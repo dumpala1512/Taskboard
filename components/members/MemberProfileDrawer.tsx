@@ -1,10 +1,11 @@
 import {
-	AlertCircle,
-	Briefcase,
-	CheckCircle2,
-	Circle,
-	Clock,
+	Building2,
+	Calendar,
+	Mail,
+	Phone,
+	Shield,
 	Trash2,
+	User,
 	X,
 } from "lucide-react";
 import React from "react";
@@ -12,16 +13,13 @@ import { toast } from "react-hot-toast";
 import { useSession } from "next-auth/react";
 import { useDeleteUser, type UserDetailed } from "../../hooks/useUsers";
 import { ConfirmDialog } from "../ui/ConfirmDialog";
-import AssignProjectModal from "./AssignProjectModal";
-import RemoveProjectDialog from "./RemoveProjectDialog";
+import { Portal } from "../ui/Portal";
 
 interface MemberProfileDrawerProps {
 	isOpen: boolean;
 	onClose: () => void;
 	user: UserDetailed | null;
 }
-
-import { Portal } from "../ui/Portal";
 
 export default function MemberProfileDrawer({
 	isOpen,
@@ -30,12 +28,6 @@ export default function MemberProfileDrawer({
 }: MemberProfileDrawerProps) {
 	const { data: session } = useSession();
 	const deleteUser = useDeleteUser();
-	const [isAssignModalOpen, setIsAssignModalOpen] = React.useState(false);
-	const [isRemoveDialogOpen, setIsRemoveDialogOpen] = React.useState(false);
-	const [projectToRemove, setProjectToRemove] = React.useState<{
-		id: string;
-		name: string;
-	} | null>(null);
 	const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
 
 	const handleDeleteUser = async () => {
@@ -56,18 +48,13 @@ export default function MemberProfileDrawer({
 
 	if (!isOpen || !user) return null;
 
-	const getStatusIcon = (status: string) => {
-		switch (status) {
-			case "DONE":
-				return <CheckCircle2 className="w-4 h-4 text-green-500" />;
-			case "IN_PROGRESS":
-				return <Clock className="w-4 h-4 text-blue-500" />;
-			case "REVIEW":
-				return <AlertCircle className="w-4 h-4 text-amber-500" />;
-			default:
-				return <Circle className="w-4 h-4 text-slate-300" />;
-		}
-	};
+	const formattedJoiningDate = user.joiningDate || user.createdAt
+		? new Date(user.joiningDate || user.createdAt).toLocaleDateString("en-US", {
+				month: "long",
+				day: "numeric",
+				year: "numeric",
+		  })
+		: "—";
 
 	return (
 		<Portal>
@@ -91,131 +78,109 @@ export default function MemberProfileDrawer({
 				</div>
 
 				{/* Content */}
-				<div className="flex-1 overflow-y-auto p-6 space-y-8">
-					{/* Profile Info */}
-					<div className="flex items-start gap-4">
+				<div className="flex-1 overflow-y-auto p-6 space-y-6">
+					{/* Profile Header */}
+					<div className="flex items-start gap-4 pb-6 border-b border-slate-100">
 						<img
 							src={
 								user.avatar ||
 								`https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=e0e7ff&color=4f46e5&size=80`
 							}
 							alt={user.name}
-							className="w-20 h-20 rounded-full border border-slate-200 shrink-0"
+							className="w-20 h-20 rounded-full border border-slate-200 shrink-0 object-cover"
 						/>
 						<div className="min-w-0 flex-1">
 							<h3 className="text-xl font-bold text-slate-900 truncate">{user.name}</h3>
 							<p className="text-sm text-slate-500 truncate">{user.email}</p>
-							<div className="mt-2 flex flex-wrap gap-2">
-								<span className="inline-flex items-center px-2 py-1 rounded bg-slate-100 text-xs font-medium text-slate-700">
-									Projects Assigned: {user.projectsAssigned}
+							<div className="mt-3 flex flex-wrap items-center gap-2">
+								<span
+									className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold ${
+										user.role === "ADMIN"
+											? "bg-purple-100 text-purple-700"
+											: "bg-blue-100 text-blue-700"
+									}`}
+								>
+									{user.role === "ADMIN" && <Shield className="w-3 h-3" />}
+									{user.role || "MEMBER"}
 								</span>
-								<span className="inline-flex items-center px-2 py-1 rounded bg-slate-100 text-xs font-medium text-slate-700">
-									Tasks Assigned: {user.tasksAssigned}
+								<span
+									className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${
+										user.status === "ACTIVE"
+											? "bg-emerald-100 text-emerald-700"
+											: "bg-amber-100 text-amber-700"
+									}`}
+								>
+									{user.status || "ACTIVE"}
 								</span>
 							</div>
 						</div>
 					</div>
 
-					{/* Assigned Projects */}
-					<div>
-						<div className="flex items-center justify-between mb-3">
-							<h4 className="text-sm font-semibold text-slate-900 uppercase tracking-wider">
-								Assigned Projects ({user.projectsAssigned})
-							</h4>
-						</div>
-
-						{user.assignedProjectsList.length === 0 ? (
-							<p className="text-sm text-slate-500 bg-slate-50 p-4 rounded-lg text-center border border-slate-100">
-								No projects assigned.
-							</p>
-						) : (
-							<div className="space-y-2">
-								{user.assignedProjectsList.map((project) => (
-									<div
-										key={project.id}
-										className="flex flex-col p-3 border border-slate-200 rounded-lg bg-white hover:border-slate-300 transition-colors"
-									>
-										<div className="flex items-center justify-between gap-2">
-											<div className="flex items-center gap-2 min-w-0 flex-1">
-												<Briefcase className="w-4 h-4 text-slate-400 shrink-0" />
-												<span className="text-sm font-medium text-slate-900 truncate">
-													{project.name}
-												</span>
-											</div>
-											<div className="flex items-center gap-3 shrink-0">
-												<span className="text-xs text-slate-500">
-													{project.status}
-												</span>
-												<button
-													className="text-xs text-red-600 hover:text-red-700 font-medium"
-													onClick={() => {
-														setProjectToRemove(project);
-														setIsRemoveDialogOpen(true);
-													}}
-												>
-													Remove
-												</button>
-											</div>
-										</div>
-										<div className="mt-2 w-full bg-slate-100 rounded-full h-1.5">
-											<div
-												className="bg-indigo-500 h-1.5 rounded-full"
-												style={{ width: `${project.progress}%` }}
-											></div>
-										</div>
-									</div>
-								))}
-							</div>
-						)}
-					</div>
-
-					{/* Assigned Tasks */}
-					<div>
-						<h4 className="text-sm font-semibold text-slate-900 uppercase tracking-wider mb-3">
-							Recent Tasks ({user.tasksAssigned})
+					{/* Member Details */}
+					<div className="space-y-4">
+						<h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+							Member Information
 						</h4>
-						{user.assignedTasksList.length === 0 ? (
-							<p className="text-sm text-slate-500 bg-slate-50 p-4 rounded-lg text-center border border-slate-100">
-								No tasks assigned.
-							</p>
-						) : (
-							<div className="space-y-2">
-								{user.assignedTasksList.slice(0, 5).map((task) => (
-									<div
-										key={task.id}
-										className="flex items-start justify-between p-3 border border-slate-200 rounded-lg bg-white hover:border-slate-300 transition-colors gap-2"
-									>
-										<div className="flex items-start gap-2 flex-1 min-w-0">
-											<div className="mt-0.5">{getStatusIcon(task.status)}</div>
-											<div className="min-w-0 flex-1">
-												<p className="text-sm font-medium text-slate-900 truncate">
-													{task.title}
-												</p>
-												<p className="text-xs text-slate-500 truncate mt-0.5">
-													Project ID: {task.projectId}
-												</p>
-											</div>
-										</div>
-										{task.dueDate && (
-											<span className="text-xs text-slate-400 whitespace-nowrap bg-slate-50 px-1.5 py-0.5 rounded">
-												Due: {new Date(task.dueDate).toLocaleDateString()}
-											</span>
-										)}
-									</div>
-								))}
-								{user.tasksAssigned > 5 && (
-									<p className="text-xs text-center text-slate-500 pt-2">
-										And {user.tasksAssigned - 5} more tasks...
+
+						<div className="grid grid-cols-1 gap-3">
+							<div className="flex items-center gap-3 p-3 rounded-lg border border-slate-100 bg-slate-50/50">
+								<Mail className="w-4 h-4 text-slate-400 shrink-0" />
+								<div className="min-w-0 flex-1">
+									<p className="text-xs text-slate-500">Email Address</p>
+									<p className="text-sm font-medium text-slate-900 truncate">
+										{user.email || "—"}
 									</p>
-								)}
+								</div>
 							</div>
-						)}
+
+							<div className="flex items-center gap-3 p-3 rounded-lg border border-slate-100 bg-slate-50/50">
+								<User className="w-4 h-4 text-slate-400 shrink-0" />
+								<div className="min-w-0 flex-1">
+									<p className="text-xs text-slate-500">Designation / Role</p>
+									<p className="text-sm font-medium text-slate-900 truncate">
+										{user.jobTitle || user.role || "—"}
+									</p>
+								</div>
+							</div>
+
+							<div className="flex items-center gap-3 p-3 rounded-lg border border-slate-100 bg-slate-50/50">
+								<Building2 className="w-4 h-4 text-slate-400 shrink-0" />
+								<div className="min-w-0 flex-1">
+									<p className="text-xs text-slate-500">Department</p>
+									<p className="text-sm font-medium text-slate-900 truncate">
+										{user.department || "—"}
+									</p>
+								</div>
+							</div>
+
+							{user.phone && (
+								<div className="flex items-center gap-3 p-3 rounded-lg border border-slate-100 bg-slate-50/50">
+									<Phone className="w-4 h-4 text-slate-400 shrink-0" />
+									<div className="min-w-0 flex-1">
+										<p className="text-xs text-slate-500">Phone</p>
+										<p className="text-sm font-medium text-slate-900 truncate">
+											{user.phone}
+										</p>
+									</div>
+								</div>
+							)}
+
+							<div className="flex items-center gap-3 p-3 rounded-lg border border-slate-100 bg-slate-50/50">
+								<Calendar className="w-4 h-4 text-slate-400 shrink-0" />
+								<div className="min-w-0 flex-1">
+									<p className="text-xs text-slate-500">Member Since</p>
+									<p className="text-sm font-medium text-slate-900 truncate">
+										{formattedJoiningDate}
+									</p>
+								</div>
+							</div>
+						</div>
 					</div>
 
 					{/* Danger Zone */}
 					{session?.user?.email !== user.email && (
-						<div className="pt-6 mt-6 border-t border-red-100">
-							<h4 className="text-sm font-semibold text-red-600 uppercase tracking-wider mb-3">
+						<div className="pt-6 border-t border-red-100">
+							<h4 className="text-xs font-semibold text-red-600 uppercase tracking-wider mb-3">
 								Danger Zone
 							</h4>
 							<div className="bg-red-50 p-4 rounded-lg border border-red-100">
@@ -235,29 +200,6 @@ export default function MemberProfileDrawer({
 					)}
 				</div>
 			</div>
-
-			<AssignProjectModal
-				isOpen={isAssignModalOpen}
-				onClose={() => setIsAssignModalOpen(false)}
-				user={user}
-			/>
-
-			{projectToRemove && (
-				<RemoveProjectDialog
-					isOpen={isRemoveDialogOpen}
-					onClose={() => {
-						setIsRemoveDialogOpen(false);
-						setProjectToRemove(null);
-					}}
-					user={user}
-					project={projectToRemove}
-					activeTasksCount={
-						user.assignedTasksList.filter(
-							(t) => t.projectId === projectToRemove.id && t.status !== "DONE",
-						).length
-					}
-				/>
-			)}
 
 			<ConfirmDialog
 				isOpen={isDeleteDialogOpen}
