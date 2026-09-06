@@ -124,11 +124,16 @@ export const clientStorage = {
 			if (!existing) {
 				mergedMap.set(p.id, p);
 			} else {
+				const mergedMembers = Array.from(
+					new Set([...(existing.members || []), ...(p.members || [])]),
+				);
 				const localTime = new Date(p.updatedAt || p.createdAt).getTime();
 				const serverTime = new Date(existing.updatedAt || existing.createdAt).getTime();
-				if (localTime >= serverTime) {
-					mergedMap.set(p.id, { ...existing, ...p });
-				}
+				const base = localTime >= serverTime ? { ...existing, ...p } : { ...p, ...existing };
+				mergedMap.set(p.id, {
+					...base,
+					members: mergedMembers,
+				});
 			}
 		}
 
@@ -347,10 +352,14 @@ export const clientStorage = {
 			const existing =
 				localMap.get(u.id) ||
 				(u.email ? localEmailMap.get(u.email.trim().toLowerCase()) : undefined);
+			const isFirstLogin = (existing?.isFirstLogin === false || u.isFirstLogin === false)
+				? false
+				: (typeof u.isFirstLogin !== "undefined" ? u.isFirstLogin : existing?.isFirstLogin);
 			userMap.set(u.id, {
 				...existing,
 				...u,
-				tempPassword: u.tempPassword || existing?.tempPassword,
+				isFirstLogin,
+				tempPassword: isFirstLogin === false ? undefined : (u.tempPassword || existing?.tempPassword),
 				passwordHash: u.passwordHash || existing?.passwordHash,
 			});
 		}

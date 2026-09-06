@@ -16,6 +16,15 @@ declare global {
 
 let db: Database;
 
+// Track deleted user IDs to prevent safe merge from resurrecting deleted users from disk
+export const deletedUserIds = new Set<string>();
+
+export function markUserDeleted(id: string) {
+	if (id) {
+		deletedUserIds.add(id);
+	}
+}
+
 // Maximum db.json file size before auto-clearing non-admin data (500 KB)
 const MAX_DB_SIZE_BYTES = 500 * 1024;
 
@@ -133,19 +142,27 @@ export function saveDb() {
 		}
 
 		if (diskDb) {
-			// Safely merge users: never drop users present on disk
+			// Safely merge users: never drop users present on disk unless explicitly deleted
 			const userMap = new Map<string, any>();
-			(diskDb.users || []).forEach((u: any) => userMap.set(u.id, u));
+			(diskDb.users || []).forEach((u: any) => {
+				if (u && u.id && !deletedUserIds.has(u.id)) {
+					userMap.set(u.id, u);
+				}
+			});
 			(db.users || []).forEach((u: any) => {
-				const existing = userMap.get(u.id);
-				const isFirstLogin = typeof u.isFirstLogin !== "undefined" ? u.isFirstLogin : existing?.isFirstLogin;
-				userMap.set(u.id, {
-					...existing,
-					...u,
-					isFirstLogin,
-					passwordHash: u.passwordHash || existing?.passwordHash,
-					tempPassword: isFirstLogin === false ? undefined : (u.tempPassword || existing?.tempPassword),
-				});
+				if (u && u.id && !deletedUserIds.has(u.id)) {
+					const existing = userMap.get(u.id);
+					const isFirstLogin = (existing?.isFirstLogin === false || u.isFirstLogin === false)
+						? false
+						: (typeof u.isFirstLogin !== "undefined" ? u.isFirstLogin : existing?.isFirstLogin);
+					userMap.set(u.id, {
+						...existing,
+						...u,
+						isFirstLogin,
+						passwordHash: u.passwordHash || existing?.passwordHash,
+						tempPassword: isFirstLogin === false ? undefined : (u.tempPassword || existing?.tempPassword),
+					});
+				}
 			});
 
 			// Safely merge projects
@@ -176,6 +193,11 @@ export function saveDb() {
 		}
 
 		fs.writeFileSync(dbPath, JSON.stringify(db, null, 2));
+		if (fs.existsSync(bundledDbPath) && bundledDbPath !== dbPath) {
+			try {
+				fs.writeFileSync(bundledDbPath, JSON.stringify(db, null, 2));
+			} catch (_) {}
+		}
 	} catch (e) {
 		console.error("Failed to save db:", e);
 	}

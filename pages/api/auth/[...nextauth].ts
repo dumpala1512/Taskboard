@@ -3,6 +3,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { authService } from "../../../server/services/auth.service";
 import { userRepository } from "../../../server/repositories/user.repository";
+import { deletedUserIds } from "../../../server/data";
 
 export const authOptions: NextAuthOptions = {
 	providers: [
@@ -21,6 +22,9 @@ export const authOptions: NextAuthOptions = {
 				if (!credentials?.email || !credentials?.password) return null;
 
 				const cleanEmail = credentials.email.trim().toLowerCase();
+				if (deletedUserIds.has(cleanEmail)) {
+					return null;
+				}
 
 				let user = await authService.login(
 					cleanEmail,
@@ -89,13 +93,17 @@ export const authOptions: NextAuthOptions = {
 				}
 
 				if (user) {
+					if (deletedUserIds.has(user.id) || (user.email && deletedUserIds.has(user.email.toLowerCase()))) {
+						return null;
+					}
+					const isFirstLogin = (user.isFirstLogin === false || !!user.passwordChangedAt) ? false : !!user.isFirstLogin;
 					return {
 						id: user.id,
 						name: user.name,
 						email: user.email,
 						role: user.role,
 						status: user.status,
-						isFirstLogin: user.isFirstLogin,
+						isFirstLogin: isFirstLogin,
 					};
 				}
 
@@ -121,6 +129,15 @@ export const authOptions: NextAuthOptions = {
 				token.role = (user as any).role;
 				token.status = (user as any).status;
 				token.isFirstLogin = (user as any).isFirstLogin;
+			}
+			// Verify in real-time if the user has already changed their password
+			if (token.id && token.isFirstLogin) {
+				try {
+					const dbUser = await userRepository.findById(token.id as string);
+					if (dbUser && (dbUser.isFirstLogin === false || !!dbUser.passwordChangedAt)) {
+						token.isFirstLogin = false;
+					}
+				} catch (_) {}
 			}
 			return token;
 		},

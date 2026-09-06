@@ -20,7 +20,10 @@ export default async function handler(
 		return res.status(400).json({ message: "Invalid user ID" });
 	}
 
-	const user = await userRepository.findById(userId);
+	let user = await userRepository.findById(userId);
+	if (!user) {
+		user = await userRepository.findByEmail(userId);
+	}
 	if (!user) {
 		return res.status(404).json({ message: "User not found" });
 	}
@@ -40,9 +43,10 @@ export default async function handler(
 				const project = allProjects.find((p) => p.id === projectId);
 				if (project) {
 					const members = project.members || [];
-					if (!members.includes(userId)) {
+					const hasMember = members.includes(user.id) || (user.email && members.includes(user.email));
+					if (!hasMember) {
 						await projectRepository.update(projectId, {
-							members: [...members, userId],
+							members: [...members, user.id],
 						});
 						updatedCount++;
 					}
@@ -54,7 +58,7 @@ export default async function handler(
 			const updatedAssigned = Array.from(
 				new Set([...currentAssigned, ...projectIds]),
 			);
-			await userRepository.update(userId, {
+			await userRepository.update(user.id, {
 				assignedProjectIds: updatedAssigned,
 			});
 

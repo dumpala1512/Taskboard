@@ -1,15 +1,25 @@
 import * as bcrypt from "bcryptjs";
 import crypto from "crypto";
 import { userRepository } from "../repositories/user.repository";
+import { deletedUserIds } from "../data";
 import type { User } from "../types";
 
 export class AuthService {
 	async login(email: string, passwordPlain: string): Promise<User | null> {
 		const cleanEmail = email?.trim().toLowerCase();
 		console.log("login attempt:", cleanEmail);
+
+		if (deletedUserIds.has(cleanEmail)) {
+			return null;
+		}
+
 		const user = await userRepository.findByEmail(cleanEmail);
 		if (!user) {
 			console.log("user not found for email:", cleanEmail);
+			return null;
+		}
+
+		if (deletedUserIds.has(user.id) || (user.email && deletedUserIds.has(user.email.toLowerCase()))) {
 			return null;
 		}
 
@@ -35,6 +45,10 @@ export class AuthService {
 			throw new Error("Account is inactive");
 		}
 		
+		if (user.passwordChangedAt || user.isFirstLogin === false) {
+			user.isFirstLogin = false;
+		}
+
 		console.log("login success:", cleanEmail);
 		return user;
 	}

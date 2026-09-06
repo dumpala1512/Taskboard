@@ -4,7 +4,7 @@ import type { Project } from "../types";
 import { activityService } from "./activity.service";
 
 export class ProjectService {
-	async getAllProjects(userId?: string, role?: string): Promise<Project[]> {
+	async getAllProjects(userId?: string, role?: string, userEmail?: string | null): Promise<Project[]> {
 		let projects = await projectRepository.findAll();
 
 		// Dynamically calculate progress based on tasks
@@ -24,9 +24,24 @@ export class ProjectService {
 			})
 		);
 
-		if (role !== "ADMIN" && userId) {
+		if (role !== "ADMIN" && (userId || userEmail)) {
+			let assignedIds = new Set<string>();
+			if (userId) {
+				const u = await import("../repositories/user.repository").then(m => m.userRepository.findById(userId));
+				(u?.assignedProjectIds || []).forEach(id => assignedIds.add(id));
+			}
+			if (userEmail) {
+				const u = await import("../repositories/user.repository").then(m => m.userRepository.findByEmail(userEmail));
+				(u?.assignedProjectIds || []).forEach(id => assignedIds.add(id));
+			}
+
 			projects = projects.filter(
-				(p) => p.members?.includes(userId) || p.ownerId === userId,
+				(p) =>
+					(userId && p.members?.includes(userId)) ||
+					(userEmail && p.members?.includes(userEmail)) ||
+					(userId && p.ownerId === userId) ||
+					(userEmail && p.ownerId === userEmail) ||
+					assignedIds.has(p.id),
 			);
 		}
 

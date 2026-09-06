@@ -123,12 +123,15 @@ export class AdminService {
 	}
 
 	async deleteUser(id: string): Promise<boolean> {
-		const user = await userRepository.findById(id);
+		let user = await userRepository.findById(id);
+		if (!user) {
+			user = await userRepository.findByEmail(id);
+		}
 		if (!user) {
 			throw new Error("User not found");
 		}
 
-		return userRepository.delete(id);
+		return userRepository.delete(user.id);
 	}
 }
 

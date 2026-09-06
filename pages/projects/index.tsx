@@ -25,6 +25,7 @@ import {
 	useProjects,
 	useUpdateProject,
 } from "../../hooks/useProjects";
+import { clientStorage } from "../../lib/client-storage";
 import type { Project } from "../../server/types";
 
 export default function ProjectsPage() {
@@ -41,11 +42,27 @@ export default function ProjectsPage() {
 	// Data Fetching
 	const { data: allProjects = [], isLoading, error } = useProjects();
 	const currentUserId = (session?.user as any)?.id;
+	const currentUserEmail = session?.user?.email;
+	const allUsers = typeof window !== "undefined" ? clientStorage.getUsers() : [];
+	const userInStorage = allUsers.find(
+		(u) =>
+			(currentUserId && u.id === currentUserId) ||
+			(currentUserEmail && u.email && u.email.trim().toLowerCase() === currentUserEmail.trim().toLowerCase()),
+	);
+	const assignedIds = new Set(userInStorage?.assignedProjectIds || []);
+
 	const userProjects = isAdmin
 		? allProjects
-		: allProjects.filter(
-				(p) => p.members?.includes(currentUserId) || p.ownerId === currentUserId,
-			);
+		: allProjects.filter((p) => {
+				const isMember =
+					(currentUserId && p.members?.includes(currentUserId)) ||
+					(currentUserEmail && p.members?.includes(currentUserEmail));
+				const isOwner =
+					(currentUserId && p.ownerId === currentUserId) ||
+					(currentUserEmail && p.ownerId === currentUserEmail);
+				const isAssigned = assignedIds.has(p.id);
+				return isMember || isOwner || isAssigned;
+			});
 
 	const projects = userProjects.filter((p) => {
 		const matchesSearch =

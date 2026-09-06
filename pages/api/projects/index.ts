@@ -13,12 +13,13 @@ export default async function handler(
 	}
 
 	const userId = (session.user as any).id;
+	const userEmail = session.user.email;
 	const userRole = (session.user as any).role;
 
 	switch (req.method) {
 		case "GET":
 			try {
-				const projects = await projectService.getAllProjects(userId, userRole);
+				const projects = await projectService.getAllProjects(userId, userRole, userEmail || undefined);
 				return res.status(200).json(projects);
 			} catch (error) {
 				console.error("Error fetching projects:", error);

@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from "uuid";
-import db, { loadDb, saveDb } from "../data";
+import db, { loadDb, saveDb, markUserDeleted } from "../data";
 import type { User } from "../types";
 
 export class UserRepository {
@@ -56,22 +56,28 @@ export class UserRepository {
 	}
 
 	async delete(id: string): Promise<boolean> {
+		markUserDeleted(id);
 		const freshDb = loadDb();
-		db.users = freshDb.users;
+		const userToDelete = freshDb.users.find((u: any) => u.id === id || u.email === id);
+		if (userToDelete) {
+			markUserDeleted(userToDelete.id);
+			if (userToDelete.email) markUserDeleted(userToDelete.email);
+		}
+
+		db.users = (freshDb.users || []).filter((u: any) => u.id !== id && u.email !== id);
 		if (freshDb.projects) db.projects = freshDb.projects;
 		if (freshDb.tasks) db.tasks = freshDb.tasks;
 
-		const index = db.users.findIndex((u: any) => u.id === id);
-		if (index === -1) return false;
-		db.users.splice(index, 1);
+		const targetId = userToDelete ? userToDelete.id : id;
 
 		// Remove user from all project members & owners
+		const idsToRemove = new Set([id, targetId, userToDelete?.email].filter(Boolean));
 		if (db.projects) {
 			db.projects.forEach((p: any) => {
-				if (p.members && p.members.includes(id)) {
-					p.members = p.members.filter((m: any) => m !== id);
+				if (p.members) {
+					p.members = p.members.filter((m: any) => !idsToRemove.has(m));
 				}
-				if (p.ownerId === id) {
+				if (idsToRemove.has(p.ownerId)) {
 					p.ownerId = undefined;
 				}
 			});
@@ -80,11 +86,11 @@ export class UserRepository {
 		// Unassign user from all tasks
 		if (db.tasks) {
 			db.tasks.forEach((t: any) => {
-				if (t.assigneeId === id) {
+				if (idsToRemove.has(t.assigneeId)) {
 					t.assigneeId = null;
 				}
-				if (t.assignees && t.assignees.includes(id)) {
-					t.assignees = t.assignees.filter((a: string) => a !== id);
+				if (t.assignees) {
+					t.assignees = t.assignees.filter((a: string) => !idsToRemove.has(a));
 				}
 			});
 		}
