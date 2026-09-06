@@ -115,8 +115,8 @@ apiClient.interceptors.response.use(
 					const cleanEmail = targetEmail ? targetEmail.trim().toLowerCase() : "";
 					const u = allUsers.find(
 						(x) =>
-							(targetId && x.id === targetId) ||
-							(cleanEmail && x.email && x.email.trim().toLowerCase() === cleanEmail),
+							(cleanEmail && x.email && x.email.trim().toLowerCase() === cleanEmail) ||
+							(targetId && x.id === targetId),
 					);
 					const baseUser = u || {
 						id: targetId || uuidv4(),
@@ -127,6 +127,7 @@ apiClient.interceptors.response.use(
 					};
 					clientStorage.saveUser({
 						...baseUser,
+						id: targetId || baseUser.id,
 						tempPassword: body.newPassword,
 						passwordHash: response.data?.passwordHash,
 						isFirstLogin: false,

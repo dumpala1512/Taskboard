@@ -237,6 +237,8 @@ export const clientStorage = {
 		const raw = getItem<any[]>(STORAGE_KEYS.USERS, []);
 		const deletedIds = new Set(this.getDeletedUserIds());
 		const sanitized: User[] = [];
+		const seenEmails = new Set<string>();
+		const seenIds = new Set<string>();
 		let needsClean = false;
 
 		for (const item of raw) {
@@ -246,10 +248,19 @@ export const clientStorage = {
 			}
 			const actual: any = item.user ? item.user : item;
 			if (actual && actual.id) {
-				if (deletedIds.has(actual.id)) {
+				const cleanEmail = actual.email ? actual.email.trim().toLowerCase() : "";
+				if (deletedIds.has(actual.id) || (cleanEmail && deletedIds.has(cleanEmail))) {
 					needsClean = true;
 					continue;
 				}
+				// Deduplicate by both ID and Email
+				if (seenIds.has(actual.id) || (cleanEmail && seenEmails.has(cleanEmail))) {
+					needsClean = true;
+					continue;
+				}
+				seenIds.add(actual.id);
+				if (cleanEmail) seenEmails.add(cleanEmail);
+
 				const name = actual.name || `${actual.firstName || ""} ${actual.lastName || ""}`.trim() || actual.email || "Member";
 				sanitized.push({
 					...actual,
@@ -279,34 +290,53 @@ export const clientStorage = {
 			actual.name = `${actual.firstName || ""} ${actual.lastName || ""}`.trim() || actual.email || "Member";
 		}
 		const deleted = this.getDeletedUserIds();
+		const cleanActualEmail = actual.email ? actual.email.trim().toLowerCase() : "";
 		if (deleted.includes(actual.id)) {
 			setItem(
 				STORAGE_KEYS.DELETED_USERS,
-				deleted.filter((id) => id !== actual.id),
+				deleted.filter((id) => id !== actual.id && id !== cleanActualEmail),
 			);
 		}
+		if (cleanActualEmail && deleted.includes(cleanActualEmail)) {
+			setItem(
+				STORAGE_KEYS.DELETED_USERS,
+				deleted.filter((id) => id !== actual.id && id !== cleanActualEmail),
+			);
+		}
+
 		const users = this.getUsers();
-		const cleanActualEmail = actual.email ? actual.email.trim().toLowerCase() : "";
 		const index = users.findIndex(
 			(u) =>
 				u.id === actual.id ||
 				(cleanActualEmail && u.email && u.email.trim().toLowerCase() === cleanActualEmail),
 		);
+
+		let savedUser: User;
 		if (index >= 0) {
 			const existing = users[index] as any;
 			const isFirstLogin = typeof actual.isFirstLogin !== "undefined" ? actual.isFirstLogin : existing.isFirstLogin;
-			users[index] = {
+			savedUser = {
 				...existing,
 				...actual,
+				id: actual.id || existing.id,
 				isFirstLogin,
 				tempPassword: actual.tempPassword ?? (isFirstLogin === false ? undefined : existing.tempPassword),
 				passwordHash: actual.passwordHash || existing.passwordHash,
 			};
+			users[index] = savedUser;
+			// Filter out any other duplicate entries with the same email or ID
+			const deduplicated = users.filter((u, i) => {
+				if (i === index) return true;
+				const uEmail = u.email?.trim().toLowerCase();
+				return !(cleanActualEmail && uEmail === cleanActualEmail) && u.id !== savedUser.id;
+			});
+			setItem(STORAGE_KEYS.USERS, deduplicated);
 		} else {
-			users.push(actual);
+			savedUser = actual;
+			users.push(savedUser);
+			setItem(STORAGE_KEYS.USERS, users);
 		}
-		setItem(STORAGE_KEYS.USERS, users);
-		return actual;
+		return savedUser;
 	},
 
 	deleteUser(id: string): boolean {
@@ -316,7 +346,7 @@ export const clientStorage = {
 			setItem(STORAGE_KEYS.DELETED_USERS, deleted);
 		}
 
-		const users = this.getUsers().filter((u) => u.id !== id);
+		const users = this.getUsers().filter((u) => u.id !== id && u.email !== id);
 		setItem(STORAGE_KEYS.USERS, users);
 
 		// Also remove deleted user from local projects' member lists
@@ -343,31 +373,49 @@ export const clientStorage = {
 		}
 
 		const userMap = new Map<string, User>();
+		const seenEmails = new Set<string>();
+
 		for (const raw of serverUsers) {
 			const u: any = raw.user ? raw.user : raw;
 			if (!u || !u.id || deletedIds.has(u.id)) continue;
+			const cleanEmail = u.email ? u.email.trim().toLowerCase() : "";
+			if (cleanEmail && deletedIds.has(cleanEmail)) continue;
+
 			if (!u.name) {
 				u.name = `${u.firstName || ""} ${u.lastName || ""}`.trim() || u.email || "Member";
 			}
 			const existing =
 				localMap.get(u.id) ||
-				(u.email ? localEmailMap.get(u.email.trim().toLowerCase()) : undefined);
+				(cleanEmail ? localEmailMap.get(cleanEmail) : undefined);
 			const isFirstLogin = (existing?.isFirstLogin === false || u.isFirstLogin === false)
 				? false
 				: (typeof u.isFirstLogin !== "undefined" ? u.isFirstLogin : existing?.isFirstLogin);
-			userMap.set(u.id, {
+
+			const merged = {
 				...existing,
 				...u,
 				isFirstLogin,
 				tempPassword: isFirstLogin === false ? undefined : (u.tempPassword || existing?.tempPassword),
 				passwordHash: u.passwordHash || existing?.passwordHash,
-			});
+			};
+
+			userMap.set(u.id, merged);
+			if (cleanEmail) seenEmails.add(cleanEmail);
 		}
+
 		for (const u of localUsers) {
-			if (u && u.id && !deletedIds.has(u.id) && !userMap.has(u.id)) {
-				userMap.set(u.id, u);
+			if (!u || !u.id || deletedIds.has(u.id)) continue;
+			const cleanEmail = u.email ? u.email.trim().toLowerCase() : "";
+			if (cleanEmail && deletedIds.has(cleanEmail)) continue;
+
+			// Do not re-add if user with this ID or email was already processed from serverUsers
+			if (userMap.has(u.id) || (cleanEmail && seenEmails.has(cleanEmail))) {
+				continue;
 			}
+			userMap.set(u.id, u);
+			if (cleanEmail) seenEmails.add(cleanEmail);
 		}
+
 		const list = Array.from(userMap.values());
 		setItem(STORAGE_KEYS.USERS, list);
 		return list;

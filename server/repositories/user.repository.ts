@@ -5,7 +5,18 @@ import type { User } from "../types";
 export class UserRepository {
 	async findAll(): Promise<User[]> {
 		const freshDb = loadDb();
-		db.users = freshDb.users;
+		db.users = freshDb.users || [];
+		const seenEmails = new Set<string>();
+		const deduplicated: User[] = [];
+		for (const u of db.users) {
+			const cleanEmail = u.email?.trim().toLowerCase();
+			if (cleanEmail) {
+				if (seenEmails.has(cleanEmail)) continue;
+				seenEmails.add(cleanEmail);
+			}
+			deduplicated.push(u);
+		}
+		db.users = deduplicated;
 		return [...db.users];
 	}
 
@@ -22,12 +33,27 @@ export class UserRepository {
 		return freshDb.users.find((u: any) => u.id === id);
 	}
 
-	async create(user: Omit<User, "id" | "createdAt">): Promise<User> {
+	async create(user: Omit<User, "id" | "createdAt"> & { id?: string; createdAt?: string }): Promise<User> {
 		loadDb();
+		const cleanEmail = user.email?.trim().toLowerCase();
+		if (cleanEmail) {
+			const existingIndex = db.users.findIndex(
+				(u: any) => u.email?.trim().toLowerCase() === cleanEmail,
+			);
+			if (existingIndex >= 0) {
+				db.users[existingIndex] = {
+					...db.users[existingIndex],
+					...user,
+				};
+				saveDb();
+				return db.users[existingIndex];
+			}
+		}
+
 		const newUser: User = {
 			...user,
-			id: uuidv4(),
-			createdAt: new Date().toISOString(),
+			id: user.id || uuidv4(),
+			createdAt: user.createdAt || new Date().toISOString(),
 		};
 		db.users.push(newUser);
 		saveDb();

@@ -90,12 +90,12 @@ export default function AccountSetup() {
 
 			// Update clientStorage with the new credentials so subsequent logins succeed
 			const effectiveEmail = userEmail || res.data?.user?.email;
-			const effectiveId = userId || res.data?.user?.id;
+			const effectiveId = res.data?.user?.id || userId;
 			const allUsers = clientStorage.getUsers();
 			const matched = allUsers.find(
 				(u) =>
-					(effectiveId && u.id === effectiveId) ||
-					(effectiveEmail && u.email && u.email.trim().toLowerCase() === effectiveEmail.trim().toLowerCase()),
+					(effectiveEmail && u.email && u.email.trim().toLowerCase() === effectiveEmail.trim().toLowerCase()) ||
+					(effectiveId && u.id === effectiveId),
 			);
 
 			const baseUser = matched || {
@@ -108,6 +108,7 @@ export default function AccountSetup() {
 
 			clientStorage.saveUser({
 				...baseUser,
+				id: effectiveId || baseUser.id,
 				tempPassword: data.newPassword,
 				passwordHash: res.data?.passwordHash,
 				isFirstLogin: false,

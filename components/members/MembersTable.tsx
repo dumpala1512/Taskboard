@@ -13,7 +13,24 @@ export default function MembersTable({ users, searchTerm }: MembersTableProps) {
   const [selectedUser, setSelectedUser] = useState<UserDetailed | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
-  const filteredUsers = users.filter((u) => {
+  // Deduplicate users by clean email or id so duplicate rows never appear
+  const uniqueUsers: UserDetailed[] = [];
+  const seenEmails = new Set<string>();
+  const seenIds = new Set<string>();
+  for (const u of (users || [])) {
+    if (!u) continue;
+    const cleanEmail = u.email ? u.email.trim().toLowerCase() : "";
+    if (cleanEmail) {
+      if (seenEmails.has(cleanEmail)) continue;
+      seenEmails.add(cleanEmail);
+    } else if (u.id) {
+      if (seenIds.has(u.id)) continue;
+      seenIds.add(u.id);
+    }
+    uniqueUsers.push(u);
+  }
+
+  const filteredUsers = uniqueUsers.filter((u) => {
     if (!u) return false;
     const term = (searchTerm || "").toLowerCase();
     const name = (u.name || (u as any).firstName || u.email || "").toLowerCase();

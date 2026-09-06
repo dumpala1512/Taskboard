@@ -63,6 +63,7 @@ export class AuthService {
 			// If running in a stateless serverless container that didn't have the user, create record
 			const hashedPassword = bcrypt.hashSync(newPasswordPlain, 10);
 			return userRepository.create({
+				id: (userId && userId !== cleanEmail) ? userId : undefined,
 				name: cleanEmail || "Member",
 				email: cleanEmail || "",
 				role: "MEMBER",

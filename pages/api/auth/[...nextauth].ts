@@ -57,6 +57,7 @@ export const authOptions: NextAuthOptions = {
 									: (matched?.passwordHash || bcrypt.hashSync(credentials.password, 10));
 								if (!existingInDb) {
 									const created = await userRepository.create({
+										id: matched.id,
 										name: matched.name || `${matched.firstName || ''} ${matched.lastName || ''}`.trim() || matched.email || cleanEmail,
 										email: cleanEmail,
 										role: matched.role || "MEMBER",
