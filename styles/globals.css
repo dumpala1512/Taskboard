@@ -148,12 +148,34 @@
   border-color: #222F49 !important;
 }
 
+.dark th {
+  color: #F8FAFC !important;
+  background-color: #1A233A !important;
+  border-color: #222F49 !important;
+}
+
+.dark thead tr {
+  background-color: #1A233A !important;
+  border-color: #222F49 !important;
+}
+
+.dark td {
+  color: #CBD5E1 !important;
+  border-color: #222F49 !important;
+}
+
 .dark .text-slate-900,
 .dark .text-gray-900,
 .dark .text-slate-800,
 .dark .text-gray-800,
-.dark .text-\[\#33475B\] {
-  color: #F8FAFC !important;
+.dark .text-\[\#33475B\],
+.dark .text-\[\#333333\],
+.dark .text-\[\#333\],
+.dark .text-\[\#111827\],
+.dark .text-\[\#1F2937\],
+.dark .text-\[\#374151\],
+.dark .text-\[\#1E293B\] {
+  color: #FFFFFF !important;
 }
 
 .dark .text-slate-700,
@@ -161,11 +183,14 @@
 .dark .text-slate-600,
 .dark .text-gray-600,
 .dark .text-\[\#6E7B8B\] {
-  color: #CBD5E1 !important;
+  color: #E2E8F0 !important;
 }
 
 .dark .text-slate-500,
-.dark .text-gray-500,
+.dark .text-gray-500 {
+  color: #94A3B8 !important;
+}
+
 .dark .text-slate-400,
 .dark .text-gray-400,
 .dark .text-\[\#9EAAB7\] {
