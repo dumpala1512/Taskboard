@@ -23,6 +23,7 @@ export interface User {
   resetTokenExpiry?: number;
   createdAt: string;
   joiningDate?: string;
+  assignedProjectIds?: string[];
 }
 
 export type ProjectStatus = "PLANNING" | "ACTIVE" | "ON_HOLD" | "COMPLETED";

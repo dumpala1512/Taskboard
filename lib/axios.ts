@@ -75,11 +75,23 @@ apiClient.interceptors.response.use(
 								}
 							}
 						});
+						const u = clientStorage.getUserById(id);
+						if (u) {
+							const current = (u as any).assignedProjectIds || [];
+							const nextIds = Array.from(new Set([...current, ...body.projectIds]));
+							clientStorage.saveUser({ ...u, assignedProjectIds: nextIds });
+						}
 					} else if (method === "DELETE" && body?.projectId) {
 						const proj = clientStorage.getProjectById(body.projectId);
 						if (proj) {
 							const members = (proj.members || []).filter((m: string) => m !== id);
 							clientStorage.updateProject(proj.id, { members });
+						}
+						const u = clientStorage.getUserById(id);
+						if (u) {
+							const current = (u as any).assignedProjectIds || [];
+							const nextIds = current.filter((pid: string) => pid !== body.projectId);
+							clientStorage.saveUser({ ...u, assignedProjectIds: nextIds });
 						}
 					}
 				} catch (_) {}
@@ -300,11 +312,23 @@ apiClient.interceptors.response.use(
 								}
 							}
 						});
+						const u = clientStorage.getUserById(id);
+						if (u) {
+							const current = (u as any).assignedProjectIds || [];
+							const nextIds = Array.from(new Set([...current, ...body.projectIds]));
+							clientStorage.saveUser({ ...u, assignedProjectIds: nextIds });
+						}
 					} else if (method === "DELETE" && body?.projectId) {
 						const proj = clientStorage.getProjectById(body.projectId);
 						if (proj) {
 							const members = (proj.members || []).filter((m: string) => m !== id);
 							clientStorage.updateProject(proj.id, { members });
+						}
+						const u = clientStorage.getUserById(id);
+						if (u) {
+							const current = (u as any).assignedProjectIds || [];
+							const nextIds = current.filter((pid: string) => pid !== body.projectId);
+							clientStorage.saveUser({ ...u, assignedProjectIds: nextIds });
 						}
 					}
 				} catch (_) {}

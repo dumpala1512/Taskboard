@@ -47,6 +47,11 @@ export default async function handler(
         }
       }
 
+      // Maintain lightweight assignedProjectIds on user object without altering auth fields
+      const currentAssigned = user.assignedProjectIds || [];
+      const updatedAssigned = Array.from(new Set([...currentAssigned, ...projectIds]));
+      await userRepository.update(userId, { assignedProjectIds: updatedAssigned });
+
       return res.status(200).json({ message: `Successfully assigned to ${updatedCount} projects` });
     } catch (error) {
       console.error("Error assigning projects:", error);
@@ -84,6 +89,11 @@ export default async function handler(
           }));
         }
       }
+
+      // Update user's assignedProjectIds without altering auth fields
+      const currentAssigned = user.assignedProjectIds || [];
+      const updatedAssigned = currentAssigned.filter((pid: string) => pid !== projectId);
+      await userRepository.update(userId, { assignedProjectIds: updatedAssigned });
 
       return res.status(200).json({ message: "Successfully removed from project" });
     } catch (error) {
