@@ -25,7 +25,9 @@ export class ProjectService {
 		);
 
 		if (role !== "ADMIN" && userId) {
-			projects = projects.filter((p) => p.members.includes(userId));
+			projects = projects.filter(
+				(p) => p.members?.includes(userId) || p.ownerId === userId,
+			);
 		}
 
 		return projects.sort(

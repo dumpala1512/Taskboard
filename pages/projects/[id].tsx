@@ -92,7 +92,10 @@ export default function ProjectDetailsPage() {
     </AppLayout>
   );
 
-  if (projectError || !project) return <Custom404 />;
+  const currentUserId = (session?.user as any)?.id;
+  const isAssigned = isAdmin || (project && (project.members?.includes(currentUserId) || project.ownerId === currentUserId));
+
+  if (projectError || !project || !isAssigned) return <Custom404 />;
 
   return (
     <AppLayout>

@@ -40,7 +40,14 @@ export default function ProjectsPage() {
 
 	// Data Fetching
 	const { data: allProjects = [], isLoading, error } = useProjects();
-	const projects = allProjects.filter((p) => {
+	const currentUserId = (session?.user as any)?.id;
+	const userProjects = isAdmin
+		? allProjects
+		: allProjects.filter(
+				(p) => p.members?.includes(currentUserId) || p.ownerId === currentUserId,
+			);
+
+	const projects = userProjects.filter((p) => {
 		const matchesSearch =
 			!searchQuery ||
 			p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||

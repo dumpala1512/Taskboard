@@ -25,6 +25,16 @@ export default async function handler(
 				const project = await projectService.getProjectById(id as string);
 				if (!project)
 					return res.status(404).json({ message: "Project not found" });
+
+				const userId = (session.user as any).id;
+				if (
+					userRole !== "ADMIN" &&
+					!project.members?.includes(userId) &&
+					project.ownerId !== userId
+				) {
+					return res.status(404).json({ message: "Project not found" });
+				}
+
 				return res.status(200).json(project);
 			} catch (error) {
 				return res.status(500).json({ message: "Failed to fetch project" });
