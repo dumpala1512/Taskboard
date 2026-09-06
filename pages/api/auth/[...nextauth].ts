@@ -33,25 +33,32 @@ export const authOptions: NextAuthOptions = {
 							const matched = localUsers.find(
 								(u: any) => u.email?.toLowerCase() === credentials.email.toLowerCase()
 							);
+							let isMatch = false;
 							if (matched && matched.passwordHash) {
-								const isMatch = bcrypt.compareSync(credentials.password, matched.passwordHash);
-								if (isMatch) {
-									const existingInDb = await userRepository.findByEmail(matched.email);
-									if (!existingInDb) {
-										await userRepository.create({
-											name: matched.name || `${matched.firstName || ''} ${matched.lastName || ''}`.trim() || matched.email,
-											email: matched.email,
-											role: matched.role || "MEMBER",
-											status: matched.status || "ACTIVE",
-											passwordHash: matched.passwordHash,
-											isFirstLogin: matched.isFirstLogin ?? true,
-											department: matched.department,
-											jobTitle: matched.jobTitle,
-											phone: matched.phone,
-											joiningDate: matched.joiningDate,
-										});
-									}
-									user = matched;
+								isMatch = bcrypt.compareSync(credentials.password, matched.passwordHash);
+							} else if (matched && matched.tempPassword) {
+								isMatch = credentials.password === matched.tempPassword;
+							}
+
+							if (isMatch) {
+								const existingInDb = await userRepository.findByEmail(matched.email);
+								const passwordHashToSave = matched.passwordHash || bcrypt.hashSync(credentials.password, 10);
+								if (!existingInDb) {
+									const created = await userRepository.create({
+										name: matched.name || `${matched.firstName || ''} ${matched.lastName || ''}`.trim() || matched.email,
+										email: matched.email,
+										role: matched.role || "MEMBER",
+										status: matched.status || "ACTIVE",
+										passwordHash: passwordHashToSave,
+										isFirstLogin: matched.isFirstLogin ?? true,
+										department: matched.department,
+										jobTitle: matched.jobTitle,
+										phone: matched.phone,
+										joiningDate: matched.joiningDate,
+									});
+									user = created;
+								} else {
+									user = existingInDb;
 								}
 							}
 						}

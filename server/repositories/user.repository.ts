@@ -10,26 +10,27 @@ export class UserRepository {
 	}
 
 	async findByEmail(email: string): Promise<User | undefined> {
-		let user = db.users.find((u) => u.email === email);
+		let user = db.users.find((u: any) => u.email === email);
 		if (!user) {
 			const freshDb = loadDb();
-			user = freshDb.users.find((u) => u.email === email);
+			user = freshDb.users.find((u: any) => u.email === email);
 			if (user) db.users = freshDb.users;
 		}
 		return user;
 	}
 
 	async findById(id: string): Promise<User | undefined> {
-		let user = db.users.find((u) => u.id === id);
+		let user = db.users.find((u: any) => u.id === id);
 		if (!user) {
 			const freshDb = loadDb();
-			user = freshDb.users.find((u) => u.id === id);
+			user = freshDb.users.find((u: any) => u.id === id);
 			if (user) db.users = freshDb.users;
 		}
 		return user;
 	}
 
 	async create(user: Omit<User, "id" | "createdAt">): Promise<User> {
+		loadDb();
 		const newUser: User = {
 			...user,
 			id: uuidv4(),
@@ -41,7 +42,8 @@ export class UserRepository {
 	}
 
 	async update(id: string, updates: Partial<User>): Promise<User> {
-		const index = db.users.findIndex((u) => u.id === id);
+		loadDb();
+		const index = db.users.findIndex((u: any) => u.id === id);
 		if (index === -1) {
 			throw new Error("User not found");
 		}
@@ -51,10 +53,10 @@ export class UserRepository {
 	}
 
 	async findByResetToken(token: string): Promise<User | undefined> {
-		let user = db.users.find((u) => u.resetToken === token);
+		let user = db.users.find((u: any) => u.resetToken === token);
 		if (!user) {
 			const freshDb = loadDb();
-			user = freshDb.users.find((u) => u.resetToken === token);
+			user = freshDb.users.find((u: any) => u.resetToken === token);
 			if (user) db.users = freshDb.users;
 		}
 		return user;
@@ -66,15 +68,15 @@ export class UserRepository {
 		if (freshDb.projects) db.projects = freshDb.projects;
 		if (freshDb.tasks) db.tasks = freshDb.tasks;
 
-		const index = db.users.findIndex((u) => u.id === id);
+		const index = db.users.findIndex((u: any) => u.id === id);
 		if (index === -1) return false;
 		db.users.splice(index, 1);
 
 		// Remove user from all project members & owners
 		if (db.projects) {
-			db.projects.forEach((p) => {
+			db.projects.forEach((p: any) => {
 				if (p.members && p.members.includes(id)) {
-					p.members = p.members.filter((m) => m !== id);
+					p.members = p.members.filter((m: any) => m !== id);
 				}
 				if (p.ownerId === id) {
 					p.ownerId = undefined;

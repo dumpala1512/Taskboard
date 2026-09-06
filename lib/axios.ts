@@ -24,7 +24,7 @@ function parseEndpoint(url?: string): { path: string; id?: string; subAction?: s
 apiClient.interceptors.response.use(
 	(response: AxiosResponse) => {
 		const method = response.config.method?.toUpperCase();
-		const { path, id } = parseEndpoint(response.config.url);
+		const { path, id, subAction } = parseEndpoint(response.config.url);
 
 		if (path === "projects") {
 			if (method === "GET") {
@@ -60,13 +60,38 @@ apiClient.interceptors.response.use(
 		} else if (path === "users") {
 			if (method === "GET" && Array.isArray(response.data)) {
 				response.data = clientStorage.mergeUsers(response.data);
-			} else if (method === "DELETE" && id) {
+			} else if (method === "DELETE" && id && !subAction) {
 				clientStorage.deleteUser(id);
+			} else if (subAction === "assign-projects" && id) {
+				try {
+					const body = typeof response.config.data === "string" ? JSON.parse(response.config.data) : response.config.data;
+					if (method === "POST" && Array.isArray(body?.projectIds)) {
+						body.projectIds.forEach((projId: string) => {
+							const proj = clientStorage.getProjectById(projId);
+							if (proj) {
+								const members = proj.members || [];
+								if (!members.includes(id)) {
+									clientStorage.updateProject(proj.id, { members: [...members, id] });
+								}
+							}
+						});
+					} else if (method === "DELETE" && body?.projectId) {
+						const proj = clientStorage.getProjectById(body.projectId);
+						if (proj) {
+							const members = (proj.members || []).filter((m: string) => m !== id);
+							clientStorage.updateProject(proj.id, { members });
+						}
+					}
+				} catch (_) {}
 			}
 		} else if (path === "admin" && id === "users" && response.config.url?.includes("/create")) {
 			if (method === "POST" && response.data) {
 				const userToSave = response.data.user || response.data;
-				clientStorage.saveUser(userToSave);
+				const tempPassword = response.data.temporaryPassword;
+				clientStorage.saveUser({
+					...userToSave,
+					tempPassword,
+				});
 			}
 		} else if (path === "activities") {
 			if (method === "GET" && Array.isArray(response.data)) {
@@ -82,7 +107,7 @@ apiClient.interceptors.response.use(
 		if (!config) return Promise.reject(error);
 
 		const method = config.method?.toUpperCase();
-		const { path, id } = parseEndpoint(config.url);
+		const { path, id, subAction } = parseEndpoint(config.url);
 		const status = error.response?.status;
 
 		// Fallback for Account Setup
@@ -253,10 +278,38 @@ apiClient.interceptors.response.use(
 
 		// Users error recovery
 		if (path === "users") {
-			if (method === "DELETE" && id) {
+			if (method === "DELETE" && id && !subAction) {
 				clientStorage.deleteUser(id);
 				return Promise.resolve({
 					data: { message: "User deleted successfully" },
+					status: 200,
+					statusText: "OK (Local Fallback)",
+					headers: {},
+					config,
+				} as AxiosResponse);
+			} else if (subAction === "assign-projects" && id) {
+				try {
+					const body = typeof config.data === "string" ? JSON.parse(config.data) : config.data;
+					if (method === "POST" && Array.isArray(body?.projectIds)) {
+						body.projectIds.forEach((projId: string) => {
+							const proj = clientStorage.getProjectById(projId);
+							if (proj) {
+								const members = proj.members || [];
+								if (!members.includes(id)) {
+									clientStorage.updateProject(proj.id, { members: [...members, id] });
+								}
+							}
+						});
+					} else if (method === "DELETE" && body?.projectId) {
+						const proj = clientStorage.getProjectById(body.projectId);
+						if (proj) {
+							const members = (proj.members || []).filter((m: string) => m !== id);
+							clientStorage.updateProject(proj.id, { members });
+						}
+					}
+				} catch (_) {}
+				return Promise.resolve({
+					data: { message: "Project assignment updated" },
 					status: 200,
 					statusText: "OK (Local Fallback)",
 					headers: {},

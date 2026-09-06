@@ -39,13 +39,17 @@ export class ProjectRepository {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
+    loadDb();
     db.projects.push(newProject);
     saveDb();
     return newProject;
   }
 
   async update(id: string, updates: Partial<Project>): Promise<Project> {
-    const index = db.projects.findIndex((p) => p.id === id);
+    loadDb();
+    const index = db.projects.findIndex(
+      (p: any) => p.id === id || (p.key && p.key.toLowerCase() === id.toLowerCase())
+    );
     if (index === -1) {
       throw new Error("Project not found");
     }
@@ -59,15 +63,18 @@ export class ProjectRepository {
   }
 
   async delete(id: string): Promise<boolean> {
-    const index = db.projects.findIndex((p) => p.id === id);
+    loadDb();
+    const index = db.projects.findIndex(
+      (p: any) => p.id === id || (p.key && p.key.toLowerCase() === id.toLowerCase())
+    );
     if (index === -1) {
       return false;
     }
     db.projects.splice(index, 1);
     
     // Also cleanup tasks and activities related to this project
-    db.tasks = db.tasks.filter(t => t.projectId !== id);
-    db.activities = db.activities.filter(a => a.projectId !== id);
+    db.tasks = db.tasks.filter((t: any) => t.projectId !== id);
+    db.activities = db.activities.filter((a: any) => a.projectId !== id);
     
     saveDb();
     return true;
