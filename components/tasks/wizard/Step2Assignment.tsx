@@ -38,24 +38,24 @@ export function Step2Assignment({ formData, setFormData, errors }: Step2Props) {
 		<div className="space-y-6">
 			<div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
 				<div className="space-y-1">
-					<label className="text-sm font-medium text-slate-700 ">Assignee <span className="text-red-500">*</span></label>
+					<label className="text-sm font-medium text-slate-700 dark:text-slate-200">Assignee <span className="text-red-500">*</span></label>
 					{!formData.projectId ? (
-						<div className="p-3 bg-slate-50 rounded-lg text-sm text-slate-500 border border-slate-200 ">
+						<div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-lg text-sm text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-[#222F49]">
 							Select a project in Step 1 first.
 						</div>
 					) : projectMembers.length === 0 ? (
-						<div className="p-3 bg-amber-50 text-amber-700 rounded-lg text-sm border border-amber-200 ">
+						<div className="p-3 bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 rounded-lg text-sm border border-amber-200 dark:border-amber-800">
 							No project members available. Add members to the project before assigning tasks.
 						</div>
 					) : (
 						<select
 							value={formData.assigneeId}
 							onChange={(e) => setFormData({ ...formData, assigneeId: e.target.value })}
-							className={`w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white text-slate-900 ${errors.assigneeId ? "border-red-500" : "border-slate-200 "}`}
+							className={`w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-[#1A233A] text-slate-900 dark:text-slate-100 ${errors.assigneeId ? "border-red-500" : "border-slate-200 dark:border-[#222F49]"}`}
 						>
 							<option value="">Unassigned</option>
 							{projectMembers.map((u) => (
-								<option key={u.id} value={u.id}>
+								<option key={u.id} value={u.id} className="dark:bg-[#1A233A]">
 									{u.name} ({u.email})
 								</option>
 							))}
@@ -65,13 +65,13 @@ export function Step2Assignment({ formData, setFormData, errors }: Step2Props) {
 				</div>
 
 				<div className="space-y-1">
-					<label className="text-sm font-medium text-slate-700 ">Status <span className="text-red-500">*</span></label>
+					<label className="text-sm font-medium text-slate-700 dark:text-slate-200">Status <span className="text-red-500">*</span></label>
 					<select
 						value={formData.status}
 						onChange={(e) => setFormData({ ...formData, status: e.target.value as TaskStatus })}
-						className={`w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white text-slate-900 ${errors.status ? "border-red-500" : "border-slate-200 "}`}
+						className={`w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-[#1A233A] text-slate-900 dark:text-slate-100 ${errors.status ? "border-red-500" : "border-slate-200 dark:border-[#222F49]"}`}
 					>
-						<option value="BACKLOG">Backlog</option>
+						<option value="BACKLOG" className="dark:bg-[#1A233A]">Backlog</option>
 						{(project?.columns && project.columns.length > 0
 							? project.columns
 							: [
@@ -83,7 +83,7 @@ export function Step2Assignment({ formData, setFormData, errors }: Step2Props) {
 						)
 							.filter((col) => col.id !== "BACKLOG")
 							.map((col) => (
-								<option key={col.id} value={col.id}>
+								<option key={col.id} value={col.id} className="dark:bg-[#1A233A]">
 									{col.title}
 								</option>
 							))}

@@ -104,6 +104,40 @@ export const clientStorage = {
 		return true;
 	},
 
+	deleteProjectColumn(projectId: string, columnId: string): Project | undefined {
+		const project = this.getProjectById(projectId);
+		if (!project) return undefined;
+		const defaultCols = [
+			{ id: "TODO", title: "To Do" },
+			{ id: "IN_PROGRESS", title: "In Progress" },
+			{ id: "REVIEW", title: "Review" },
+			{ id: "DONE", title: "Done" },
+		];
+		const currentCols = project.columns && project.columns.length > 0 ? project.columns : defaultCols;
+		const updatedCols = currentCols.filter(
+			(c) => c.id.toLowerCase() !== columnId.toLowerCase(),
+		);
+		const updatedProj = this.updateProject(project.id, { columns: updatedCols });
+
+		// Move any tasks in this column to BACKLOG
+		const allTasks = getItem<Task[]>(STORAGE_KEYS.TASKS, []);
+		let modified = false;
+		const nextTasks = allTasks.map((t) => {
+			if (
+				(t.projectId === project.id || (project.key && t.projectId === project.key)) &&
+				t.status?.toLowerCase() === columnId.toLowerCase()
+			) {
+				modified = true;
+				return { ...t, status: "BACKLOG" as any, updatedAt: new Date().toISOString() };
+			}
+			return t;
+		});
+		if (modified) {
+			setItem(STORAGE_KEYS.TASKS, nextTasks);
+		}
+		return updatedProj;
+	},
+
 	mergeProjects(serverProjects: Project[]): Project[] {
 		const localProjects = this.getProjects();
 		const deletedIds = new Set(this.getDeletedProjectIds());

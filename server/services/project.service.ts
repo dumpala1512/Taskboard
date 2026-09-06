@@ -118,7 +118,7 @@ export class ProjectService {
 		const project = await projectRepository.findById(projectId);
 		if (!project) throw new Error("Project not found");
 
-		if (columnId === "BACKLOG") throw new Error("Cannot delete the Backlog column");
+		if (columnId.toUpperCase() === "BACKLOG") throw new Error("Cannot delete the Backlog column");
 
 		let columns = (project.columns && project.columns.length > 0) ? [...project.columns] : [
 			{ id: "TODO", title: "To Do" },
@@ -128,32 +128,33 @@ export class ProjectService {
 		];
 
 		// Ensure BACKLOG is not stored as a board column
-		columns = columns.filter((c) => c.id !== "BACKLOG");
+		columns = columns.filter((c) => c.id.toUpperCase() !== "BACKLOG");
 
-		// Check if column exists
-		if (!columns.find((c) => c.id === columnId)) {
+		// Check if column exists (case-insensitive)
+		const matchedCol = columns.find((c) => c.id.toLowerCase() === columnId.toLowerCase());
+		if (!matchedCol) {
 			throw new Error("Column not found");
 		}
 
 		// Remove the column
-		columns = columns.filter((c) => c.id !== columnId);
+		columns = columns.filter((c) => c.id.toLowerCase() !== columnId.toLowerCase());
 
 		// Move tasks assigned to this column to BACKLOG
-		const tasks = await taskRepository.findByProjectId(projectId);
+		const tasks = await taskRepository.findByProjectId(project.id);
 		for (const task of tasks) {
-			if (task.status === columnId) {
+			if (task.status?.toLowerCase() === columnId.toLowerCase() || task.status === matchedCol.id) {
 				await taskRepository.update(task.id, { status: "BACKLOG" as any });
 			}
 		}
 
-		const updated = await projectRepository.update(projectId, { columns });
+		const updated = await projectRepository.update(project.id, { columns });
 		
 		if (userId) {
 			await activityService.logActivity({
 				type: "PROJECT_UPDATED",
 				userId,
 				projectId: updated.id,
-				details: `Deleted column ${columnId}`,
+				details: `Deleted column ${matchedCol.title || columnId}`,
 			});
 		}
 		return updated;

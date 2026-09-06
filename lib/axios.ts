@@ -37,8 +37,13 @@ apiClient.interceptors.response.use(
 				clientStorage.saveProject(response.data);
 			} else if (method === "PATCH" && response.data && id) {
 				clientStorage.updateProject(id, response.data);
-			} else if (method === "DELETE" && id) {
+			} else if (method === "DELETE" && id && !subAction) {
 				clientStorage.deleteProject(id);
+			} else if (method === "DELETE" && id && subAction === "columns") {
+				const colId = response.config.url?.split("/columns/")[1]?.split("?")[0];
+				if (colId) {
+					clientStorage.deleteProjectColumn(id, colId);
+				}
 			}
 		} else if (path === "tasks") {
 			const params = response.config.params;
@@ -250,7 +255,7 @@ apiClient.interceptors.response.use(
 				} catch (e) {
 					// pass through original error
 				}
-			} else if (method === "DELETE" && id) {
+			} else if (method === "DELETE" && id && !subAction) {
 				clientStorage.deleteProject(id);
 				return Promise.resolve({
 					data: { message: "Project deleted successfully" },
@@ -259,6 +264,18 @@ apiClient.interceptors.response.use(
 					headers: {},
 					config,
 				} as AxiosResponse);
+			} else if (method === "DELETE" && id && subAction === "columns") {
+				const colId = config.url?.split("/columns/")[1]?.split("?")[0];
+				if (colId) {
+					const updated = clientStorage.deleteProjectColumn(id, colId);
+					return Promise.resolve({
+						data: updated || { message: "Column deleted successfully" },
+						status: 200,
+						statusText: "OK (Local Fallback)",
+						headers: {},
+						config,
+					} as AxiosResponse);
+				}
 			}
 		}
 

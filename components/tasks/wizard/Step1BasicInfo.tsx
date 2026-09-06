@@ -23,7 +23,7 @@ export function Step1BasicInfo({
 		<div className="space-y-6">
 			{!isFixedProject && (
 				<div className="space-y-1">
-					<label className="text-sm font-medium text-slate-700 ">
+					<label className="text-sm font-medium text-slate-700 dark:text-slate-200">
 						Project <span className="text-red-500">*</span>
 					</label>
 					<select
@@ -35,7 +35,7 @@ export function Step1BasicInfo({
 								assigneeId: "",
 							})
 						} // clear assignee on project change
-						className={`w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white text-slate-900 ${errors.projectId ? "border-red-500" : "border-slate-200 "}`}
+						className={`w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-[#1A233A] text-slate-900 dark:text-slate-100 ${errors.projectId ? "border-red-500" : "border-slate-200 dark:border-[#222F49]"}`}
 					>
 						<option value="">Select Project</option>
 						{projects.map((p) => (
@@ -51,7 +51,7 @@ export function Step1BasicInfo({
 			)}
 
 			<div className="space-y-1">
-				<label className="text-sm font-medium text-slate-700 ">
+				<label className="text-sm font-medium text-slate-700 dark:text-slate-200">
 					Task Title <span className="text-red-500">*</span>
 				</label>
 				<Input
@@ -67,7 +67,7 @@ export function Step1BasicInfo({
 			</div>
 
 			<div className="space-y-1">
-				<label className="text-sm font-medium text-slate-700 ">
+				<label className="text-sm font-medium text-slate-700 dark:text-slate-200">
 					Description <span className="text-red-500">*</span>
 				</label>
 				<RichTextEditor
@@ -84,7 +84,7 @@ export function Step1BasicInfo({
 
 			<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 				<div className="space-y-1">
-					<label className="text-sm font-medium text-slate-700 ">
+					<label className="text-sm font-medium text-slate-700 dark:text-slate-200">
 						Priority <span className="text-red-500">*</span>
 					</label>
 					<select
@@ -92,7 +92,7 @@ export function Step1BasicInfo({
 						onChange={(e) =>
 							setFormData({ ...formData, priority: e.target.value })
 						}
-						className={`w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white text-slate-900 ${errors.priority ? "border-red-500" : "border-slate-200 "}`}
+						className={`w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-[#1A233A] text-slate-900 dark:text-slate-100 ${errors.priority ? "border-red-500" : "border-slate-200 dark:border-[#222F49]"}`}
 					>
 						<option value="LOW">Low</option>
 						<option value="MEDIUM">Medium</option>
@@ -100,7 +100,7 @@ export function Step1BasicInfo({
 					</select>
 				</div>
 				<div className="space-y-1">
-					<label className="text-sm font-medium text-slate-700 ">
+					<label className="text-sm font-medium text-slate-700 dark:text-slate-200">
 						Task Type
 					</label>
 					<select
@@ -108,7 +108,7 @@ export function Step1BasicInfo({
 						onChange={(e) =>
 							setFormData({ ...formData, taskType: e.target.value as TaskType })
 						}
-						className="w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 border-slate-200 bg-white text-slate-900 "
+						className="w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 border-slate-200 dark:border-[#222F49] bg-white dark:bg-[#1A233A] text-slate-900 dark:text-slate-100"
 					>
 						<option value="">Select Type</option>
 						<option value="Feature">Feature</option>

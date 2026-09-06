@@ -186,21 +186,21 @@ export function TaskWizardModal({
 
 	return (
 		<Portal>
-		<div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-[#33475B]/20 overflow-y-auto">
-			<div className="bg-white rounded-md shadow-[0_4px_20px_rgba(0,0,0,0.12)] border border-[#E0E3E8] w-full max-w-3xl flex flex-col my-8 h-[700px] max-h-[90vh]">
+		<div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-[#33475B]/20 backdrop-blur-sm overflow-y-auto">
+			<div className="bg-white dark:bg-[#131B2E] rounded-md shadow-[0_4px_20px_rgba(0,0,0,0.12)] border border-[#E0E3E8] dark:border-[#222F49] w-full max-w-3xl flex flex-col my-8 h-[700px] max-h-[90vh]">
 				{/* Header */}
-				<div className="flex justify-between items-center px-6 py-4 border-b border-[#E0E3E8] bg-white rounded-t-[6px] shrink-0">
+				<div className="flex justify-between items-center px-6 py-4 border-b border-[#E0E3E8] dark:border-[#222F49] bg-white dark:bg-[#131B2E] rounded-t-[6px] shrink-0">
 					<div>
-						<h2 className="text-lg font-semibold text-[#33475B]">
+						<h2 className="text-lg font-semibold text-[#33475B] dark:text-slate-100">
 							{taskToEdit ? "Edit Task" : "Create Task"}
 						</h2>
-						<p className="text-sm text-slate-500 mt-1">
+						<p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
 							Step {step} of 4: {STEPS[step - 1]}
 						</p>
 					</div>
 					<button
 						onClick={handleClose}
-						className="text-slate-400 hover:text-slate-600 :text-slate-300 transition-colors"
+						className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
 					>
 						<X className="w-6 h-6" />
 					</button>
@@ -209,7 +209,7 @@ export function TaskWizardModal({
 				{/* Progress Bar */}
 				<div className="px-10 sm:px-16 pt-4 pb-12 shrink-0">
 					<div className="flex items-center justify-between relative">
-						<div className="absolute left-0 top-1/2 -translate-y-1/2 w-full h-1 bg-slate-100 rounded-full" />
+						<div className="absolute left-0 top-1/2 -translate-y-1/2 w-full h-1 bg-slate-100 dark:bg-slate-800 rounded-full" />
 						<div
 							className="absolute left-0 top-1/2 -translate-y-1/2 h-1 bg-indigo-600 transition-all duration-300 rounded-full"
 							style={{ width: `${((step - 1) / 3) * 100}%` }}
@@ -225,15 +225,15 @@ export function TaskWizardModal({
 											step > i + 1
 												? "bg-indigo-600 border-indigo-600 text-white"
 												: step === i + 1
-													? "bg-white border-indigo-600 text-indigo-600 "
-													: "bg-white border-slate-200 text-slate-400"
+													? "bg-white dark:bg-[#131B2E] border-indigo-600 text-indigo-600 dark:text-indigo-400"
+													: "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-400 dark:text-slate-500"
 										}`}
 								>
 									{i + 1}
 								</div>
 								<span
 									className={`absolute top-10 text-xs whitespace-nowrap hidden sm:block font-medium
-									${step >= i + 1 ? "text-slate-900 " : "text-slate-400"}`}
+									${step >= i + 1 ? "text-slate-900 dark:text-slate-200" : "text-slate-400 dark:text-slate-500"}`}
 								>
 									{label}
 								</span>
@@ -270,14 +270,21 @@ export function TaskWizardModal({
 				</div>
 
 				{/* Footer */}
-				<div className="p-6 border-t border-slate-200 bg-slate-50 flex items-center justify-between shrink-0 rounded-b-2xl">
-					<div>
-					</div>
-					<div className="flex space-x-3">
+				<div className="px-6 py-4 border-t border-[#E0E3E8] dark:border-[#222F49] bg-[#F8FAFC] dark:bg-[#0E1526] rounded-b-md flex items-center justify-between shrink-0">
+					<Button
+						variant="secondary"
+						onClick={handleClose}
+						disabled={isSubmitting}
+					>
+						Cancel
+					</Button>
+
+					<div className="flex items-center gap-3">
 						{step > 1 && (
 							<Button
-								variant="outline"
+								variant="secondary"
 								onClick={prevStep}
+								disabled={isSubmitting}
 								leftIcon={<ChevronLeft className="w-4 h-4" />}
 							>
 								Back
@@ -285,6 +292,7 @@ export function TaskWizardModal({
 						)}
 						{step < 4 ? (
 							<Button
+								variant="primary"
 								onClick={nextStep}
 								rightIcon={<ChevronRight className="w-4 h-4" />}
 								disabled={isContinueDisabled()}
@@ -292,7 +300,7 @@ export function TaskWizardModal({
 								Continue
 							</Button>
 						) : (
-							<Button onClick={handleSubmit} disabled={isSubmitting}>
+							<Button variant="primary" onClick={handleSubmit} disabled={isSubmitting}>
 								{isSubmitting && (
 									<Loader2 className="w-4 h-4 mr-2 animate-spin" />
 								)}

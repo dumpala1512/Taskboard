@@ -237,19 +237,19 @@ export function ProjectWizardModal({
 
 	return (
 		<Portal>
-			<div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-[#33475B]/20 overflow-y-auto">
-				<div className="bg-white rounded-md shadow-[0_4px_20px_rgba(0,0,0,0.12)] border border-[#E0E3E8] w-full max-w-3xl flex flex-col my-8 h-[700px] max-h-[90vh]">
+			<div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-[#33475B]/20 backdrop-blur-sm overflow-y-auto">
+				<div className="bg-white dark:bg-[#131B2E] rounded-md shadow-[0_4px_20px_rgba(0,0,0,0.12)] border border-[#E0E3E8] dark:border-[#222F49] w-full max-w-3xl flex flex-col my-8 h-[700px] max-h-[90vh]">
 					{/* Header */}
-					<div className="flex justify-between items-center px-6 py-4 border-b border-[#E0E3E8] bg-white rounded-t-[6px]">
+					<div className="flex justify-between items-center px-6 py-4 border-b border-[#E0E3E8] dark:border-[#222F49] bg-white dark:bg-[#131B2E] rounded-t-[6px]">
 						<div>
-							<h3 className="text-lg font-semibold text-[#33475B]">
+							<h3 className="text-lg font-semibold text-[#33475B] dark:text-slate-100">
 								{project ? "Edit Project" : "Create New Project"}
 							</h3>
-							<p className="text-sm text-gray-500">Step {step} of 4</p>
+							<p className="text-sm text-gray-500 dark:text-slate-400">Step {step} of 4</p>
 						</div>
 						<button
 							onClick={handleClose}
-							className="text-gray-400 hover:text-gray-600 transition-colors p-1"
+							className="text-gray-400 hover:text-gray-600 dark:hover:text-slate-200 transition-colors p-1"
 							disabled={isSubmitting}
 						>
 							<X className="w-5 h-5" />
@@ -259,7 +259,7 @@ export function ProjectWizardModal({
 					{/* Progress Bar */}
 					<div className="px-10 sm:px-16 pt-4 pb-12 shrink-0">
 						<div className="flex items-center justify-between relative">
-							<div className="absolute left-0 top-1/2 -translate-y-1/2 w-full h-1 bg-slate-100 rounded-full" />
+							<div className="absolute left-0 top-1/2 -translate-y-1/2 w-full h-1 bg-slate-100 dark:bg-slate-800 rounded-full" />
 							<div
 								className="absolute left-0 top-1/2 -translate-y-1/2 h-1 bg-indigo-600 transition-all duration-300 rounded-full"
 								style={{ width: `${((step - 1) / 3) * 100}%` }}
@@ -275,15 +275,15 @@ export function ProjectWizardModal({
 											step > i + 1
 												? "bg-indigo-600 border-indigo-600 text-white"
 												: step === i + 1
-													? "bg-white border-indigo-600 text-indigo-600 "
-													: "bg-white border-slate-200 text-slate-400"
+													? "bg-white dark:bg-[#131B2E] border-indigo-600 text-indigo-600 dark:text-indigo-400"
+													: "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-400 dark:text-slate-500"
 										}`}
 									>
 										{i + 1}
 									</div>
 									<span
 										className={`absolute top-10 text-xs whitespace-nowrap hidden sm:block font-medium
-									${step >= i + 1 ? "text-slate-900 " : "text-slate-400"}`}
+									${step >= i + 1 ? "text-slate-900 dark:text-slate-200" : "text-slate-400 dark:text-slate-500"}`}
 									>
 										{label}
 									</span>
@@ -318,10 +318,10 @@ export function ProjectWizardModal({
 										<FileText className="w-5 h-5" />
 									</div>
 									<div>
-										<h4 className="text-base font-semibold text-gray-900">
+										<h4 className="text-base font-semibold text-gray-900 dark:text-slate-100">
 											Project Information
 										</h4>
-										<p className="text-sm text-gray-500">
+										<p className="text-sm text-gray-500 dark:text-slate-400">
 											Basic details about the project.
 										</p>
 									</div>
@@ -351,11 +351,11 @@ export function ProjectWizardModal({
 									/>
 
 									<div>
-										<label className="block text-sm font-medium text-gray-700 mb-1.5">
+										<label className="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1.5">
 											Status *
 										</label>
 										<select
-											className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm text-gray-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors"
+											className="w-full px-3 py-2 bg-white dark:bg-[#1A233A] border border-gray-300 dark:border-[#222F49] rounded-lg text-sm text-gray-900 dark:text-slate-100 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors"
 											value={formData.status}
 											onChange={(e) =>
 												setFormData({
@@ -364,19 +364,19 @@ export function ProjectWizardModal({
 												})
 											}
 										>
-											<option value="PLANNING">Planning</option>
-											<option value="ACTIVE">Active</option>
-											<option value="ON_HOLD">On Hold</option>
-											<option value="COMPLETED">Completed</option>
+											<option value="PLANNING" className="dark:bg-[#1A233A]">Planning</option>
+											<option value="ACTIVE" className="dark:bg-[#1A233A]">Active</option>
+											<option value="ON_HOLD" className="dark:bg-[#1A233A]">On Hold</option>
+											<option value="COMPLETED" className="dark:bg-[#1A233A]">Completed</option>
 										</select>
 									</div>
 
 									<div className="sm:col-span-2">
-										<label className="block text-sm font-medium text-gray-700 mb-1.5">
+										<label className="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1.5">
 											Description *
 										</label>
 										<textarea
-											className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm text-gray-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors min-h-[100px]"
+											className="w-full px-3 py-2 bg-white dark:bg-[#1A233A] border border-gray-300 dark:border-[#222F49] rounded-lg text-sm text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-500 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors min-h-[100px]"
 											placeholder="Briefly describe the project goals..."
 											value={formData.description}
 											onChange={(e) =>
@@ -403,10 +403,10 @@ export function ProjectWizardModal({
 										<Users className="w-5 h-5" />
 									</div>
 									<div>
-										<h4 className="text-base font-semibold text-gray-900">
+										<h4 className="text-base font-semibold text-gray-900 dark:text-slate-100">
 											Team & Timeline
 										</h4>
-										<p className="text-sm text-gray-500">
+										<p className="text-sm text-gray-500 dark:text-slate-400">
 											Assign members and set a due date.
 										</p>
 									</div>
@@ -414,7 +414,7 @@ export function ProjectWizardModal({
 
 								<div className="grid grid-cols-1 sm:grid-cols-2 gap-5 relative">
 									<div className="sm:col-span-2 relative">
-										<label className="block text-sm font-medium text-gray-700 mb-1.5">
+										<label className="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1.5">
 											Project Owner *
 										</label>
 										<button
@@ -423,11 +423,11 @@ export function ProjectWizardModal({
 												setOwnerDropdownOpen(!ownerDropdownOpen);
 												setMembersDropdownOpen(false);
 											}}
-											className="w-full flex items-center justify-between px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm text-gray-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors text-left"
+											className="w-full flex items-center justify-between px-3 py-2 bg-white dark:bg-[#1A233A] border border-gray-300 dark:border-[#222F49] rounded-lg text-sm text-gray-900 dark:text-slate-100 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors text-left"
 										>
 											{formData.ownerId ? (
 												<span className="flex items-center gap-2">
-													<div className="w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center text-xs font-medium text-gray-600">
+													<div className="w-5 h-5 rounded-full bg-gray-200 dark:bg-slate-700 flex items-center justify-center text-xs font-medium text-gray-600 dark:text-slate-300">
 														{users
 															.find((u) => u.id === formData.ownerId)
 															?.name?.charAt(0)}
@@ -435,7 +435,7 @@ export function ProjectWizardModal({
 													{users.find((u) => u.id === formData.ownerId)?.name}
 												</span>
 											) : (
-												<span className="text-gray-500">Select an owner</span>
+												<span className="text-gray-500 dark:text-slate-400">Select an owner</span>
 											)}
 											<ChevronRight
 												className={`w-4 h-4 text-gray-400 transition-transform ${ownerDropdownOpen ? "rotate-90" : ""}`}
@@ -443,11 +443,11 @@ export function ProjectWizardModal({
 										</button>
 
 										{ownerDropdownOpen && (
-											<div className="absolute z-10 mt-1 w-full border border-gray-200 rounded-lg max-h-48 overflow-y-auto bg-white p-2 space-y-1 shadow-lg">
+											<div className="absolute z-10 mt-1 w-full border border-gray-200 dark:border-[#222F49] rounded-lg max-h-48 overflow-y-auto bg-white dark:bg-[#131B2E] p-2 space-y-1 shadow-lg">
 												{users.map((u) => (
 													<label
 														key={u.id}
-														className={`flex items-center gap-3 p-2 rounded cursor-pointer border ${formData.ownerId === u.id ? "bg-indigo-50 border-indigo-200" : "border-transparent hover:bg-gray-50"}`}
+														className={`flex items-center gap-3 p-2 rounded cursor-pointer border ${formData.ownerId === u.id ? "bg-indigo-50 dark:bg-indigo-950/40 border-indigo-200 dark:border-indigo-800" : "border-transparent hover:bg-gray-50 dark:hover:bg-[#1A233A]"}`}
 													>
 														<input
 															type="radio"
@@ -460,10 +460,10 @@ export function ProjectWizardModal({
 															}}
 														/>
 														<div className="flex items-center gap-2">
-															<div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-xs font-medium text-gray-600">
+															<div className="w-6 h-6 rounded-full bg-gray-200 dark:bg-slate-700 flex items-center justify-center text-xs font-medium text-gray-600 dark:text-slate-300">
 																{u.name.charAt(0)}
 															</div>
-															<span className="text-sm text-gray-700">
+															<span className="text-sm text-gray-700 dark:text-slate-200">
 																{u.name} ({u.email})
 															</span>
 														</div>
@@ -474,7 +474,7 @@ export function ProjectWizardModal({
 									</div>
 
 									<div className="sm:col-span-2 relative">
-										<label className="block text-sm font-medium text-gray-700 mb-1.5">
+										<label className="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1.5">
 											Team Members
 										</label>
 										<button
@@ -483,13 +483,13 @@ export function ProjectWizardModal({
 												setMembersDropdownOpen(!membersDropdownOpen);
 												setOwnerDropdownOpen(false);
 											}}
-											className="w-full flex items-center justify-between px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm text-gray-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors text-left"
+											className="w-full flex items-center justify-between px-3 py-2 bg-white dark:bg-[#1A233A] border border-gray-300 dark:border-[#222F49] rounded-lg text-sm text-gray-900 dark:text-slate-100 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors text-left"
 										>
 											<span className="truncate">
 												{formData.members && formData.members.length > 0 ? (
 													`${formData.members.length} member${formData.members.length > 1 ? "s" : ""} selected`
 												) : (
-													<span className="text-gray-500">
+													<span className="text-gray-500 dark:text-slate-400">
 														Select team members
 													</span>
 												)}
@@ -500,13 +500,13 @@ export function ProjectWizardModal({
 										</button>
 
 										{membersDropdownOpen && (
-											<div className="absolute z-10 mt-1 w-full border border-gray-200 rounded-lg max-h-48 overflow-y-auto bg-white p-2 space-y-1 shadow-lg">
+											<div className="absolute z-10 mt-1 w-full border border-gray-200 dark:border-[#222F49] rounded-lg max-h-48 overflow-y-auto bg-white dark:bg-[#131B2E] p-2 space-y-1 shadow-lg">
 												{users
 													.filter((u) => u.id !== formData.ownerId)
 													.map((u) => (
 														<label
 															key={u.id}
-															className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded cursor-pointer border border-transparent"
+															className="flex items-center gap-3 p-2 hover:bg-gray-50 dark:hover:bg-[#1A233A] rounded cursor-pointer border border-transparent"
 														>
 															<input
 																type="checkbox"
@@ -517,10 +517,10 @@ export function ProjectWizardModal({
 																onChange={() => toggleMember(u.id)}
 															/>
 															<div className="flex items-center gap-2">
-																<div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-xs font-medium text-gray-600">
+																<div className="w-6 h-6 rounded-full bg-gray-200 dark:bg-slate-700 flex items-center justify-center text-xs font-medium text-gray-600 dark:text-slate-300">
 																	{u.name.charAt(0)}
 																</div>
-																<span className="text-sm text-gray-700">
+																<span className="text-sm text-gray-700 dark:text-slate-200">
 																	{u.name}
 																</span>
 															</div>
@@ -573,10 +573,10 @@ export function ProjectWizardModal({
 										<Settings className="w-5 h-5" />
 									</div>
 									<div>
-										<h4 className="text-base font-semibold text-gray-900">
+										<h4 className="text-base font-semibold text-gray-900 dark:text-slate-100">
 											Additional Details
 										</h4>
-										<p className="text-sm text-gray-500">
+										<p className="text-sm text-gray-500 dark:text-slate-400">
 											Configure tags and extra project settings.
 										</p>
 									</div>
@@ -584,12 +584,12 @@ export function ProjectWizardModal({
 
 								<div className="space-y-5">
 									<div>
-										<label className="block text-sm font-medium text-gray-700 mb-1.5">
+										<label className="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1.5">
 											Project Tags (comma separated)
 										</label>
 										<input
 											type="text"
-											className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm text-gray-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors"
+											className="w-full px-3 py-2 bg-white dark:bg-[#1A233A] border border-gray-300 dark:border-[#222F49] rounded-lg text-sm text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-500 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors"
 											placeholder="e.g. Frontend, API, Q3, Important"
 											value={tagInput}
 											onChange={(e) => {
@@ -601,7 +601,7 @@ export function ProjectWizardModal({
 												setFormData({ ...formData, tags });
 											}}
 										/>
-										<p className="text-xs text-gray-500 mt-2">
+										<p className="text-xs text-gray-500 dark:text-slate-400 mt-2">
 											These help in searching and filtering projects.
 										</p>
 									</div>
@@ -617,56 +617,56 @@ export function ProjectWizardModal({
 										<CheckCircle2 className="w-5 h-5" />
 									</div>
 									<div>
-										<h4 className="text-base font-semibold text-gray-900">
+										<h4 className="text-base font-semibold text-gray-900 dark:text-slate-100">
 											Review & Submit
 										</h4>
-										<p className="text-sm text-gray-500">
+										<p className="text-sm text-gray-500 dark:text-slate-400">
 											Verify the details before saving.
 										</p>
 									</div>
 								</div>
 
-								<div className="bg-gray-50 rounded-lg p-5 border border-gray-100 space-y-4">
-									<div className="grid grid-cols-3 gap-4 pb-4 border-b border-gray-200">
-										<div className="col-span-1 font-medium text-sm text-gray-900">
+								<div className="bg-gray-50 dark:bg-[#1A233A] rounded-lg p-5 border border-gray-100 dark:border-[#222F49] space-y-4">
+									<div className="grid grid-cols-3 gap-4 pb-4 border-b border-gray-200 dark:border-[#222F49]">
+										<div className="col-span-1 font-medium text-sm text-gray-900 dark:text-slate-200">
 											Name
 										</div>
-										<div className="col-span-2 text-gray-700 break-all">
+										<div className="col-span-2 text-gray-700 dark:text-slate-300 break-all">
 											{formData.name}
 										</div>
 									</div>
-									<div className="grid grid-cols-3 gap-4 pb-4 border-b border-gray-200">
-										<div className="col-span-1 font-medium text-sm text-gray-900">
+									<div className="grid grid-cols-3 gap-4 pb-4 border-b border-gray-200 dark:border-[#222F49]">
+										<div className="col-span-1 font-medium text-sm text-gray-900 dark:text-slate-200">
 											Key
 										</div>
-										<div className="col-span-2 text-gray-700 break-all">
+										<div className="col-span-2 text-gray-700 dark:text-slate-300 break-all">
 											{formData.key || "Auto-generated"}
 										</div>
 									</div>
-									<div className="grid grid-cols-3 gap-4 pb-4 border-b border-gray-200">
-										<div className="col-span-1 font-medium text-sm text-gray-900">
+									<div className="grid grid-cols-3 gap-4 pb-4 border-b border-gray-200 dark:border-[#222F49]">
+										<div className="col-span-1 font-medium text-sm text-gray-900 dark:text-slate-200">
 											Status
 										</div>
-										<div className="col-span-2 text-gray-700">
-											<span className="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset bg-white text-gray-700 ring-gray-200">
+										<div className="col-span-2 text-gray-700 dark:text-slate-300">
+											<span className="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset bg-white dark:bg-[#131B2E] text-gray-700 dark:text-slate-200 ring-gray-200 dark:ring-slate-700">
 												{formData.status}
 											</span>
 										</div>
 									</div>
-									<div className="grid grid-cols-3 gap-4 pb-4 border-b border-gray-200">
-										<div className="col-span-1 font-medium text-sm text-gray-900">
+									<div className="grid grid-cols-3 gap-4 pb-4 border-b border-gray-200 dark:border-[#222F49]">
+										<div className="col-span-1 font-medium text-sm text-gray-900 dark:text-slate-200">
 											Owner
 										</div>
-										<div className="col-span-2 text-gray-700 break-all">
+										<div className="col-span-2 text-gray-700 dark:text-slate-300 break-all">
 											{users.find((u) => u.id === formData.ownerId)?.name ||
 												"Unknown"}
 										</div>
 									</div>
-									<div className="grid grid-cols-3 gap-4 pb-4 border-b border-gray-200">
-										<div className="col-span-1 font-medium text-sm text-gray-900">
+									<div className="grid grid-cols-3 gap-4 pb-4 border-b border-gray-200 dark:border-[#222F49]">
+										<div className="col-span-1 font-medium text-sm text-gray-900 dark:text-slate-200">
 											Timeline
 										</div>
-										<div className="col-span-2 text-gray-700">
+										<div className="col-span-2 text-gray-700 dark:text-slate-300">
 											{formData.startDate
 												? new Date(formData.startDate).toLocaleDateString()
 												: "Not set"}{" "}
@@ -677,10 +677,10 @@ export function ProjectWizardModal({
 										</div>
 									</div>
 									<div className="grid grid-cols-3 gap-4">
-										<div className="col-span-1 font-medium text-sm text-gray-900">
+										<div className="col-span-1 font-medium text-sm text-gray-900 dark:text-slate-200">
 											Members
 										</div>
-										<div className="col-span-2 text-gray-700">
+										<div className="col-span-2 text-gray-700 dark:text-slate-300">
 											{formData.members?.length || 0} selected
 										</div>
 									</div>
@@ -690,11 +690,19 @@ export function ProjectWizardModal({
 					</div>
 
 					{/* Footer Controls */}
-					<div className="px-6 py-4 border-t border-gray-100 bg-gray-50/50 flex items-center justify-between">
-						<div>
+					<div className="px-6 py-4 border-t border-[#E0E3E8] dark:border-[#222F49] bg-[#F8FAFC] dark:bg-[#0E1526] rounded-b-md flex items-center justify-between shrink-0">
+						<Button
+							variant="secondary"
+							onClick={handleClose}
+							disabled={isSubmitting}
+						>
+							Cancel
+						</Button>
+
+						<div className="flex items-center gap-3">
 							{step > 1 && (
 								<Button
-									variant="outline"
+									variant="secondary"
 									onClick={handleBack}
 									disabled={isSubmitting}
 									leftIcon={<ChevronLeft className="w-4 h-4" />}
@@ -702,37 +710,37 @@ export function ProjectWizardModal({
 									Back
 								</Button>
 							)}
-						</div>
 
-						{step < 4 ? (
-							<Button
-								variant="primary"
-								onClick={handleNext}
-								disabled={
-									isSubmitting ||
-									(step === 1 && !isStep1Valid) ||
-									(step === 2 && !isStep2Valid)
-								}
-								rightIcon={
-									isSubmitting ? (
-										<Loader2 className="w-4 h-4 animate-spin" />
-									) : (
-										<ChevronRight className="w-4 h-4" />
-									)
-								}
-							>
-								{isSubmitting ? "Saving..." : "Continue"}
-							</Button>
-						) : (
-							<Button
-								variant="primary"
-								onClick={handleSubmit}
-								disabled={isSubmitting}
-								leftIcon={<CheckCircle2 className="w-4 h-4" />}
-							>
-								Finish
-							</Button>
-						)}
+							{step < 4 ? (
+								<Button
+									variant="primary"
+									onClick={handleNext}
+									disabled={
+										isSubmitting ||
+										(step === 1 && !isStep1Valid) ||
+										(step === 2 && !isStep2Valid)
+									}
+									rightIcon={
+										isSubmitting ? (
+											<Loader2 className="w-4 h-4 animate-spin" />
+										) : (
+											<ChevronRight className="w-4 h-4" />
+										)
+									}
+								>
+									{isSubmitting ? "Saving..." : "Continue"}
+								</Button>
+							) : (
+								<Button
+									variant="primary"
+									onClick={handleSubmit}
+									disabled={isSubmitting}
+									leftIcon={isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+								>
+									{project ? "Save Changes" : "Create Project"}
+								</Button>
+							)}
+						</div>
 					</div>
 				</div>
 			</div>

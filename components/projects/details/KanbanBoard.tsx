@@ -7,6 +7,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useUpdateProject } from "../../../hooks/useProjects";
 import { useUpdateTask } from "../../../hooks/useTasks";
 import type { Project, Task, TaskStatus, User } from "../../../server/types";
+import { apiClient } from "../../../lib/axios";
 import { TaskDetailsPanel } from "../../tasks/details/TaskDetailsPanel";
 import { TaskWizardModal } from "../../tasks/TaskWizardModal";
 import { Button } from "../../ui/Button";
@@ -93,22 +94,50 @@ export default function KanbanBoard({
 
 	const executeDeleteColumn = async () => {
 		if (!project || !columnToDelete) return;
+		const colId = columnToDelete;
 		try {
-			const res = await fetch(`/api/projects/${project.id}/columns/${columnToDelete}`, {
-				method: "DELETE",
+			await apiClient.delete(`/projects/${project.id}/columns/${colId}`);
+
+			// Optimistically move affected tasks to BACKLOG in local state
+			setTasks((prev) =>
+				prev.map((t) =>
+					t.status?.toLowerCase() === colId.toLowerCase()
+						? { ...t, status: "BACKLOG" }
+						: t
+				)
+			);
+
+			// Optimistically update project in query cache
+			queryClient.setQueryData(["projects", project.id], (old: any) => {
+				if (!old) return old;
+				const currentCols = old.columns?.length ? old.columns : COLUMNS;
+				return {
+					...old,
+					columns: currentCols.filter(
+						(c: any) => c.id.toLowerCase() !== colId.toLowerCase()
+					),
+				};
 			});
-			if (!res.ok) {
-				const errorData = await res.json();
-				throw new Error(errorData.message || "Failed to delete column");
-			}
-			
+
+			// Invalidate all project and task queries
 			queryClient.invalidateQueries({ queryKey: ["projects"] });
-			queryClient.invalidateQueries({ queryKey: ["tasks", project.id] });
-			
+			queryClient.invalidateQueries({ queryKey: ["projects", project.id] });
+			if (project.key) {
+				queryClient.invalidateQueries({ queryKey: ["projects", project.key] });
+			}
+			queryClient.invalidateQueries({ queryKey: ["tasks"] });
+			queryClient.invalidateQueries({ queryKey: ["tasks", { projectId: project.id }] });
+			if (project.key) {
+				queryClient.invalidateQueries({ queryKey: ["tasks", { projectId: project.key }] });
+			}
+
 			setColumnToDelete(null);
+			setDeleteConfirmationChecked(false);
 			toast.success("Column deleted and tasks moved to Backlog");
 		} catch (error: any) {
-			toast.error(error.message || "Failed to delete column");
+			toast.error(
+				error.response?.data?.message || error.message || "Failed to delete column"
+			);
 		}
 	};
 

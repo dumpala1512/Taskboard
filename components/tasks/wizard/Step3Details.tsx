@@ -49,7 +49,7 @@ export function Step3Details({ formData, setFormData, errors }: Step3Props) {
 	return (
 		<div className="space-y-6">
 			<div className="space-y-2">
-				<label className="text-sm font-medium text-slate-700">Tags (Max 20)</label>
+				<label className="text-sm font-medium text-slate-700 dark:text-slate-200">Tags (Max 20)</label>
 				<div className="flex flex-wrap gap-2 mb-3">
 					{AVAILABLE_TAGS.map(tag => (
 						<button
@@ -58,8 +58,8 @@ export function Step3Details({ formData, setFormData, errors }: Step3Props) {
 							onClick={() => toggleTag(tag)}
 							className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors
 								${(formData.tags || []).includes(tag) 
-									? 'bg-indigo-100 text-indigo-700 border-indigo-200' 
-									: 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'}`}
+									? 'bg-indigo-100 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800' 
+									: 'bg-white dark:bg-[#1A233A] text-slate-600 dark:text-slate-300 border-slate-200 dark:border-[#222F49] hover:bg-slate-50 dark:hover:bg-[#222F49]'}`}
 						>
 							{tag}
 						</button>
@@ -69,7 +69,7 @@ export function Step3Details({ formData, setFormData, errors }: Step3Props) {
 							key={tag}
 							type="button"
 							onClick={() => toggleTag(tag)}
-							className="px-3 py-1.5 rounded-full text-xs font-medium border transition-colors bg-indigo-100 text-indigo-700 border-indigo-200"
+							className="px-3 py-1.5 rounded-full text-xs font-medium border transition-colors bg-indigo-100 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800"
 						>
 							{tag}
 						</button>
@@ -87,7 +87,7 @@ export function Step3Details({ formData, setFormData, errors }: Step3Props) {
 							}
 						}}
 						placeholder="Add custom tag..." 
-						className="flex-1 px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 border-slate-200 bg-white"
+						className="flex-1 px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 border-slate-200 dark:border-[#222F49] bg-white dark:bg-[#1A233A] text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500"
 					/>
 					<button
 						type="button"

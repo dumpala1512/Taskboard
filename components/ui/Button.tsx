@@ -34,16 +34,16 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         "bg-[#1E88E5] text-white hover:bg-[#1876C4] shadow-[0_1px_3px_rgba(30,136,229,0.25)]",
       /* Outline — secondary action */
       secondary:
-        "bg-white text-[#33475B] border border-[#E0E3E8] hover:bg-[#F5F6F8] hover:border-[#C8CDD4]",
+        "bg-white dark:bg-[#1A233A] text-[#33475B] dark:text-slate-200 border border-[#E0E3E8] dark:border-[#222F49] hover:bg-[#F5F6F8] dark:hover:bg-[#222F49] hover:border-[#C8CDD4] dark:hover:border-[#334155]",
       /* Ghost — subtle text button */
       ghost:
-        "bg-transparent text-[#1E88E5] hover:bg-[#E3F2FD]",
+        "bg-transparent text-[#1E88E5] dark:text-[#38BDF8] hover:bg-[#E3F2FD] dark:hover:bg-[#1E293B]",
       /* Danger — destructive */
       danger:
         "bg-[#E53935] text-white hover:bg-[#C62828]",
       /* Outline blue — filter/group style buttons */
       outline:
-        "bg-white text-[#1E88E5] border border-[#90CAF9] hover:bg-[#E3F2FD]",
+        "bg-white dark:bg-[#1A233A] text-[#1E88E5] dark:text-[#38BDF8] border border-[#90CAF9] dark:border-[#0284C7] hover:bg-[#E3F2FD] dark:hover:bg-[#1E293B]",
     };
 
     const sizes = {
