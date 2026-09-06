@@ -39,7 +39,17 @@ export class TaskRepository {
 		loadDb();
 		const index = db.tasks.findIndex((t: any) => t.id === id);
 		if (index === -1) return undefined;
-		db.tasks[index] = { ...db.tasks[index], ...updates };
+		const now = new Date().toISOString();
+		const isDone = (updates.status || "").toUpperCase() === "DONE" || (updates.status || "").toUpperCase() === "COMPLETED";
+		const completedAt = isDone
+			? (updates as any).completedAt || (db.tasks[index] as any).completedAt || now
+			: undefined;
+		db.tasks[index] = {
+			...db.tasks[index],
+			...updates,
+			updatedAt: updates.updatedAt || now,
+			...(completedAt ? { completedAt } : {}),
+		};
 		saveDb();
 		return db.tasks[index];
 	}

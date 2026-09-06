@@ -170,20 +170,41 @@ export const clientStorage = {
 		}
 		const tasks = this.getTasks();
 		const index = tasks.findIndex((t) => t.id === task.id);
+		const now = new Date().toISOString();
+		const isDone = (task.status || "").toUpperCase() === "DONE" || (task.status || "").toUpperCase() === "COMPLETED";
+		const completedAt = isDone ? (task as any).completedAt || now : undefined;
+		const taskToSave: Task = {
+			...task,
+			createdAt: task.createdAt || now,
+			updatedAt: task.updatedAt || now,
+			...(completedAt ? { completedAt } as any : {}),
+		};
+
 		if (index >= 0) {
-			tasks[index] = { ...tasks[index], ...task, updatedAt: new Date().toISOString() };
+			tasks[index] = { ...tasks[index], ...taskToSave };
 		} else {
-			tasks.unshift(task);
+			tasks.unshift(taskToSave);
 		}
 		setItem(STORAGE_KEYS.TASKS, tasks);
-		return task;
+		return tasks[index >= 0 ? index : 0];
 	},
 
 	updateTask(id: string, updates: Partial<Task>): Task | undefined {
 		const tasks = this.getTasks();
 		const index = tasks.findIndex((t) => t.id === id);
 		if (index === -1) return undefined;
-		tasks[index] = { ...tasks[index], ...updates, updatedAt: new Date().toISOString() };
+		const now = new Date().toISOString();
+		const isDone = (updates.status || "").toUpperCase() === "DONE" || (updates.status || "").toUpperCase() === "COMPLETED";
+		const completedAt = isDone
+			? (updates as any).completedAt || (tasks[index] as any).completedAt || now
+			: undefined;
+
+		tasks[index] = {
+			...tasks[index],
+			...updates,
+			updatedAt: updates.updatedAt || now,
+			...(completedAt ? { completedAt } as any : {}),
+		};
 		setItem(STORAGE_KEYS.TASKS, tasks);
 		return tasks[index];
 	},

@@ -6,15 +6,10 @@ import {
   Folder, 
   Activity, 
   CheckCircle, 
-  ClipboardList, 
   AlertTriangle, 
   Users, 
   PieChart as PieChartIcon, 
-  TrendingUp,
   RefreshCw,
-  Download,
-  Filter,
-  BarChart2
 } from "lucide-react";
 import { EmptyState } from "../../components/ui/EmptyState";
 import { Skeleton } from "../../components/ui/Skeleton";
@@ -33,7 +28,151 @@ import {
   LineChart,
   Line
 } from "recharts";
-import axios from "axios";
+import { apiClient } from "../../lib/axios";
+import { clientStorage } from "../../lib/client-storage";
+
+function computeClientAnalytics(filter: "all" | "my", sessionUser: any) {
+  const isMember = filter === "my" || sessionUser?.role === "MEMBER";
+  const userId = sessionUser?.id;
+  const userEmail = sessionUser?.email ? sessionUser.email.trim().toLowerCase() : "";
+
+  let projects = clientStorage.getProjects();
+  let tasks = clientStorage.getTasks();
+  const allUsers = clientStorage.getUsers();
+
+  if (isMember) {
+    projects = projects.filter(
+      (p) =>
+        (p.members && (p.members.includes(userId) || (userEmail && p.members.includes(userEmail)))) ||
+        p.ownerId === userId ||
+        (userEmail && p.ownerId === userEmail)
+    );
+    tasks = tasks.filter((t) => {
+      const aId = (t.assigneeId || "").trim().toLowerCase();
+      const aList = (t.assignees || []).map((a: string) => (a || "").trim().toLowerCase());
+      return (
+        t.assigneeId === userId ||
+        (userEmail && aId === userEmail) ||
+        t.assignees?.includes(userId) ||
+        (userEmail && aList.includes(userEmail))
+      );
+    });
+  }
+
+  const now = new Date();
+  const isDone = (status?: string): boolean => {
+    const s = (status || "").toUpperCase();
+    return s === "DONE" || s === "COMPLETED";
+  };
+
+  const totalProjects = projects.length;
+  const activeProjects = projects.filter((p) => p.status === "ACTIVE").length;
+  const completedProjects = projects.filter((p) => p.status === "COMPLETED").length;
+  const totalTasks = tasks.length;
+  const completedTasks = tasks.filter((t) => isDone(t.status)).length;
+  const overdueTasks = tasks.filter((t) => !isDone(t.status) && t.dueDate && new Date(t.dueDate) < now).length;
+  const activeMembers = allUsers.filter((u) => u.status === "ACTIVE").length || allUsers.length;
+  const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+
+  const statuses = { TODO: 0, IN_PROGRESS: 0, REVIEW: 0, DONE: 0 };
+  tasks.forEach((t) => {
+    const s = (t.status || "").toUpperCase();
+    if (s === "DONE" || s === "COMPLETED") statuses.DONE++;
+    else if (s === "IN_PROGRESS") statuses.IN_PROGRESS++;
+    else if (s === "REVIEW") statuses.REVIEW++;
+    else statuses.TODO++;
+  });
+
+  const taskStatusDistribution = [
+    { name: "Todo", value: statuses.TODO },
+    { name: "In Progress", value: statuses.IN_PROGRESS },
+    { name: "Review", value: statuses.REVIEW },
+    { name: "Done", value: statuses.DONE },
+  ];
+
+  const priorities = { HIGH: 0, MEDIUM: 0, LOW: 0 };
+  tasks.forEach((t) => {
+    const p = (t.priority || "").toUpperCase();
+    if (p === "HIGH" || p === "CRITICAL") priorities.HIGH++;
+    else if (p === "LOW") priorities.LOW++;
+    else priorities.MEDIUM++;
+  });
+
+  const priorityDistribution = [
+    { name: "High", value: priorities.HIGH },
+    { name: "Medium", value: priorities.MEDIUM },
+    { name: "Low", value: priorities.LOW },
+  ];
+
+  const projectProgress = projects.map((p) => {
+    const pTasks = tasks.filter((t) => t.projectId === p.id);
+    const progress = pTasks.length > 0 ? Math.round((pTasks.filter((t) => isDone(t.status)).length / pTasks.length) * 100) : (p.progress || 0);
+    return { id: p.id, name: p.name, progress, status: p.status };
+  });
+
+  const usersToCalculate = isMember
+    ? allUsers.filter((u) => u.id === userId || (userEmail && u.email?.trim().toLowerCase() === userEmail))
+    : allUsers;
+
+  const workloadDistribution = usersToCalculate.map((user) => {
+    const uEmail = user.email ? user.email.trim().toLowerCase() : "";
+    const uTasks = tasks.filter((t) => {
+      const aId = (t.assigneeId || "").trim().toLowerCase();
+      const aList = (t.assignees || []).map((a: string) => (a || "").trim().toLowerCase());
+      return (
+        t.assigneeId === user.id ||
+        t.assignees?.includes(user.id) ||
+        (uEmail && (aId === uEmail || aList.includes(uEmail)))
+      );
+    });
+    return {
+      memberId: user.id,
+      memberName: user.name || `${user.firstName || ""} ${user.lastName || ""}`.trim() || user.email,
+      assigned: uTasks.length,
+      completed: uTasks.filter((t) => isDone(t.status)).length,
+      overdue: uTasks.filter((t) => !isDone(t.status) && t.dueDate && new Date(t.dueDate) < now).length,
+    };
+  });
+
+  const taskCompletionTrend = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    const dateStr = `${year}-${month}-${day}`;
+
+    const completedOnDate = tasks.filter((t) => {
+      if (!isDone(t.status)) return false;
+      const taskDate = (t as any).completedAt || t.updatedAt || t.createdAt;
+      if (!taskDate) return false;
+      const td = new Date(taskDate);
+      return td.getFullYear() === d.getFullYear() && td.getMonth() === d.getMonth() && td.getDate() === d.getDate();
+    }).length;
+
+    taskCompletionTrend.push({ date: dateStr, completed: completedOnDate });
+  }
+
+  return {
+    kpi: {
+      totalProjects,
+      activeProjects,
+      completedProjects,
+      totalTasks,
+      completedTasks,
+      overdueTasks,
+      activeMembers,
+      completionRate,
+    },
+    taskStatusDistribution,
+    projectProgress,
+    workloadDistribution,
+    priorityDistribution,
+    projectHealth: [],
+    taskCompletionTrend,
+  };
+}
 
 export default function AnalyticsDashboard() {
   const { data: session } = useSession();
@@ -45,11 +184,25 @@ export default function AnalyticsDashboard() {
   const fetchAnalytics = async () => {
     try {
       setLoading(true);
-      const res = await axios.get(`/api/analytics?filter=${filter}`);
+      const localTasks = clientStorage.getTasks();
+      const localProjects = clientStorage.getProjects();
+      const localUsers = clientStorage.getUsers();
+
+      const res = await apiClient.post(`/analytics?filter=${filter}`, {
+        localTasks,
+        localProjects,
+        localUsers,
+      });
       setData(res.data);
       setError(null);
     } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to load analytics");
+      try {
+        const localData = computeClientAnalytics(filter, session?.user);
+        setData(localData);
+        setError(null);
+      } catch (_) {
+        setError(err.response?.data?.message || "Failed to load analytics");
+      }
     } finally {
       setLoading(false);
     }
@@ -59,6 +212,18 @@ export default function AnalyticsDashboard() {
     if (session) {
       fetchAnalytics();
     }
+  }, [session, filter]);
+
+  useEffect(() => {
+    const handleFocus = () => {
+      if (session) fetchAnalytics();
+    };
+    window.addEventListener("focus", handleFocus);
+    window.addEventListener("storage", handleFocus);
+    return () => {
+      window.removeEventListener("focus", handleFocus);
+      window.removeEventListener("storage", handleFocus);
+    };
   }, [session, filter]);
 
   const COLORS = ["#3b82f6", "#f59e0b", "#ef4444", "#10b981", "#6b7280"];
@@ -91,6 +256,14 @@ export default function AnalyticsDashboard() {
             </p>
           </div>
           <div className="flex items-center gap-2">
+            <button
+              onClick={fetchAnalytics}
+              className="flex items-center gap-1.5 px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+              title="Refresh Analytics"
+            >
+              <RefreshCw className={`w-4 h-4 text-gray-500 ${loading ? "animate-spin" : ""}`} />
+              Refresh
+            </button>
             <select
               value={filter}
               onChange={(e) => setFilter(e.target.value as 'all' | 'my')}
@@ -262,22 +435,32 @@ export default function AnalyticsDashboard() {
               <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm lg:col-span-2">
                 <h3 className="text-lg font-medium text-gray-900 mb-4">Workload Distribution</h3>
                 <div className="h-96">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart
-                      data={data.workloadDistribution}
-                      margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
-                      barSize={50}
-                    >
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                      <XAxis dataKey="memberName" tick={{ fontSize: 12 }} />
-                      <YAxis allowDecimals={false} label={{ value: 'Count', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle' } }} />
-                      <Tooltip cursor={{ fill: 'rgba(0, 0, 0, 0.05)' }} />
-                      <Legend wrapperStyle={{ paddingTop: '20px' }} />
-                      <Bar dataKey="assigned" name="Assigned" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-                      <Bar dataKey="completed" name="Completed" fill="#10b981" radius={[4, 4, 0, 0]} />
-                      <Bar dataKey="overdue" name="Overdue" fill="#ef4444" radius={[4, 4, 0, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
+                  {data.workloadDistribution?.length === 0 ? (
+                    <div className="h-full flex items-center justify-center">
+                      <EmptyState 
+                        icon={Users} 
+                        title="No Workload Data" 
+                        description="There is no workload data to display for any members." 
+                      />
+                    </div>
+                  ) : (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart
+                        data={data.workloadDistribution}
+                        margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
+                        barSize={50}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                        <XAxis dataKey="memberName" tick={{ fontSize: 12 }} />
+                        <YAxis allowDecimals={false} label={{ value: 'Count', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle' } }} />
+                        <Tooltip cursor={{ fill: 'rgba(0, 0, 0, 0.05)' }} />
+                        <Legend wrapperStyle={{ paddingTop: '20px' }} />
+                        <Bar dataKey="assigned" name="Assigned" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                        <Bar dataKey="completed" name="Completed" fill="#10b981" radius={[4, 4, 0, 0]} />
+                        <Bar dataKey="overdue" name="Overdue" fill="#ef4444" radius={[4, 4, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  )}
                 </div>
               </div>
 
@@ -304,9 +487,9 @@ export default function AnalyticsDashboard() {
                         <tr>
                           <td colSpan={4} className="p-0 border-b-0">
                             <EmptyState 
-                              icon={Users}
-                              title="No member data"
-                              description="There is no workload data to display for any members."
+                              icon={Users} 
+                              title="No member data" 
+                              description="There is no workload data to display for any members." 
                             />
                           </td>
                         </tr>
@@ -315,7 +498,7 @@ export default function AnalyticsDashboard() {
                           <tr key={member.memberId}>
                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{member.memberName}</td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{member.assigned}</td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{member.completed}</td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-emerald-600 font-medium">{member.completed}</td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-red-500 font-medium">{member.overdue > 0 ? member.overdue : '-'}</td>
                           </tr>
                         ))

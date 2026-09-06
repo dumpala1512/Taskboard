@@ -5,24 +5,34 @@ import { analyticsService } from "../../../server/services/analytics.service";
 import { UserRole } from "../../../server/types";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== "GET") {
+  if (req.method !== "GET" && req.method !== "POST") {
     return res.status(405).json({ message: "Method not allowed" });
   }
 
   const session = await getServerSession(req, res, authOptions);
 
   const userId = (session?.user as any)?.id;
-  if (!userId) {
+  const userEmail = session?.user?.email;
+  if (!userId && !userEmail) {
     return res.status(401).json({ message: "Unauthorized" });
   }
 
-  const filter = req.query.filter as string;
-  const effectiveRole = filter === 'my' ? 'MEMBER' : 'ADMIN';
+  const effectiveUserId = userId || userEmail;
+  const filter = (req.query.filter as string) || (req.body?.filter as string);
+  const sessionRole = (session?.user as any)?.role || "MEMBER";
+  const effectiveRole = filter === "my" ? "MEMBER" : sessionRole;
 
   try {
+    const { localTasks, localProjects, localUsers } = req.body || {};
+
     const data = await analyticsService.getDashboardData(
-      userId,
-      effectiveRole as UserRole
+      effectiveUserId,
+      effectiveRole as UserRole,
+      {
+        tasks: Array.isArray(localTasks) ? localTasks : undefined,
+        projects: Array.isArray(localProjects) ? localProjects : undefined,
+        users: Array.isArray(localUsers) ? localUsers : undefined,
+      }
     );
     return res.status(200).json(data);
   } catch (error) {
