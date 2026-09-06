@@ -2,26 +2,185 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ──────────────────────────────────────────────────────────
+   ZOHO SPRINTS DESIGN TOKENS
+   All colors, typography & spacing in one centralized place.
+   ========================================================== */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* ── Brand / Primary ────────────────────────────────── */
+  --zs-primary:          #1E88E5;
+  --zs-primary-hover:    #1876C4;
+  --zs-primary-light:    #E3F2FD;
+  --zs-primary-border:   #90CAF9;
+  --zs-teal:             #26A69A;
+  --zs-teal-light:       #E0F2F1;
+
+  /* ── Page surfaces ──────────────────────────────────── */
+  --zs-page-bg:          #F5F6F8;
+  --zs-surface:          #FFFFFF;
+  --zs-surface-alt:      #FAFBFC;
+
+  /* ── Borders ────────────────────────────────────────── */
+  --zs-border:           #E0E3E8;
+  --zs-border-light:     #EEF0F3;
+
+  /* ── Text ───────────────────────────────────────────── */
+  --zs-text-primary:     #33475B;
+  --zs-text-secondary:   #6E7B8B;
+  --zs-text-muted:       #9EAAB7;
+  --zs-text-on-primary:  #FFFFFF;
+
+  /* ── Layout ─────────────────────────────────────────── */
+  --background:          #F5F6F8;
+  --foreground:          #33475B;
+
+  /* ── Status colors ──────────────────────────────────── */
+  --zs-todo-color:       #9E9E9E;
+  --zs-todo-bg:          #F5F5F5;
+  --zs-inprogress-color: #2196F3;
+  --zs-inprogress-bg:    #E3F2FD;
+  --zs-review-color:     #7B61FF;
+  --zs-review-bg:        #EDE7F6;
+  --zs-done-color:       #43A047;
+  --zs-done-bg:          #E8F5E9;
+  --zs-blocked-color:    #E53935;
+  --zs-blocked-bg:       #FFEBEE;
+  --zs-onhold-color:     #FB8C00;
+  --zs-onhold-bg:        #FFF3E0;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* ──────────────────────────────────────────────────────────
+   BASE RESET  — Zoho Sprints look
+────────────────────────────────────────────────────────── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 14px;
 }
 
 body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: 'Roboto', 'Segoe UI', -apple-system, sans-serif;
+  color: var(--zs-text-primary);
+  background: var(--zs-page-bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  line-height: 1.5;
 }
 
+/* ──────────────────────────────────────────────────────────
+   SCROLLBAR
+────────────────────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94A3B8;
+}
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #CBD5E1 transparent;
+}
+
+/* ──────────────────────────────────────────────────────────
+   FOCUS
+────────────────────────────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid var(--zs-primary);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+
+/* ──────────────────────────────────────────────────────────
+   UTILITIES
+────────────────────────────────────────────────────────── */
 @layer utilities {
-  .text-balance {
-    text-wrap: balance;
+  .text-balance { text-wrap: balance; }
+
+  .zs-label {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--zs-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
   }
+  .zs-meta {
+    font-size: 11px;
+    color: var(--zs-text-muted);
+  }
+}
+
+/* ──────────────────────────────────────────────────────────
+   STATUS DOTS
+────────────────────────────────────────────────────────── */
+.zs-status-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.zs-status-dot--todo        { background: var(--zs-todo-color); }
+.zs-status-dot--inprogress  { background: var(--zs-inprogress-color); }
+.zs-status-dot--review      { background: var(--zs-review-color); }
+.zs-status-dot--done        { background: var(--zs-done-color); }
+.zs-status-dot--blocked     { background: var(--zs-blocked-color); }
+.zs-status-dot--onhold      { background: var(--zs-onhold-color); }
+
+/* "?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?
+   TIPTAP EDITOR STYLES
+"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"? */
+.ProseMirror {
+  outline: none;
+}
+.ProseMirror p.is-editor-empty:first-child::before {
+  color: #9CA3AF;
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+.ProseMirror ul {
+  list-style-type: disc;
+  padding-left: 1.5rem;
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+.ProseMirror ol {
+  list-style-type: decimal;
+  padding-left: 1.5rem;
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+.ProseMirror ul[data-type="taskList"] {
+  list-style: none;
+  padding: 0;
+}
+.ProseMirror ul[data-type="taskList"] p {
+  margin: 0;
+}
+.ProseMirror ul[data-type="taskList"] li {
+  display: flex;
+}
+.ProseMirror ul[data-type="taskList"] li > label {
+  flex: 0 0 auto;
+  margin-right: 0.5rem;
+  user-select: none;
+}
+.ProseMirror ul[data-type="taskList"] li > label input[type="checkbox"] {
+  cursor: pointer;
+}
+.ProseMirror ul[data-type="taskList"] li > div {
+  flex: 1 1 auto;
 }

@@ -1,0 +1,47 @@
+services:
+  app:
+    container_name: taskboard-app
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: dev
+    restart: unless-stopped
+    ports:
+      - "${PORT:-3000}:3000"
+    env_file:
+      - path: .env.local
+        required: false
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+      - NEXT_TELEMETRY_DISABLED=1
+      # Enables file-polling so Windows filesystem changes trigger Next.js HMR reliably
+      - WATCHPACK_POLLING=true
+    volumes:
+      # Mount application source directories for live development hot-reloading
+      - ./pages:/app/pages
+      - ./components:/app/components
+      - ./styles:/app/styles
+      - ./hooks:/app/hooks
+      - ./lib:/app/lib
+      - ./schemas:/app/schemas
+      - ./public:/app/public
+      - ./server:/app/server
+      - ./next.config.mjs:/app/next.config.mjs
+      - ./tailwind.config.ts:/app/tailwind.config.ts
+      - ./tsconfig.json:/app/tsconfig.json
+      # Prevent host OS node_modules & .next from shadowing container's Linux builds
+      - /app/node_modules
+      - /app/.next
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3000/api/auth/csrf || exit 1"]
+      interval: 20s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - taskboard-net
+
+networks:
+  taskboard-net:
+    driver: bridge

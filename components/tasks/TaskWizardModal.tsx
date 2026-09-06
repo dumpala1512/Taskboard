@@ -1,0 +1,308 @@
+import { ChevronLeft, ChevronRight, Loader2, Save, X } from "lucide-react";
+import { useRouter } from "next/router";
+import React, { useEffect, useState } from "react";
+import { Portal } from "../ui/Portal";
+import { toast } from "react-hot-toast";
+import { useCreateTask, useUpdateTask } from "../../hooks/useTasks";
+import type { Task } from "../../server/types";
+import { Button } from "../ui/Button";
+import { Step1BasicInfo } from "./wizard/Step1BasicInfo";
+import { Step2Assignment } from "./wizard/Step2Assignment";
+import { Step3Details } from "./wizard/Step3Details";
+import { Step4Review } from "./wizard/Step4Review";
+
+interface TaskWizardModalProps {
+	isOpen: boolean;
+	onClose: () => void;
+	taskToEdit?: Task | null;
+	initialProjectId?: string;
+}
+
+const STEPS = ["Basic Information", "Assignment", "Details", "Review"];
+
+export function TaskWizardModal({
+	isOpen,
+	onClose,
+	taskToEdit,
+	initialProjectId,
+}: TaskWizardModalProps) {
+	const [step, setStep] = useState(1);
+	const [isSubmitting, setIsSubmitting] = useState(false);
+	const [errors, setErrors] = useState<Record<string, string>>({});
+
+	const createTask = useCreateTask();
+	const updateTask = useUpdateTask();
+	const router = useRouter();
+
+	const initialFormData = {
+		title: "",
+		description: "",
+		projectId: initialProjectId || "",
+		priority: "MEDIUM",
+		taskType: "",
+		assigneeId: "",
+		status: "TODO",
+		startDate: "",
+		dueDate: "",
+		estimatedTime: null as number | null,
+		tags: [],
+		attachments: [],
+		notes: "",
+		isDraft: false,
+	};
+
+	const [formData, setFormData] = useState<any>(initialFormData);
+
+	useEffect(() => {
+		try {
+			localStorage.removeItem("taskWizardDraft");
+		} catch (e) {}
+
+		setStep(1);
+		setErrors({});
+
+		if (isOpen) {
+			if (taskToEdit) {
+				setFormData({
+					...initialFormData,
+					...taskToEdit,
+					dueDate: taskToEdit.dueDate
+						? new Date(taskToEdit.dueDate).toISOString().split("T")[0]
+						: "",
+					startDate: taskToEdit.startDate
+						? new Date(taskToEdit.startDate).toISOString().split("T")[0]
+						: "",
+				});
+			} else {
+				setFormData(initialFormData);
+			}
+		} else {
+			setFormData(initialFormData);
+		}
+	}, [isOpen, taskToEdit]);
+
+	if (!isOpen) return null;
+
+	const validateStep = (currentStep: number) => {
+		const newErrors: Record<string, string> = {};
+
+		if (currentStep === 1) {
+			if (!formData.projectId) newErrors.projectId = "Project is required";
+			if (!formData.title?.trim()) {
+				newErrors.title = "Title is required";
+			} else if (formData.title.length < 3 || formData.title.length > 150) {
+				newErrors.title = "Title must be between 3 and 150 characters";
+			}
+			if (!formData.description?.trim()) {
+				newErrors.description = "Description is required";
+			} else if (
+				formData.description.length < 10 ||
+				formData.description.length > 2000
+			) {
+				newErrors.description =
+					"Description must be between 10 and 2000 characters";
+			}
+			if (!formData.priority) newErrors.priority = "Priority is required";
+		}
+
+		if (currentStep === 2) {
+			if (!formData.status) newErrors.status = "Status is required";
+			if (!formData.startDate) newErrors.startDate = "Start date is required";
+			if (!formData.dueDate) newErrors.dueDate = "Due date is required";
+
+			if (formData.startDate && formData.dueDate) {
+				const start = new Date(formData.startDate);
+				const due = new Date(formData.dueDate);
+				if (start > due) {
+					newErrors.startDate = "Start date cannot be after due date";
+					newErrors.dueDate = "Due date cannot be before start date";
+				}
+			}
+		}
+
+		setErrors(newErrors);
+		return Object.keys(newErrors).length === 0;
+	};
+
+	const nextStep = () => {
+		if (validateStep(step)) {
+			setStep((s) => Math.min(s + 1, 4));
+		} else {
+			toast.error("Please fix the errors before proceeding.");
+		}
+	};
+
+	const isContinueDisabled = () => {
+		if (step === 1) {
+			return !formData.projectId || !formData.title?.trim() || !formData.description?.trim() || !formData.priority;
+		}
+		if (step === 2) {
+			return !formData.status || !formData.startDate || !formData.dueDate;
+		}
+		return false;
+	};
+
+	const prevStep = () => setStep((s) => Math.max(s - 1, 1));
+
+	const handleClose = () => {
+		try {
+			localStorage.removeItem("taskWizardDraft");
+		} catch (e) {}
+		setStep(1);
+		setErrors({});
+		setFormData(initialFormData);
+		onClose();
+	};
+
+	const handleSubmit = async () => {
+		if (!validateStep(4)) {
+			toast.error("Validation failed");
+			return;
+		}
+
+		setIsSubmitting(true);
+		try {
+			const submitData = { ...formData, isDraft: false };
+			if (taskToEdit) {
+				await updateTask.mutateAsync({
+					id: taskToEdit.id,
+					...submitData,
+				} as any);
+				toast.success("Task updated successfully");
+			} else {
+				await createTask.mutateAsync(submitData as any);
+				toast.success("Task created successfully");
+				if (router.pathname !== "/projects/[id]") {
+					router.push(`/projects/${formData.projectId}`);
+				}
+			}
+			handleClose();
+		} catch (err: any) {
+			toast.error(err.message || "Failed to save task");
+		} finally {
+			setIsSubmitting(false);
+		}
+	};
+
+	return (
+		<Portal>
+		<div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-[#33475B]/20 overflow-y-auto">
+			<div className="bg-white rounded-md shadow-[0_4px_20px_rgba(0,0,0,0.12)] border border-[#E0E3E8] w-full max-w-3xl flex flex-col my-8 h-[700px] max-h-[90vh]">
+				{/* Header */}
+				<div className="flex justify-between items-center px-6 py-4 border-b border-[#E0E3E8] bg-white rounded-t-[6px] shrink-0">
+					<div>
+						<h2 className="text-lg font-semibold text-[#33475B]">
+							{taskToEdit ? "Edit Task" : "Create Task"}
+						</h2>
+						<p className="text-sm text-slate-500 mt-1">
+							Step {step} of 4: {STEPS[step - 1]}
+						</p>
+					</div>
+					<button
+						onClick={handleClose}
+						className="text-slate-400 hover:text-slate-600 :text-slate-300 transition-colors"
+					>
+						<X className="w-6 h-6" />
+					</button>
+				</div>
+
+				{/* Progress Bar */}
+				<div className="px-10 sm:px-16 pt-4 pb-12 shrink-0">
+					<div className="flex items-center justify-between relative">
+						<div className="absolute left-0 top-1/2 -translate-y-1/2 w-full h-1 bg-slate-100 rounded-full" />
+						<div
+							className="absolute left-0 top-1/2 -translate-y-1/2 h-1 bg-indigo-600 transition-all duration-300 rounded-full"
+							style={{ width: `${((step - 1) / 3) * 100}%` }}
+						/>
+						{STEPS.map((label, i) => (
+							<div
+								key={label}
+								className="relative z-10 flex flex-col items-center"
+							>
+								<div
+									className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors border-2
+										${
+											step > i + 1
+												? "bg-indigo-600 border-indigo-600 text-white"
+												: step === i + 1
+													? "bg-white border-indigo-600 text-indigo-600 "
+													: "bg-white border-slate-200 text-slate-400"
+										}`}
+								>
+									{i + 1}
+								</div>
+								<span
+									className={`absolute top-10 text-xs whitespace-nowrap hidden sm:block font-medium
+									${step >= i + 1 ? "text-slate-900 " : "text-slate-400"}`}
+								>
+									{label}
+								</span>
+							</div>
+						))}
+					</div>
+				</div>
+
+				{/* Content */}
+				<div className="p-6 overflow-y-auto flex-1 mt-0">
+					{step === 1 && (
+						<Step1BasicInfo
+							formData={formData}
+							setFormData={setFormData}
+							errors={errors}
+							isFixedProject={!!initialProjectId}
+						/>
+					)}
+					{step === 2 && (
+						<Step2Assignment
+							formData={formData}
+							setFormData={setFormData}
+							errors={errors}
+						/>
+					)}
+					{step === 3 && (
+						<Step3Details
+							formData={formData}
+							setFormData={setFormData}
+							errors={errors}
+						/>
+					)}
+					{step === 4 && <Step4Review formData={formData} />}
+				</div>
+
+				{/* Footer */}
+				<div className="p-6 border-t border-slate-200 bg-slate-50 flex items-center justify-between shrink-0 rounded-b-2xl">
+					<div>
+					</div>
+					<div className="flex space-x-3">
+						{step > 1 && (
+							<Button
+								variant="outline"
+								onClick={prevStep}
+								leftIcon={<ChevronLeft className="w-4 h-4" />}
+							>
+								Back
+							</Button>
+						)}
+						{step < 4 ? (
+							<Button
+								onClick={nextStep}
+								rightIcon={<ChevronRight className="w-4 h-4" />}
+								disabled={isContinueDisabled()}
+							>
+								Continue
+							</Button>
+						) : (
+							<Button onClick={handleSubmit} disabled={isSubmitting}>
+								{isSubmitting && (
+									<Loader2 className="w-4 h-4 mr-2 animate-spin" />
+								)}
+								{taskToEdit ? "Update Task" : "Create Task"}
+							</Button>
+						)}
+					</div>
+				</div>
+			</div>
+		</div>
+		</Portal>
+	);
+}

@@ -1,0 +1,36 @@
+services:
+  app:
+    container_name: taskboard-prod
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runner
+    restart: always
+    ports:
+      - "${PORT:-3000}:3000"
+    env_file:
+      - path: .env.local
+        required: false
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - NEXT_TELEMETRY_DISABLED=1
+    volumes:
+      # Persist embedded JSON database across container restarts and updates
+      - taskboard-data:/app/server/database
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3000/api/auth/csrf || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - taskboard-prod-net
+
+volumes:
+  taskboard-data:
+    name: taskboard_db_data
+
+networks:
+  taskboard-prod-net:
+    driver: bridge
