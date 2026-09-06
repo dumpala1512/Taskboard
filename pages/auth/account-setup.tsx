@@ -87,7 +87,12 @@ export default function AccountSetup() {
 			toast.success(
 				"Account setup complete! Welcome to the platform.",
 			);
-			router.push("/dashboard");
+
+			const role = (session?.user as any)?.role;
+			const targetUrl = role === "ADMIN" ? "/admin/dashboard" : "/dashboard";
+
+			// Full page navigation ensures fresh session cookies are evaluated by middleware
+			window.location.href = targetUrl;
 		} catch (error: any) {
 			setGlobalError(
 				error.response?.data?.message || "Failed to setup account",

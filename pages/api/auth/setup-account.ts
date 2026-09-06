@@ -25,8 +25,9 @@ export default async function handler(
 		}
 
 		const userId = (session.user as any).id;
+		const userEmail = session.user.email;
 		
-		await authService.setupAccount(userId, currentPassword, newPassword);
+		await authService.setupAccount(userId, currentPassword, newPassword, userEmail);
 
 		return res.status(200).json({ message: "Account setup successful" });
 	} catch (error: any) {

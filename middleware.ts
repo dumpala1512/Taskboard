@@ -28,6 +28,9 @@ export default withAuth(
 		}
 		
 		if (!token?.isFirstLogin && path === "/auth/account-setup") {
+			if (token?.role === "ADMIN") {
+				return NextResponse.redirect(new URL("/admin/dashboard", req.url));
+			}
 			return NextResponse.redirect(new URL("/dashboard", req.url));
 		}
 
