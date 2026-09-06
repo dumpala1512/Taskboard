@@ -1,9 +1,10 @@
-import { Bell, ChevronRight, Menu, Search, User } from "lucide-react";
+import { Bell, ChevronRight, Menu, Moon, Search, Sun, User } from "lucide-react";
 import { useRouter } from "next/router";
 import { useSession } from "next-auth/react";
 import { useQueryClient } from "@tanstack/react-query";
 import React, { useState } from "react";
 import { useActivities } from "../../hooks/useActivities";
+import { useTheme } from "../../context/ThemeContext";
 import { CreateUserModal } from "../members/CreateUserModal";
 import { ProjectWizardModal } from "../projects/ProjectWizardModal";
 import { TaskWizardModal } from "../tasks/TaskWizardModal";
@@ -18,6 +19,7 @@ export const TopNav: React.FC<TopNavProps> = ({ setMobileOpen }) => {
 	const router = useRouter();
 	const { data: session } = useSession();
 	const queryClient = useQueryClient();
+	const { isDark, toggleTheme } = useTheme();
 	const isAdmin = (session?.user as any)?.role === "ADMIN";
 	const [notificationsOpen, setNotificationsOpen] = useState(false);
 	const [createNewOpen, setCreateNewOpen] = useState(false);
@@ -99,6 +101,20 @@ export const TopNav: React.FC<TopNavProps> = ({ setMobileOpen }) => {
 						Add Member
 					</button>
 				)}
+
+				{/* Dark Mode Toggle */}
+				<button
+					onClick={toggleTheme}
+					aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
+					title={isDark ? "Switch to light mode" : "Switch to dark mode"}
+					className="text-[#6E7B8B] hover:text-[#33475B] dark:text-slate-400 dark:hover:text-slate-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1E88E5]/30 rounded-full p-1.5 hover:bg-[#EEF0F3] dark:hover:bg-slate-800 transition-colors"
+				>
+					{isDark ? (
+						<Sun className="w-[18px] h-[18px] text-amber-400 hover:rotate-45 transition-transform duration-200" />
+					) : (
+						<Moon className="w-[18px] h-[18px] text-slate-600 hover:-rotate-12 transition-transform duration-200" />
+					)}
+				</button>
 
 				{/* Notifications */}
 				<button

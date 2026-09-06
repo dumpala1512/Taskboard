@@ -176,10 +176,13 @@ function computeClientAnalytics(filter: "all" | "my", sessionUser: any) {
 
 export default function AnalyticsDashboard() {
   const { data: session } = useSession();
+  const isAdmin = (session?.user as any)?.role === "ADMIN";
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<'all' | 'my'>('all');
+
+  const effectiveFilter = isAdmin ? filter : 'my';
 
   const fetchAnalytics = async () => {
     try {
@@ -188,7 +191,7 @@ export default function AnalyticsDashboard() {
       const localProjects = clientStorage.getProjects();
       const localUsers = clientStorage.getUsers();
 
-      const res = await apiClient.post(`/analytics?filter=${filter}`, {
+      const res = await apiClient.post(`/analytics?filter=${effectiveFilter}`, {
         localTasks,
         localProjects,
         localUsers,
@@ -197,7 +200,7 @@ export default function AnalyticsDashboard() {
       setError(null);
     } catch (err: any) {
       try {
-        const localData = computeClientAnalytics(filter, session?.user);
+        const localData = computeClientAnalytics(effectiveFilter, session?.user);
         setData(localData);
         setError(null);
       } catch (_) {
@@ -212,7 +215,7 @@ export default function AnalyticsDashboard() {
     if (session) {
       fetchAnalytics();
     }
-  }, [session, filter]);
+  }, [session, effectiveFilter]);
 
   useEffect(() => {
     const handleFocus = () => {
@@ -224,7 +227,7 @@ export default function AnalyticsDashboard() {
       window.removeEventListener("focus", handleFocus);
       window.removeEventListener("storage", handleFocus);
     };
-  }, [session, filter]);
+  }, [session, effectiveFilter]);
 
   const COLORS = ["#3b82f6", "#f59e0b", "#ef4444", "#10b981", "#6b7280"];
   const PRIORITY_COLORS = {
@@ -244,13 +247,15 @@ export default function AnalyticsDashboard() {
   return (
     <AppLayout>
       <Head>
-        <title>Analytics & Reports | Capstone</title>
+        <title>{isAdmin ? "Analytics & Reports" : "My Analytics"} | Capstone</title>
       </Head>
 
       <div className="w-full space-y-4">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Analytics</h1>
+            <h1 className="text-2xl font-bold text-gray-900">
+              {isAdmin ? (filter === "all" ? "Workspace Analytics" : "My Analytics") : "My Analytics"}
+            </h1>
             <p className="text-sm text-gray-500">
               Last Updated: {loading ? "Loading..." : "Just now"}
             </p>
@@ -264,14 +269,20 @@ export default function AnalyticsDashboard() {
               <RefreshCw className={`w-4 h-4 text-gray-500 ${loading ? "animate-spin" : ""}`} />
               Refresh
             </button>
-            <select
-              value={filter}
-              onChange={(e) => setFilter(e.target.value as 'all' | 'my')}
-              className="flex items-center gap-2 px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-            >
-              <option value="all">Workspace Analytics</option>
-              <option value="my">My Analytics</option>
-            </select>
+            {isAdmin ? (
+              <select
+                value={filter}
+                onChange={(e) => setFilter(e.target.value as 'all' | 'my')}
+                className="flex items-center gap-2 px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              >
+                <option value="all">Workspace Analytics</option>
+                <option value="my">My Analytics</option>
+              </select>
+            ) : (
+              <span className="px-3 py-1.5 bg-blue-50 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 rounded-md text-xs font-semibold border border-blue-200 dark:border-blue-800">
+                Personal Analytics
+              </span>
+            )}
           </div>
         </div>
 

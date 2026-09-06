@@ -20,7 +20,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const effectiveUserId = userId || userEmail;
   const filter = (req.query.filter as string) || (req.body?.filter as string);
   const sessionRole = (session?.user as any)?.role || "MEMBER";
-  const effectiveRole = filter === "my" ? "MEMBER" : sessionRole;
+  // Non-admin members can ONLY see their own analytics
+  const effectiveRole = sessionRole !== "ADMIN" ? "MEMBER" : (filter === "my" ? "MEMBER" : "ADMIN");
 
   try {
     const { localTasks, localProjects, localUsers } = req.body || {};
