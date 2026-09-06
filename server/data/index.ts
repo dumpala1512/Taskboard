@@ -138,7 +138,12 @@ export function saveDb() {
 			(diskDb.users || []).forEach((u: any) => userMap.set(u.id, u));
 			(db.users || []).forEach((u: any) => {
 				const existing = userMap.get(u.id);
-				userMap.set(u.id, { ...existing, ...u });
+				userMap.set(u.id, {
+					...existing,
+					...u,
+					passwordHash: u.passwordHash || existing?.passwordHash,
+					tempPassword: u.tempPassword || existing?.tempPassword,
+				});
 			});
 
 			// Safely merge projects

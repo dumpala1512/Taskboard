@@ -20,8 +20,10 @@ export const authOptions: NextAuthOptions = {
 			async authorize(credentials, req) {
 				if (!credentials?.email || !credentials?.password) return null;
 
+				const cleanEmail = credentials.email.trim().toLowerCase();
+
 				let user = await authService.login(
-					credentials.email,
+					cleanEmail,
 					credentials.password,
 				).catch(() => null);
 
@@ -31,22 +33,25 @@ export const authOptions: NextAuthOptions = {
 						const localUsers = JSON.parse((credentials as any).localUsers);
 						if (Array.isArray(localUsers)) {
 							const matched = localUsers.find(
-								(u: any) => u.email?.toLowerCase() === credentials.email.toLowerCase()
+								(u: any) => u.email?.trim().toLowerCase() === cleanEmail
 							);
 							let isMatch = false;
 							if (matched && matched.passwordHash) {
-								isMatch = bcrypt.compareSync(credentials.password, matched.passwordHash);
-							} else if (matched && matched.tempPassword) {
+								try {
+									isMatch = bcrypt.compareSync(credentials.password, matched.passwordHash);
+								} catch (_) {}
+							}
+							if (!isMatch && matched && matched.tempPassword) {
 								isMatch = credentials.password === matched.tempPassword;
 							}
 
 							if (isMatch) {
-								const existingInDb = await userRepository.findByEmail(matched.email);
+								const existingInDb = await userRepository.findByEmail(cleanEmail);
 								const passwordHashToSave = matched.passwordHash || bcrypt.hashSync(credentials.password, 10);
 								if (!existingInDb) {
 									const created = await userRepository.create({
-										name: matched.name || `${matched.firstName || ''} ${matched.lastName || ''}`.trim() || matched.email,
-										email: matched.email,
+										name: matched.name || `${matched.firstName || ''} ${matched.lastName || ''}`.trim() || matched.email || cleanEmail,
+										email: cleanEmail,
 										role: matched.role || "MEMBER",
 										status: matched.status || "ACTIVE",
 										passwordHash: passwordHashToSave,
@@ -58,6 +63,14 @@ export const authOptions: NextAuthOptions = {
 									});
 									user = created;
 								} else {
+									// Synchronize verified credentials to database
+									if (!existingInDb.passwordHash || !bcrypt.compareSync(credentials.password, existingInDb.passwordHash)) {
+										await userRepository.update(existingInDb.id, {
+											passwordHash: passwordHashToSave,
+											status: "ACTIVE",
+										});
+										existingInDb.passwordHash = passwordHashToSave;
+									}
 									user = existingInDb;
 								}
 							}

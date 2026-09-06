@@ -43,7 +43,7 @@ export default function SignIn() {
 
 		const result = await signIn("credentials", {
 			redirect: false,
-			email: data.email,
+			email: data.email.trim().toLowerCase(),
 			password: data.password,
 			localUsers: JSON.stringify(localUsers),
 		});

@@ -1,6 +1,6 @@
+import { v4 as uuidv4 } from "uuid";
 import db, { loadDb, saveDb } from "../data";
 import type { User } from "../types";
-import { v4 as uuidv4 } from "uuid";
 
 export class UserRepository {
 	async findAll(): Promise<User[]> {
@@ -10,23 +10,16 @@ export class UserRepository {
 	}
 
 	async findByEmail(email: string): Promise<User | undefined> {
-		let user = db.users.find((u: any) => u.email === email);
-		if (!user) {
-			const freshDb = loadDb();
-			user = freshDb.users.find((u: any) => u.email === email);
-			if (user) db.users = freshDb.users;
-		}
-		return user;
+		const freshDb = loadDb();
+		db.users = freshDb.users;
+		const clean = email?.trim().toLowerCase();
+		return freshDb.users.find((u: any) => u.email?.trim().toLowerCase() === clean);
 	}
 
 	async findById(id: string): Promise<User | undefined> {
-		let user = db.users.find((u: any) => u.id === id);
-		if (!user) {
-			const freshDb = loadDb();
-			user = freshDb.users.find((u: any) => u.id === id);
-			if (user) db.users = freshDb.users;
-		}
-		return user;
+		const freshDb = loadDb();
+		db.users = freshDb.users;
+		return freshDb.users.find((u: any) => u.id === id);
 	}
 
 	async create(user: Omit<User, "id" | "createdAt">): Promise<User> {

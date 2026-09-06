@@ -5,27 +5,37 @@ import type { User } from "../types";
 
 export class AuthService {
 	async login(email: string, passwordPlain: string): Promise<User | null> {
-		console.log("login attempt:", email);
-		const user = await userRepository.findByEmail(email);
+		const cleanEmail = email?.trim().toLowerCase();
+		console.log("login attempt:", cleanEmail);
+		const user = await userRepository.findByEmail(cleanEmail);
 		if (!user) {
-			console.log("user not found for email:", email);
+			console.log("user not found for email:", cleanEmail);
 			return null;
 		}
 
-		// Verify using bcrypt
-		const isValid = bcrypt.compareSync(passwordPlain, user.passwordHash);
+		// Verify using bcrypt or tempPassword
+		let isValid = false;
+		if (user.passwordHash) {
+			try {
+				isValid = bcrypt.compareSync(passwordPlain, user.passwordHash);
+			} catch (_) {}
+		}
+		if (!isValid && (user as any).tempPassword) {
+			isValid = passwordPlain === (user as any).tempPassword;
+		}
+
 		if (!isValid) {
-			console.log("password mismatch for:", email);
+			console.log("password mismatch for:", cleanEmail);
 			return null;
 		}
 
 		// Only allow ACTIVE users to login
 		if (user.status !== "ACTIVE") {
-			console.log("user inactive:", email);
+			console.log("user inactive:", cleanEmail);
 			throw new Error("Account is inactive");
 		}
 		
-		console.log("login success:", email);
+		console.log("login success:", cleanEmail);
 		return user;
 	}
 

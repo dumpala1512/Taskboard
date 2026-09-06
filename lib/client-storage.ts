@@ -281,9 +281,19 @@ export const clientStorage = {
 			);
 		}
 		const users = this.getUsers();
-		const index = users.findIndex((u) => u.id === actual.id);
+		const cleanActualEmail = actual.email ? actual.email.trim().toLowerCase() : "";
+		const index = users.findIndex(
+			(u) =>
+				u.id === actual.id ||
+				(cleanActualEmail && u.email && u.email.trim().toLowerCase() === cleanActualEmail),
+		);
 		if (index >= 0) {
-			users[index] = { ...users[index], ...actual };
+			users[index] = {
+				...users[index],
+				...actual,
+				tempPassword: actual.tempPassword || (users[index] as any).tempPassword,
+				passwordHash: actual.passwordHash || (users[index] as any).passwordHash,
+			};
 		} else {
 			users.push(actual);
 		}
@@ -317,6 +327,13 @@ export const clientStorage = {
 	mergeUsers(serverUsers: any[]): User[] {
 		const localUsers = this.getUsers();
 		const deletedIds = new Set(this.getDeletedUserIds());
+		const localMap = new Map<string, any>();
+		const localEmailMap = new Map<string, any>();
+		for (const u of localUsers) {
+			if (u && u.id) localMap.set(u.id, u);
+			if (u && u.email) localEmailMap.set(u.email.trim().toLowerCase(), u);
+		}
+
 		const userMap = new Map<string, User>();
 		for (const raw of serverUsers) {
 			const u: any = raw.user ? raw.user : raw;
@@ -324,7 +341,15 @@ export const clientStorage = {
 			if (!u.name) {
 				u.name = `${u.firstName || ""} ${u.lastName || ""}`.trim() || u.email || "Member";
 			}
-			userMap.set(u.id, u);
+			const existing =
+				localMap.get(u.id) ||
+				(u.email ? localEmailMap.get(u.email.trim().toLowerCase()) : undefined);
+			userMap.set(u.id, {
+				...existing,
+				...u,
+				tempPassword: u.tempPassword || existing?.tempPassword,
+				passwordHash: u.passwordHash || existing?.passwordHash,
+			});
 		}
 		for (const u of localUsers) {
 			if (u && u.id && !deletedIds.has(u.id) && !userMap.has(u.id)) {
