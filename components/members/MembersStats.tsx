@@ -8,10 +8,10 @@ interface MembersStatsProps {
 
 export default function MembersStats({ users }: MembersStatsProps) {
 	const total = users.length;
-	const active = users.filter((u) => u.status === "ACTIVE").length;
-	const inactive = users.filter((u) => u.status === "INACTIVE").length;
-	const assigned = users.filter((u) => u.projectsAssigned > 0).length;
-	const unassigned = total - assigned;
+	const active = users.filter((u) => u?.status === "ACTIVE").length;
+	const inactive = users.filter((u) => u?.status === "INACTIVE").length;
+	const assigned = users.filter((u) => (u?.projectsAssigned || 0) > 0).length;
+	const unassigned = Math.max(0, total - assigned);
 
 	const stats = [
 		{

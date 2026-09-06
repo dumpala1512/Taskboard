@@ -177,33 +177,69 @@ export const clientStorage = {
 
 	// ==================== USERS ====================
 	getUsers(): User[] {
-		return getItem<User[]>(STORAGE_KEYS.USERS, []);
+		const raw = getItem<any[]>(STORAGE_KEYS.USERS, []);
+		const sanitized: User[] = [];
+		let needsClean = false;
+
+		for (const item of raw) {
+			if (!item) {
+				needsClean = true;
+				continue;
+			}
+			const actual: any = item.user ? item.user : item;
+			if (actual && actual.id) {
+				const name = actual.name || `${actual.firstName || ""} ${actual.lastName || ""}`.trim() || actual.email || "Member";
+				sanitized.push({
+					...actual,
+					name,
+				});
+				if (item.user) needsClean = true;
+			} else {
+				needsClean = true;
+			}
+		}
+
+		if (needsClean) {
+			setItem(STORAGE_KEYS.USERS, sanitized);
+		}
+
+		return sanitized;
 	},
 
 	getUserById(id: string): User | undefined {
 		return this.getUsers().find((u) => u.id === id);
 	},
 
-	saveUser(user: User): User {
+	saveUser(user: any): User {
+		const actual: any = user.user ? user.user : user;
+		if (!actual || !actual.id) return actual;
+		if (!actual.name) {
+			actual.name = `${actual.firstName || ""} ${actual.lastName || ""}`.trim() || actual.email || "Member";
+		}
 		const users = this.getUsers();
-		const index = users.findIndex((u) => u.id === user.id);
+		const index = users.findIndex((u) => u.id === actual.id);
 		if (index >= 0) {
-			users[index] = { ...users[index], ...user };
+			users[index] = { ...users[index], ...actual };
 		} else {
-			users.push(user);
+			users.push(actual);
 		}
 		setItem(STORAGE_KEYS.USERS, users);
-		return user;
+		return actual;
 	},
 
-	mergeUsers(serverUsers: User[]): User[] {
+	mergeUsers(serverUsers: any[]): User[] {
 		const localUsers = this.getUsers();
 		const userMap = new Map<string, User>();
-		for (const u of serverUsers) {
+		for (const raw of serverUsers) {
+			const u: any = raw.user ? raw.user : raw;
+			if (!u || !u.id) continue;
+			if (!u.name) {
+				u.name = `${u.firstName || ""} ${u.lastName || ""}`.trim() || u.email || "Member";
+			}
 			userMap.set(u.id, u);
 		}
 		for (const u of localUsers) {
-			if (!userMap.has(u.id)) {
+			if (u && u.id && !userMap.has(u.id)) {
 				userMap.set(u.id, u);
 			}
 		}

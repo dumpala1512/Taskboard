@@ -63,7 +63,8 @@ apiClient.interceptors.response.use(
 			}
 		} else if (path === "admin" && id === "users" && response.config.url?.includes("/create")) {
 			if (method === "POST" && response.data) {
-				clientStorage.saveUser(response.data);
+				const userToSave = response.data.user || response.data;
+				clientStorage.saveUser(userToSave);
 			}
 		} else if (path === "activities") {
 			if (method === "GET" && Array.isArray(response.data)) {
