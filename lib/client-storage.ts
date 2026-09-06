@@ -227,6 +227,24 @@ export const clientStorage = {
 		return actual;
 	},
 
+	deleteUser(id: string): boolean {
+		const users = this.getUsers();
+		const filtered = users.filter((u) => u.id !== id);
+		setItem(STORAGE_KEYS.USERS, filtered);
+
+		// Also remove deleted user from local projects' member lists
+		const projects = this.getProjects();
+		const updatedProjects = projects.map((p) => {
+			if (p.members && p.members.includes(id)) {
+				return { ...p, members: p.members.filter((m) => m !== id) };
+			}
+			return p;
+		});
+		setItem(STORAGE_KEYS.PROJECTS, updatedProjects);
+
+		return true;
+	},
+
 	mergeUsers(serverUsers: any[]): User[] {
 		const localUsers = this.getUsers();
 		const userMap = new Map<string, User>();

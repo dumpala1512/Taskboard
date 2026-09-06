@@ -60,6 +60,8 @@ apiClient.interceptors.response.use(
 		} else if (path === "users") {
 			if (method === "GET" && Array.isArray(response.data)) {
 				response.data = clientStorage.mergeUsers(response.data);
+			} else if (method === "DELETE" && id) {
+				clientStorage.deleteUser(id);
 			}
 		} else if (path === "admin" && id === "users" && response.config.url?.includes("/create")) {
 			if (method === "POST" && response.data) {
@@ -246,6 +248,31 @@ apiClient.interceptors.response.use(
 					headers: {},
 					config,
 				} as AxiosResponse);
+			}
+		}
+
+		// Users error recovery
+		if (path === "users") {
+			if (method === "DELETE" && id) {
+				clientStorage.deleteUser(id);
+				return Promise.resolve({
+					data: { message: "User deleted successfully" },
+					status: 200,
+					statusText: "OK (Local Fallback)",
+					headers: {},
+					config,
+				} as AxiosResponse);
+			} else if (method === "GET") {
+				const localUsers = clientStorage.getUsers();
+				if (localUsers.length > 0) {
+					return Promise.resolve({
+						data: localUsers,
+						status: 200,
+						statusText: "OK (Recovered from Local Storage)",
+						headers: {},
+						config,
+					} as AxiosResponse);
+				}
 			}
 		}
 

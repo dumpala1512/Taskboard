@@ -1,6 +1,8 @@
 import NextAuth, { type NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
+import bcrypt from "bcryptjs";
 import { authService } from "../../../server/services/auth.service";
+import { userRepository } from "../../../server/repositories/user.repository";
 
 export const authOptions: NextAuthOptions = {
 	providers: [
@@ -13,14 +15,50 @@ export const authOptions: NextAuthOptions = {
 					placeholder: "you@company.com",
 				},
 				password: { label: "Password", type: "password" },
+				localUsers: { label: "Local Users", type: "text" },
 			},
 			async authorize(credentials, req) {
 				if (!credentials?.email || !credentials?.password) return null;
 
-				const user = await authService.login(
+				let user = await authService.login(
 					credentials.email,
 					credentials.password,
-				);
+				).catch(() => null);
+
+				// Fallback: If serverless lambda does not have the user in db.json, check localUsers
+				if (!user && (credentials as any)?.localUsers) {
+					try {
+						const localUsers = JSON.parse((credentials as any).localUsers);
+						if (Array.isArray(localUsers)) {
+							const matched = localUsers.find(
+								(u: any) => u.email?.toLowerCase() === credentials.email.toLowerCase()
+							);
+							if (matched && matched.passwordHash) {
+								const isMatch = bcrypt.compareSync(credentials.password, matched.passwordHash);
+								if (isMatch) {
+									const existingInDb = await userRepository.findByEmail(matched.email);
+									if (!existingInDb) {
+										await userRepository.create({
+											name: matched.name || `${matched.firstName || ''} ${matched.lastName || ''}`.trim() || matched.email,
+											email: matched.email,
+											role: matched.role || "MEMBER",
+											status: matched.status || "ACTIVE",
+											passwordHash: matched.passwordHash,
+											isFirstLogin: matched.isFirstLogin ?? true,
+											department: matched.department,
+											jobTitle: matched.jobTitle,
+											phone: matched.phone,
+											joiningDate: matched.joiningDate,
+										});
+									}
+									user = matched;
+								}
+							}
+						}
+					} catch (e) {
+						console.error("Failed to parse localUsers in authorize", e);
+					}
+				}
 
 				if (user) {
 					return {

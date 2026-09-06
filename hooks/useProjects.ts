@@ -61,7 +61,11 @@ export function useDeleteProject() {
 			const response = await apiClient.delete(`/projects/${id}`);
 			return response.data;
 		},
-		onSuccess: () => {
+		onSuccess: (_, deletedId) => {
+			queryClient.setQueryData(["projects"], (old: any) => {
+				if (!Array.isArray(old)) return [];
+				return old.filter((p: any) => p.id !== deletedId);
+			});
 			queryClient.invalidateQueries({ queryKey: ["projects"] });
 		},
 	});

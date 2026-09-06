@@ -83,7 +83,15 @@ export function useDeleteUser() {
 			const response = await apiClient.delete(`/users/${userId}`);
 			return response.data;
 		},
-		onSuccess: () => {
+		onSuccess: (_, userId) => {
+			queryClient.setQueryData(["admin-users"], (old: any) => {
+				if (!Array.isArray(old)) return [];
+				return old.filter((u: any) => u.id !== userId);
+			});
+			queryClient.setQueryData(["users"], (old: any) => {
+				if (!Array.isArray(old)) return [];
+				return old.filter((u: any) => u.id !== userId);
+			});
 			queryClient.invalidateQueries({ queryKey: ["admin-users"] });
 			queryClient.invalidateQueries({ queryKey: ["users"] });
 			queryClient.invalidateQueries({ queryKey: ["projects"] });
