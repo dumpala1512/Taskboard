@@ -60,6 +60,23 @@
       "id": "b60c0801-11e6-4489-b496-8c06844ba495",
       "createdAt": "2026-09-06T05:52:09.445Z",
       "passwordChangedAt": "2026-09-06T05:52:56.791Z"
+    },
+    {
+      "name": "vercel user",
+      "firstName": "vercel",
+      "lastName": "user",
+      "email": "vercel@gmail.com",
+      "role": "MEMBER",
+      "status": "ACTIVE",
+      "department": "",
+      "jobTitle": "",
+      "joiningDate": "",
+      "passwordHash": "$2b$10$vy38BcJsjKni3R.EKh1TZutrZubB7GGbvZf8abiFcGJNrDJDMVwp6",
+      "isFirstLogin": false,
+      "createdBy": "admin-1",
+      "id": "91b7bbac-1162-4cb0-9219-fdeeba17ac9e",
+      "createdAt": "2026-09-06T06:51:44.849Z",
+      "passwordChangedAt": "2026-09-06T06:52:21.376Z"
     }
   ],
   "projects": [
@@ -115,6 +132,41 @@
       "id": "a753a882-4080-4834-ab60-771fe7a423f0",
       "createdAt": "2026-09-05T06:58:58.935Z",
       "updatedAt": "2026-09-05T10:00:40.159Z"
+    },
+    {
+      "columns": [
+        {
+          "id": "TODO",
+          "title": "To Do"
+        },
+        {
+          "id": "IN_PROGRESS",
+          "title": "In Progress"
+        },
+        {
+          "id": "REVIEW",
+          "title": "Review"
+        },
+        {
+          "id": "DONE",
+          "title": "Done"
+        }
+      ],
+      "name": "new project",
+      "description": "iagsdaujks liy yufve dcw8djm ddusadv duwedgue wdwdwudf dsuidvd shdsiudgv",
+      "status": "PLANNING",
+      "progress": 0,
+      "ownerId": "admin-1",
+      "members": [
+        "a33523c4-2fb1-4d30-81ba-d35c21aebcf6"
+      ],
+      "tags": [],
+      "startDate": "2026-09-06",
+      "dueDate": "2026-09-14",
+      "key": "uabsioadb",
+      "id": "10a894dd-30a0-40bc-81d3-e079beb52682",
+      "createdAt": "2026-09-06T06:50:56.909Z",
+      "updatedAt": "2026-09-06T06:50:56.909Z"
     }
   ],
   "tasks": [
@@ -829,6 +881,14 @@
       "details": "Develop Team hub applicationlsjf ldkvssssalfffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
       "id": "9291b3fb-2e70-4f12-ae86-6d49af582ad5",
       "createdAt": "2026-09-05T10:00:40.162Z"
+    },
+    {
+      "type": "PROJECT_CREATED",
+      "userId": "admin-1",
+      "projectId": "10a894dd-30a0-40bc-81d3-e079beb52682",
+      "details": "new project",
+      "id": "03760132-13aa-4501-b11d-6a23d01813af",
+      "createdAt": "2026-09-06T06:50:56.911Z"
     }
   ]
 }

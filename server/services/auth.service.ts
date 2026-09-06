@@ -78,11 +78,13 @@ export class AuthService {
 		console.log(`[SIMULATED EMAIL DELIVERY]`);
 		console.log(`To: ${user.email}`);
 		console.log(`Subject: Reset Your Password`);
+		const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
 		console.log(
-			`Link: http://localhost:3000/auth/reset-password?token=${resetToken}`,
+			`Link: ${baseUrl}/auth/reset-password?token=${resetToken}`,
 		);
 		console.log(`=================================================\n`);
 	}
+
 
 	async resetPassword(token: string, newPasswordPlain: string): Promise<void> {
 		const user = await userRepository.findByResetToken(token);

@@ -48,8 +48,12 @@ export const config = {
 		"/",
 		"/dashboard/:path*",
 		"/admin/:path*",
+		"/projects/:path*",
+		"/members/:path*",
+		"/analytics/:path*",
 		"/profile/:path*",
 		"/settings/:path*",
 		"/auth/account-setup",
 	],
 };
+
