@@ -47,7 +47,10 @@ export const authOptions: NextAuthOptions = {
 
 							if (isMatch) {
 								const existingInDb = await userRepository.findByEmail(cleanEmail);
-								const passwordHashToSave = matched.passwordHash || bcrypt.hashSync(credentials.password, 10);
+								// Always compute a fresh bcrypt hash from credentials.password if matched via tempPassword or if hash invalid
+								const passwordHashToSave = (matched && credentials.password === matched.tempPassword)
+									? bcrypt.hashSync(credentials.password, 10)
+									: (matched?.passwordHash || bcrypt.hashSync(credentials.password, 10));
 								if (!existingInDb) {
 									const created = await userRepository.create({
 										name: matched.name || `${matched.firstName || ''} ${matched.lastName || ''}`.trim() || matched.email || cleanEmail,
@@ -55,7 +58,7 @@ export const authOptions: NextAuthOptions = {
 										role: matched.role || "MEMBER",
 										status: matched.status || "ACTIVE",
 										passwordHash: passwordHashToSave,
-										isFirstLogin: matched.isFirstLogin ?? true,
+										isFirstLogin: matched.isFirstLogin ?? false,
 										department: matched.department,
 										jobTitle: matched.jobTitle,
 										phone: matched.phone,
@@ -63,13 +66,18 @@ export const authOptions: NextAuthOptions = {
 									});
 									user = created;
 								} else {
-									// Synchronize verified credentials to database
-									if (!existingInDb.passwordHash || !bcrypt.compareSync(credentials.password, existingInDb.passwordHash)) {
+									// Synchronize verified credentials and isFirstLogin state to database
+									const needsUpdate = !existingInDb.passwordHash || 
+										!bcrypt.compareSync(credentials.password, existingInDb.passwordHash) ||
+										existingInDb.isFirstLogin !== matched.isFirstLogin;
+									if (needsUpdate) {
 										await userRepository.update(existingInDb.id, {
 											passwordHash: passwordHashToSave,
+											isFirstLogin: matched.isFirstLogin ?? false,
 											status: "ACTIVE",
 										});
 										existingInDb.passwordHash = passwordHashToSave;
+										existingInDb.isFirstLogin = matched.isFirstLogin ?? false;
 									}
 									user = existingInDb;
 								}

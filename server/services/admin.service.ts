@@ -102,13 +102,24 @@ export class AdminService {
 		return { temporaryPasswordPlain };
 	}
 
-	async updateUser(id: string, data: Partial<User>): Promise<User> {
-		const user = await userRepository.findById(id);
+	async updateUser(id: string, data: Partial<User> & { password?: string }): Promise<User> {
+		let user = await userRepository.findById(id);
+		if (!user) {
+			user = await userRepository.findByEmail(id);
+		}
 		if (!user) {
 			throw new Error("User not found");
 		}
 
-		return userRepository.update(id, data);
+		const updates: any = { ...data };
+		if (updates.password) {
+			updates.passwordHash = bcrypt.hashSync(updates.password, 10);
+			updates.isFirstLogin = false;
+			updates.passwordChangedAt = new Date().toISOString();
+			delete updates.password;
+		}
+
+		return userRepository.update(user.id, updates);
 	}
 
 	async deleteUser(id: string): Promise<boolean> {

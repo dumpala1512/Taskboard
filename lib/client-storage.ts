@@ -288,11 +288,14 @@ export const clientStorage = {
 				(cleanActualEmail && u.email && u.email.trim().toLowerCase() === cleanActualEmail),
 		);
 		if (index >= 0) {
+			const existing = users[index] as any;
+			const isFirstLogin = typeof actual.isFirstLogin !== "undefined" ? actual.isFirstLogin : existing.isFirstLogin;
 			users[index] = {
-				...users[index],
+				...existing,
 				...actual,
-				tempPassword: actual.tempPassword || (users[index] as any).tempPassword,
-				passwordHash: actual.passwordHash || (users[index] as any).passwordHash,
+				isFirstLogin,
+				tempPassword: actual.tempPassword ?? (isFirstLogin === false ? undefined : existing.tempPassword),
+				passwordHash: actual.passwordHash || existing.passwordHash,
 			};
 		} else {
 			users.push(actual);

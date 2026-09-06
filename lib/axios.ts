@@ -105,6 +105,34 @@ apiClient.interceptors.response.use(
 					tempPassword,
 				});
 			}
+		} else if (path === "auth" && id === "setup-account" && method === "POST") {
+			try {
+				const body = typeof response.config.data === "string" ? JSON.parse(response.config.data) : response.config.data;
+				if (body?.newPassword) {
+					const allUsers = clientStorage.getUsers();
+					const targetId = response.data?.user?.id || body?.userId;
+					const targetEmail = response.data?.user?.email || body?.email;
+					const cleanEmail = targetEmail ? targetEmail.trim().toLowerCase() : "";
+					const u = allUsers.find(
+						(x) =>
+							(targetId && x.id === targetId) ||
+							(cleanEmail && x.email && x.email.trim().toLowerCase() === cleanEmail),
+					);
+					const baseUser = u || {
+						id: targetId || uuidv4(),
+						email: targetEmail,
+						name: targetEmail || "Member",
+						role: "MEMBER",
+						status: "ACTIVE",
+					};
+					clientStorage.saveUser({
+						...baseUser,
+						tempPassword: body.newPassword,
+						passwordHash: response.data?.passwordHash,
+						isFirstLogin: false,
+					});
+				}
+			} catch (_) {}
 		} else if (path === "activities") {
 			if (method === "GET" && Array.isArray(response.data)) {
 				response.data = clientStorage.mergeActivities(response.data);
@@ -122,8 +150,28 @@ apiClient.interceptors.response.use(
 		const { path, id, subAction } = parseEndpoint(config.url);
 		const status = error.response?.status;
 
-		// Fallback for Account Setup
-		if (path === "auth" && id === "setup-account") {
+		// Fallback for Account Setup (only on 404 or server failure, not on 400 bad request)
+		if (path === "auth" && id === "setup-account" && (status === 404 || !status || status >= 500)) {
+			try {
+				const body = typeof config.data === "string" ? JSON.parse(config.data) : config.data;
+				if (body?.newPassword) {
+					const allUsers = clientStorage.getUsers();
+					const targetId = body?.userId;
+					const targetEmail = body?.email ? body.email.trim().toLowerCase() : "";
+					const target = allUsers.find((u) => 
+						(targetId && u.id === targetId) ||
+						(targetEmail && u.email && u.email.trim().toLowerCase() === targetEmail) ||
+						u.isFirstLogin
+					);
+					if (target) {
+						clientStorage.saveUser({
+							...target,
+							tempPassword: body.newPassword,
+							isFirstLogin: false,
+						});
+					}
+				}
+			} catch (_) {}
 			return Promise.resolve({
 				data: { message: "Account setup successful" },
 				status: 200,

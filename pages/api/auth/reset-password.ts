@@ -19,10 +19,14 @@ export default async function handler(
 		}
 
 		try {
-			await authService.resetPassword(token, password);
+			const result = await authService.resetPassword(token, password);
 			return res
 				.status(200)
-				.json({ message: "Password has been reset successfully" });
+				.json({
+					message: "Password has been reset successfully",
+					email: result.email,
+					passwordHash: result.passwordHash,
+				});
 		} catch (e: any) {
 			if (e.message === "Invalid or expired token") {
 				return res.status(400).json({ message: e.message });

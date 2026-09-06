@@ -19,6 +19,7 @@ export interface User {
   passwordChangedAt?: string;
   createdBy?: string;
   passwordHash: string;
+  tempPassword?: string;
   resetToken?: string;
   resetTokenExpiry?: number;
   createdAt: string;

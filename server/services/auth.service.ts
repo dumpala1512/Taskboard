@@ -40,16 +40,17 @@ export class AuthService {
 	}
 
 	async setupAccount(userId: string, currentTempPasswordPlain: string, newPasswordPlain: string, userEmail?: string): Promise<User> {
+		const cleanEmail = userEmail?.trim().toLowerCase();
 		let user = await userRepository.findById(userId);
-		if (!user && userEmail) {
-			user = await userRepository.findByEmail(userEmail);
+		if (!user && cleanEmail) {
+			user = await userRepository.findByEmail(cleanEmail);
 		}
 		if (!user) {
 			// If running in a stateless serverless container that didn't have the user, create record
 			const hashedPassword = bcrypt.hashSync(newPasswordPlain, 10);
 			return userRepository.create({
-				name: userEmail || "Member",
-				email: userEmail || "",
+				name: cleanEmail || "Member",
+				email: cleanEmail || "",
 				role: "MEMBER",
 				status: "ACTIVE",
 				passwordHash: hashedPassword,
@@ -58,11 +59,18 @@ export class AuthService {
 			});
 		}
 		
+		let isValid = false;
 		if (user.passwordHash) {
-			const isValid = bcrypt.compareSync(currentTempPasswordPlain, user.passwordHash);
-			if (!isValid && user.isFirstLogin) {
-				throw new Error("Incorrect temporary password");
-			}
+			try {
+				isValid = bcrypt.compareSync(currentTempPasswordPlain, user.passwordHash);
+			} catch (_) {}
+		}
+		if (!isValid && (user as any).tempPassword) {
+			isValid = currentTempPasswordPlain === (user as any).tempPassword;
+		}
+
+		if (!isValid && user.isFirstLogin) {
+			throw new Error("Incorrect temporary password");
 		}
 
 		const hashedPassword = bcrypt.hashSync(newPasswordPlain, 10);
@@ -70,8 +78,11 @@ export class AuthService {
 		const updatedUser = await userRepository.update(user.id, {
 			passwordHash: hashedPassword,
 			isFirstLogin: false,
+			tempPassword: null as any,
 			passwordChangedAt: new Date().toISOString(),
 		});
+
+		delete (updatedUser as any).tempPassword;
 
 		return updatedUser;
 	}
@@ -108,7 +119,7 @@ export class AuthService {
 	}
 
 
-	async resetPassword(token: string, newPasswordPlain: string): Promise<void> {
+	async resetPassword(token: string, newPasswordPlain: string): Promise<{ email: string; passwordHash: string }> {
 		const user = await userRepository.findByResetToken(token);
 		if (!user) {
 			throw new Error("Invalid or expired token");
@@ -120,14 +131,13 @@ export class AuthService {
 
 		const hashedPassword = bcrypt.hashSync(newPasswordPlain, 10);
 
-		// TypeScript might complain if we try to set them to undefined directly
-		// since they are optional, we can cast it or use null. Actually, omitting them from partial works,
-		// but we need to delete them. We can set them to undefined.
 		await userRepository.update(user.id, {
 			passwordHash: hashedPassword,
 			resetToken: undefined,
 			resetTokenExpiry: undefined,
 		});
+
+		return { email: user.email, passwordHash: hashedPassword };
 	}
 }
 

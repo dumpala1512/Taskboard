@@ -138,11 +138,13 @@ export function saveDb() {
 			(diskDb.users || []).forEach((u: any) => userMap.set(u.id, u));
 			(db.users || []).forEach((u: any) => {
 				const existing = userMap.get(u.id);
+				const isFirstLogin = typeof u.isFirstLogin !== "undefined" ? u.isFirstLogin : existing?.isFirstLogin;
 				userMap.set(u.id, {
 					...existing,
 					...u,
+					isFirstLogin,
 					passwordHash: u.passwordHash || existing?.passwordHash,
-					tempPassword: u.tempPassword || existing?.tempPassword,
+					tempPassword: isFirstLogin === false ? undefined : (u.tempPassword || existing?.tempPassword),
 				});
 			});
 

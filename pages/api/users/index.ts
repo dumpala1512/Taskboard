@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { getServerSession } from "next-auth/next";
-import { authOptions } from "../auth/[...nextauth]";
 import { adminService } from "../../../server/services/admin.service";
+import { authOptions } from "../auth/[...nextauth]";
 
 export default async function handler(
 	req: NextApiRequest,
@@ -23,9 +23,9 @@ export default async function handler(
 		} else {
 			// Even regular members can see the basic list of users (to assign tasks/projects)
 			const users = await adminService.getAllUsers();
-			
+
 			// Return only safe fields (id, name, email, avatar) for members
-			const safeUsers = users.map(u => ({
+			const safeUsers = users.map((u) => ({
 				id: u.id,
 				name: u.name,
 				email: u.email,
