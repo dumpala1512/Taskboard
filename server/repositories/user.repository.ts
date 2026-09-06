@@ -61,6 +61,11 @@ export class UserRepository {
 	}
 
 	async delete(id: string): Promise<boolean> {
+		const freshDb = loadDb();
+		db.users = freshDb.users;
+		if (freshDb.projects) db.projects = freshDb.projects;
+		if (freshDb.tasks) db.tasks = freshDb.tasks;
+
 		const index = db.users.findIndex((u) => u.id === id);
 		if (index === -1) return false;
 		db.users.splice(index, 1);

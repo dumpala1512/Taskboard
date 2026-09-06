@@ -10,73 +10,6 @@
       "createdAt": "2026-08-03T04:26:35.622Z",
       "resetToken": "c4d0a9cb93b5bb8d9e2049e07ab3b49b28ebf68c23154775e06067614dd4f4fc",
       "resetTokenExpiry": 1788673529721
-    },
-    {
-      "name": "Abhishek g",
-      "firstName": "Abhishek",
-      "lastName": "g",
-      "email": "abg@gmail.com",
-      "role": "MEMBER",
-      "status": "ACTIVE",
-      "department": "Engineering",
-      "jobTitle": "",
-      "passwordHash": "$2b$10$QslK0XkhAhoalM91BBBWw.VPTHDZytmVqnh9c2MpAd.TukFpwqsUq",
-      "isFirstLogin": false,
-      "createdBy": "admin-1",
-      "id": "0c54df13-9f37-44cc-9803-0317a74b1ce3",
-      "createdAt": "2026-09-03T04:13:38.706Z",
-      "passwordChangedAt": "2026-09-03T04:14:16.316Z"
-    },
-    {
-      "name": "Test user",
-      "firstName": "Test",
-      "lastName": "user",
-      "email": "test@gmail.com",
-      "role": "MEMBER",
-      "status": "ACTIVE",
-      "department": "kblvd",
-      "jobTitle": "rtgrtg",
-      "joiningDate": "2026-02-15",
-      "passwordHash": "$2b$10$L8Sr71VsE3VGysFEOrkLGuK0.FjrOgf.Lxx3pRTfX2bz7ONd0yBKa",
-      "isFirstLogin": false,
-      "createdBy": "admin-1",
-      "id": "a33523c4-2fb1-4d30-81ba-d35c21aebcf6",
-      "createdAt": "2026-09-05T09:58:13.447Z",
-      "passwordChangedAt": "2026-09-05T09:58:49.831Z"
-    },
-    {
-      "name": "new  employee",
-      "firstName": "new ",
-      "lastName": "employee",
-      "email": "user@gmail.com",
-      "role": "MEMBER",
-      "status": "ACTIVE",
-      "department": "",
-      "jobTitle": "",
-      "joiningDate": "2026-09-09",
-      "passwordHash": "$2b$10$4OBTwFrV2QqeFt0g0ooV6upLaMYhL4QTmhHRfuEA9dPHyHu4l3giS",
-      "isFirstLogin": false,
-      "createdBy": "admin-1",
-      "id": "b60c0801-11e6-4489-b496-8c06844ba495",
-      "createdAt": "2026-09-06T05:52:09.445Z",
-      "passwordChangedAt": "2026-09-06T05:52:56.791Z"
-    },
-    {
-      "name": "vercel user",
-      "firstName": "vercel",
-      "lastName": "user",
-      "email": "vercel@gmail.com",
-      "role": "MEMBER",
-      "status": "ACTIVE",
-      "department": "",
-      "jobTitle": "",
-      "joiningDate": "",
-      "passwordHash": "$2b$10$vy38BcJsjKni3R.EKh1TZutrZubB7GGbvZf8abiFcGJNrDJDMVwp6",
-      "isFirstLogin": false,
-      "createdBy": "admin-1",
-      "id": "91b7bbac-1162-4cb0-9219-fdeeba17ac9e",
-      "createdAt": "2026-09-06T06:51:44.849Z",
-      "passwordChangedAt": "2026-09-06T06:52:21.376Z"
     }
   ],
   "projects": [
@@ -103,9 +36,7 @@
       "status": "ACTIVE",
       "progress": 50,
       "ownerId": "admin-1",
-      "members": [
-        "0c54df13-9f37-44cc-9803-0317a74b1ce3"
-      ],
+      "members": [],
       "tags": [],
       "dueDate": "",
       "key": "sbsiuvsc",
@@ -120,9 +51,7 @@
       "status": "ACTIVE",
       "progress": 0,
       "ownerId": "admin-1",
-      "members": [
-        "a33523c4-2fb1-4d30-81ba-d35c21aebcf6"
-      ],
+      "members": [],
       "tags": [
         "35k.n."
       ],
@@ -157,9 +86,7 @@
       "status": "PLANNING",
       "progress": 0,
       "ownerId": "admin-1",
-      "members": [
-        "a33523c4-2fb1-4d30-81ba-d35c21aebcf6"
-      ],
+      "members": [],
       "tags": [],
       "startDate": "2026-09-06",
       "dueDate": "2026-09-14",
