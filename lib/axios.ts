@@ -37,6 +37,20 @@ function parseEndpoint(url?: string): {
 // Intercept successful responses to mirror data in clientStorage
 apiClient.interceptors.response.use(
 	(response: AxiosResponse) => {
+		// Sync tombstones from server headers
+		const delProjectsHeader = response.headers?.["x-deleted-projects"];
+		const delUsersHeader = response.headers?.["x-deleted-users"];
+		const delTasksHeader = response.headers?.["x-deleted-tasks"];
+		if (delProjectsHeader || delUsersHeader || delTasksHeader) {
+			try {
+				clientStorage.syncDeleted({
+					deletedProjectIds: delProjectsHeader ? JSON.parse(delProjectsHeader) : undefined,
+					deletedUserIds: delUsersHeader ? JSON.parse(delUsersHeader) : undefined,
+					deletedTaskIds: delTasksHeader ? JSON.parse(delTasksHeader) : undefined,
+				});
+			} catch (_) {}
+		}
+
 		const method = response.config.method?.toUpperCase();
 		const { path, id, subAction } = parseEndpoint(response.config.url);
 
@@ -191,6 +205,18 @@ apiClient.interceptors.response.use(
 		const { path, id, subAction } = parseEndpoint(config.url);
 		const status = error.response?.status;
 		if (status === 400 || status === 422) {
+			return Promise.reject(error);
+		}
+
+		// When the server returns 404, the resource is deleted/not found. Never resurrect from local storage!
+		if (status === 404) {
+			if (path === "projects" && id) {
+				clientStorage.deleteProject(id);
+			} else if (path === "tasks" && id) {
+				clientStorage.deleteTask(id);
+			} else if (path === "users" && id) {
+				clientStorage.deleteUser(id);
+			}
 			return Promise.reject(error);
 		}
 

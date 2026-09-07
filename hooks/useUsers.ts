@@ -84,13 +84,14 @@ export function useDeleteUser() {
 			return response.data;
 		},
 		onSuccess: (_, userId) => {
+			const target = (userId || "").toLowerCase();
 			queryClient.setQueryData(["admin-users"], (old: any) => {
 				if (!Array.isArray(old)) return [];
-				return old.filter((u: any) => u.id !== userId);
+				return old.filter((u: any) => u && u.id !== userId && u.id?.toLowerCase() !== target && (!u.email || u.email.toLowerCase() !== target));
 			});
 			queryClient.setQueryData(["users"], (old: any) => {
 				if (!Array.isArray(old)) return [];
-				return old.filter((u: any) => u.id !== userId);
+				return old.filter((u: any) => u && u.id !== userId && u.id?.toLowerCase() !== target && (!u.email || u.email.toLowerCase() !== target));
 			});
 			queryClient.invalidateQueries({ queryKey: ["admin-users"] });
 			queryClient.invalidateQueries({ queryKey: ["users"] });

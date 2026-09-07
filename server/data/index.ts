@@ -82,6 +82,15 @@ export function isTaskDeleted(id?: string): boolean {
 	return deletedTaskIds.has(id) || deletedTaskIds.has(id.toLowerCase());
 }
 
+export function attachDeletedHeaders(res: any) {
+	if (!res || typeof res.setHeader !== "function" || res.headersSent) return;
+	try {
+		res.setHeader("x-deleted-projects", JSON.stringify(Array.from(deletedProjectIds)));
+		res.setHeader("x-deleted-users", JSON.stringify(Array.from(deletedUserIds)));
+		res.setHeader("x-deleted-tasks", JSON.stringify(Array.from(deletedTaskIds)));
+	} catch (_) {}
+}
+
 // Maximum db.json file size before auto-clearing non-admin data (500 KB)
 const MAX_DB_SIZE_BYTES = 500 * 1024;
 

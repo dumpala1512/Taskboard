@@ -2,11 +2,13 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import { taskService } from "../../../server/services/task.service";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "../auth/[...nextauth]";
+import { attachDeletedHeaders } from "../../../server/data";
 
 export default async function handler(
 	req: NextApiRequest,
 	res: NextApiResponse,
 ) {
+	attachDeletedHeaders(res);
 	if (req.method !== "GET" && req.method !== "POST") {
 		return res.status(405).json({ message: "Method not allowed" });
 	}

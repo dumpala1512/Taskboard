@@ -62,9 +62,10 @@ export function useDeleteProject() {
 			return response.data;
 		},
 		onSuccess: (_, deletedId) => {
+			const target = (deletedId || "").toLowerCase();
 			queryClient.setQueryData(["projects"], (old: any) => {
 				if (!Array.isArray(old)) return [];
-				return old.filter((p: any) => p.id !== deletedId);
+				return old.filter((p: any) => p && p.id !== deletedId && p.id?.toLowerCase() !== target && (!p.key || p.key.toLowerCase() !== target));
 			});
 			queryClient.invalidateQueries({ queryKey: ["projects"] });
 			queryClient.invalidateQueries({ queryKey: ["tasks"] });

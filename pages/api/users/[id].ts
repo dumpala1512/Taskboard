@@ -2,11 +2,13 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import { getServerSession } from "next-auth/next";
 import { adminService } from "../../../server/services/admin.service";
 import { authOptions } from "../auth/[...nextauth]";
+import { attachDeletedHeaders } from "../../../server/data";
 
 export default async function handler(
 	req: NextApiRequest,
 	res: NextApiResponse,
 ) {
+	attachDeletedHeaders(res);
 	const session = await getServerSession(req, res, authOptions);
 	if (!session || !session.user) {
 		return res.status(401).json({ message: "Unauthorized" });

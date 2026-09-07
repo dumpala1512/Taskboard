@@ -48,6 +48,84 @@ export const clientStorage = {
 		return getItem<string[]>(STORAGE_KEYS.DELETED_TASKS, []);
 	},
 
+	syncDeleted(data: {
+		deletedProjectIds?: string[];
+		deletedUserIds?: string[];
+		deletedTaskIds?: string[];
+	}): void {
+		if (!data) return;
+		let projectsChanged = false;
+		let usersChanged = false;
+		let tasksChanged = false;
+
+		if (Array.isArray(data.deletedProjectIds) && data.deletedProjectIds.length > 0) {
+			const existing = this.getDeletedProjectIds();
+			const existingSet = new Set(existing.map((x) => x.toLowerCase()));
+			for (const id of data.deletedProjectIds) {
+				if (id && !existingSet.has(id.toLowerCase())) {
+					existing.push(id);
+					existing.push(id.toLowerCase());
+					existingSet.add(id.toLowerCase());
+					projectsChanged = true;
+				}
+			}
+			if (projectsChanged) {
+				setItem(STORAGE_KEYS.DELETED_PROJECTS, existing);
+				const deletedSet = new Set(existing.map((x) => x.toLowerCase()));
+				const filtered = getItem<Project[]>(STORAGE_KEYS.PROJECTS, []).filter(
+					(p) => p && p.id && !deletedSet.has(p.id.toLowerCase()) && (!p.key || !deletedSet.has(p.key.toLowerCase())),
+				);
+				setItem(STORAGE_KEYS.PROJECTS, filtered);
+			}
+		}
+
+		if (Array.isArray(data.deletedUserIds) && data.deletedUserIds.length > 0) {
+			const existing = this.getDeletedUserIds();
+			const existingSet = new Set(existing.map((x) => x.toLowerCase()));
+			for (const id of data.deletedUserIds) {
+				if (id && !existingSet.has(id.toLowerCase())) {
+					existing.push(id);
+					existing.push(id.toLowerCase());
+					existingSet.add(id.toLowerCase());
+					usersChanged = true;
+				}
+			}
+			if (usersChanged) {
+				setItem(STORAGE_KEYS.DELETED_USERS, existing);
+				const deletedSet = new Set(existing.map((x) => x.toLowerCase()));
+				const filteredUsers = getItem<any[]>(STORAGE_KEYS.USERS, []).filter((item) => {
+					const u = item?.user || item;
+					if (!u || !u.id) return false;
+					if (deletedSet.has(u.id.toLowerCase())) return false;
+					if (u.email && deletedSet.has(u.email.trim().toLowerCase())) return false;
+					return true;
+				});
+				setItem(STORAGE_KEYS.USERS, filteredUsers);
+			}
+		}
+
+		if (Array.isArray(data.deletedTaskIds) && data.deletedTaskIds.length > 0) {
+			const existing = this.getDeletedTaskIds();
+			const existingSet = new Set(existing.map((x) => x.toLowerCase()));
+			for (const id of data.deletedTaskIds) {
+				if (id && !existingSet.has(id.toLowerCase())) {
+					existing.push(id);
+					existing.push(id.toLowerCase());
+					existingSet.add(id.toLowerCase());
+					tasksChanged = true;
+				}
+			}
+			if (tasksChanged) {
+				setItem(STORAGE_KEYS.DELETED_TASKS, existing);
+				const deletedSet = new Set(existing.map((x) => x.toLowerCase()));
+				const filteredTasks = getItem<Task[]>(STORAGE_KEYS.TASKS, []).filter(
+					(t) => t && t.id && !deletedSet.has(t.id.toLowerCase()),
+				);
+				setItem(STORAGE_KEYS.TASKS, filteredTasks);
+			}
+		}
+	},
+
 	// ==================== PROJECTS ====================
 	getProjects(): Project[] {
 		const raw = getItem<Project[]>(STORAGE_KEYS.PROJECTS, []);
@@ -189,43 +267,12 @@ export const clientStorage = {
 	},
 
 	mergeProjects(serverProjects: Project[]): Project[] {
-		const localProjects = this.getProjects();
 		const deletedIds = new Set(this.getDeletedProjectIds().map((x) => x.toLowerCase()));
-		const mergedMap = new Map<string, Project>();
-
-		// Add server projects first (ignoring deleted)
-		for (const p of serverProjects) {
-			if (!p || !p.id) continue;
-			if (deletedIds.has(p.id.toLowerCase()) || (p.key && deletedIds.has(p.key.toLowerCase()))) continue;
-			mergedMap.set(p.id, p);
-		}
-
-		// Overlay local projects
-		for (const p of localProjects) {
-			if (!p || !p.id) continue;
-			if (deletedIds.has(p.id.toLowerCase()) || (p.key && deletedIds.has(p.key.toLowerCase()))) continue;
-			const existing = mergedMap.get(p.id);
-			if (!existing) {
-				mergedMap.set(p.id, p);
-			} else {
-				const mergedMembers = Array.from(
-					new Set([...(existing.members || []), ...(p.members || [])]),
-				);
-				const localTime = new Date(p.updatedAt || p.createdAt).getTime();
-				const serverTime = new Date(existing.updatedAt || existing.createdAt).getTime();
-				const base = localTime >= serverTime ? { ...existing, ...p } : { ...p, ...existing };
-				mergedMap.set(p.id, {
-					...base,
-					members: mergedMembers,
-				});
-			}
-		}
-
-		const mergedList = Array.from(mergedMap.values()).sort(
-			(a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+		const validProjects = (serverProjects || []).filter(
+			(p) => p && p.id && !deletedIds.has(p.id.toLowerCase()) && (!p.key || !deletedIds.has(p.key.toLowerCase())),
 		);
-		setItem(STORAGE_KEYS.PROJECTS, mergedList);
-		return mergedList;
+		setItem(STORAGE_KEYS.PROJECTS, validProjects);
+		return validProjects;
 	},
 
 	// ==================== TASKS ====================
@@ -319,51 +366,20 @@ export const clientStorage = {
 	},
 
 	mergeTasks(serverTasks: Task[], projectId?: string): Task[] {
-		const activeProjects = this.getProjects();
-		const validProjectIds = new Set<string>();
-		activeProjects.forEach((p) => {
-			if (p.id) validProjectIds.add(p.id.toLowerCase());
-			if (p.key) validProjectIds.add(p.key.toLowerCase());
-		});
-		const deletedIds = new Set(this.getDeletedTaskIds());
-		const rawLocalTasks = getItem<Task[]>(STORAGE_KEYS.TASKS, []);
-		const localTasks = rawLocalTasks.filter(
-			(t) =>
-				t &&
-				t.id &&
-				!deletedIds.has(t.id) &&
-				t.projectId &&
-				validProjectIds.has(t.projectId.toLowerCase()),
+		const deletedIds = new Set(this.getDeletedTaskIds().map((x) => x.toLowerCase()));
+		const validTasks = (serverTasks || []).filter(
+			(t) => t && t.id && !deletedIds.has(t.id.toLowerCase()),
 		);
-		const mergedMap = new Map<string, Task>();
-
-		for (const t of serverTasks) {
-			if (!t || !t.id || deletedIds.has(t.id)) continue;
-			if (!t.projectId || !validProjectIds.has(t.projectId.toLowerCase())) continue;
-			mergedMap.set(t.id, t);
+		if (projectId) {
+			const allTasks = getItem<Task[]>(STORAGE_KEYS.TASKS, []).filter(
+				(t) => t && t.id && !deletedIds.has(t.id.toLowerCase()) && t.projectId?.toLowerCase() !== projectId.toLowerCase(),
+			);
+			const combined = [...allTasks, ...validTasks];
+			setItem(STORAGE_KEYS.TASKS, combined);
+			return validTasks;
 		}
-
-		for (const t of localTasks) {
-			if (!t || !t.id || deletedIds.has(t.id)) continue;
-			if (!t.projectId || !validProjectIds.has(t.projectId.toLowerCase())) continue;
-			if (projectId && t.projectId !== projectId) continue;
-			const existing = mergedMap.get(t.id);
-			if (!existing) {
-				mergedMap.set(t.id, t);
-			} else {
-				const localTime = new Date(t.updatedAt || t.createdAt).getTime();
-				const serverTime = new Date(existing.updatedAt || existing.createdAt).getTime();
-				if (localTime >= serverTime) {
-					mergedMap.set(t.id, { ...existing, ...t });
-				}
-			}
-		}
-
-		const mergedList = Array.from(mergedMap.values());
-		const otherTasks = projectId ? localTasks.filter((t) => t.projectId !== projectId && !deletedIds.has(t.id)) : [];
-		setItem(STORAGE_KEYS.TASKS, [...otherTasks, ...mergedList]);
-
-		return projectId ? mergedList.filter((t) => t.projectId === projectId) : mergedList;
+		setItem(STORAGE_KEYS.TASKS, validTasks);
+		return validTasks;
 	},
 
 	// ==================== USERS ====================
@@ -539,19 +555,10 @@ export const clientStorage = {
 	},
 
 	mergeUsers(serverUsers: any[]): User[] {
-		const localUsers = this.getUsers();
 		const deletedIds = new Set(this.getDeletedUserIds().map((x) => x.toLowerCase()));
-		const localMap = new Map<string, any>();
-		const localEmailMap = new Map<string, any>();
-		for (const u of localUsers) {
-			if (u && u.id) localMap.set(u.id.toLowerCase(), u);
-			if (u && u.email) localEmailMap.set(u.email.trim().toLowerCase(), u);
-		}
-
 		const userMap = new Map<string, User>();
-		const seenEmails = new Set<string>();
 
-		for (const raw of serverUsers) {
+		for (const raw of serverUsers || []) {
 			const u: any = raw.user ? raw.user : raw;
 			if (!u || !u.id || deletedIds.has(u.id.toLowerCase())) continue;
 			const cleanEmail = u.email ? u.email.trim().toLowerCase() : "";
@@ -560,36 +567,7 @@ export const clientStorage = {
 			if (!u.name) {
 				u.name = `${u.firstName || ""} ${u.lastName || ""}`.trim() || u.email || "Member";
 			}
-			const existing =
-				localMap.get(u.id.toLowerCase()) ||
-				(cleanEmail ? localEmailMap.get(cleanEmail) : undefined);
-			const isFirstLogin = (existing?.isFirstLogin === false || u.isFirstLogin === false)
-				? false
-				: (typeof u.isFirstLogin !== "undefined" ? u.isFirstLogin : existing?.isFirstLogin);
-
-			const merged = {
-				...existing,
-				...u,
-				isFirstLogin,
-				tempPassword: isFirstLogin === false ? undefined : (u.tempPassword || existing?.tempPassword),
-				passwordHash: u.passwordHash || existing?.passwordHash,
-			};
-
-			userMap.set(u.id, merged);
-			if (cleanEmail) seenEmails.add(cleanEmail);
-		}
-
-		for (const u of localUsers) {
-			if (!u || !u.id || deletedIds.has(u.id.toLowerCase())) continue;
-			const cleanEmail = u.email ? u.email.trim().toLowerCase() : "";
-			if (cleanEmail && deletedIds.has(cleanEmail)) continue;
-
-			// Do not re-add if user with this ID or email was already processed from serverUsers
-			if (userMap.has(u.id) || (cleanEmail && seenEmails.has(cleanEmail))) {
-				continue;
-			}
-			userMap.set(u.id, u);
-			if (cleanEmail) seenEmails.add(cleanEmail);
+			userMap.set(u.id.toLowerCase(), u);
 		}
 
 		const list = Array.from(userMap.values());
