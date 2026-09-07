@@ -8,11 +8,13 @@ import { ChevronDown, ListTodo } from "lucide-react";
 import { EmptyState } from "../../components/ui/EmptyState";
 import { useUsers } from "../../hooks/useUsers";
 import { Skeleton } from "../../components/ui/Skeleton";
+import { useProjects } from "../../hooks/useProjects";
 
 export default function Overview() {
 	const { data: session } = useSession();
 	const { data: tasks, isLoading: tasksLoading } = useTasks();
 	const { data: users } = useUsers();
+	const { data: projects = [] } = useProjects();
 	
 	const safeUsers = users || [];
 	const role = (session?.user as any)?.role || "MEMBER";
@@ -21,7 +23,18 @@ export default function Overview() {
 
 	const [view, setView] = useState<"assigned" | "all">("assigned");
 
-	const safeTasks: any[] = tasks || [];
+	const validProjectIds = React.useMemo(() => {
+		const set = new Set<string>();
+		projects.forEach((p) => {
+			if (p.id) set.add(p.id.toLowerCase());
+			if (p.key) set.add(p.key.toLowerCase());
+		});
+		return set;
+	}, [projects]);
+
+	const safeTasks: any[] = (tasks || []).filter(
+		(t) => t.projectId && (validProjectIds.size === 0 || validProjectIds.has(t.projectId.toLowerCase()))
+	);
 	
 	// Filter tasks based on view
 	const filteredTasks = view === "assigned" 

@@ -34,8 +34,11 @@ export default async function handler(
 			const allTasks = await taskService.getAllTasks(userId, role);
 			return res.status(200).json(allTasks);
 		}
-	} catch (error) {
-		console.error("Error fetching tasks:", error);
-		return res.status(500).json({ message: "Internal server error" });
+	} catch (error: any) {
+		console.error("Error fetching/creating tasks:", error);
+		if (error?.message === "Add the member to the project and then assign task") {
+			return res.status(400).json({ message: error.message });
+		}
+		return res.status(500).json({ message: error?.message || "Internal server error" });
 	}
 }

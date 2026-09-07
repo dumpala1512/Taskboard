@@ -70,10 +70,7 @@ export function InviteMemberModal({ isOpen, onClose }: InviteMemberModalProps) {
 					</div>
 				</div>
 
-				<div className="p-6 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 flex justify-end space-x-3">
-					<Button variant="outline" onClick={onClose} disabled={isSubmitting}>
-						Cancel
-					</Button>
+				<div className="p-6 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 flex justify-end">
 					<Button onClick={handleInvite} disabled={isSubmitting}>
 						{isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
 						Send Invite

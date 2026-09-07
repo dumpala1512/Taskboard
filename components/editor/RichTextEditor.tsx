@@ -21,6 +21,7 @@ import { Toolbar } from "./Toolbar";
 interface RichTextEditorProps {
 	value: string;
 	onChange: (value: string) => void;
+	onBlur?: () => void;
 	placeholder?: string;
 	className?: string;
 	error?: boolean;
@@ -31,6 +32,7 @@ interface RichTextEditorProps {
 export default function RichTextEditor({
 	value,
 	onChange,
+	onBlur,
 	placeholder = "Write something...",
 	className = "",
 	error,
@@ -60,6 +62,9 @@ export default function RichTextEditor({
 		editable: !readOnly,
 		onUpdate: ({ editor }) => {
 			onChange(editor.getHTML());
+		},
+		onBlur: () => {
+			onBlur?.();
 		},
 		editorProps: {
 			attributes: {

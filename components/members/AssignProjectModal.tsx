@@ -139,13 +139,7 @@ export default function AssignProjectModal({
 					)}
 				</div>
 
-				<div className="p-6 border-t border-slate-200 flex justify-end gap-3 bg-slate-50">
-					<button
-						onClick={onClose}
-						className="px-4 py-2 bg-white border border-slate-200 text-slate-700 text-sm font-medium rounded-lg hover:bg-slate-50 transition-colors"
-					>
-						Cancel
-					</button>
+				<div className="p-6 border-t border-slate-200 flex justify-end bg-slate-50">
 					<button
 						className="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
 						onClick={handleAssign}

@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { Portal } from "../ui/Portal";
 import { toast } from "react-hot-toast";
 import { useCreateTask, useUpdateTask } from "../../hooks/useTasks";
+import { useProjects } from "../../hooks/useProjects";
 import type { Task } from "../../server/types";
 import { Button } from "../ui/Button";
 import { Step1BasicInfo } from "./wizard/Step1BasicInfo";
@@ -30,6 +31,7 @@ export function TaskWizardModal({
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [errors, setErrors] = useState<Record<string, string>>({});
 
+	const { data: projects = [] } = useProjects();
 	const createTask = useCreateTask();
 	const updateTask = useUpdateTask();
 	const router = useRouter();
@@ -105,7 +107,7 @@ export function TaskWizardModal({
 			if (!formData.priority) newErrors.priority = "Priority is required";
 		}
 
-		if (currentStep === 2) {
+		if (currentStep === 2 || currentStep === 4) {
 			if (!formData.status) newErrors.status = "Status is required";
 			if (!formData.startDate) newErrors.startDate = "Start date is required";
 			if (!formData.dueDate) newErrors.dueDate = "Due date is required";
@@ -118,10 +120,97 @@ export function TaskWizardModal({
 					newErrors.dueDate = "Due date cannot be before start date";
 				}
 			}
+
+			if (formData.assigneeId && formData.projectId) {
+				const project = projects.find((p) => p.id === formData.projectId);
+				if (project) {
+					const isMember =
+						project.ownerId === formData.assigneeId ||
+						(Array.isArray(project.members) &&
+							project.members.includes(formData.assigneeId));
+					if (!isMember) {
+						newErrors.assigneeId =
+							"Add the member to the project and then assign task";
+					}
+				}
+			}
 		}
 
 		setErrors(newErrors);
 		return Object.keys(newErrors).length === 0;
+	};
+
+	const handleBlurField = (field: string, value: any) => {
+		setErrors((prev) => {
+			const next = { ...prev };
+			if (field === "projectId") {
+				if (!value) next.projectId = "Project is required";
+				else delete next.projectId;
+			}
+			if (field === "title") {
+				if (!value?.trim()) next.title = "Title is required";
+				else if (value.trim().length < 3)
+					next.title = "Title must be at least 3 characters";
+				else delete next.title;
+			}
+			if (field === "description") {
+				if (!value?.trim()) next.description = "Description is required";
+				else if (value.trim().length < 10)
+					next.description = "Description must be at least 10 characters";
+				else delete next.description;
+			}
+			if (field === "priority") {
+				if (!value) next.priority = "Priority is required";
+				else delete next.priority;
+			}
+			if (field === "status") {
+				if (!value) next.status = "Status is required";
+				else delete next.status;
+			}
+			if (field === "startDate") {
+				if (!value) next.startDate = "Start date is required";
+				else delete next.startDate;
+			}
+			if (field === "dueDate") {
+				if (!value) next.dueDate = "Due date is required";
+				else delete next.dueDate;
+			}
+			if (field === "assigneeId") {
+				if (value && formData.projectId) {
+					const project = projects.find((p) => p.id === formData.projectId);
+					if (project) {
+						const isMember =
+							project.ownerId === value ||
+							(Array.isArray(project.members) &&
+								project.members.includes(value));
+						if (!isMember) {
+							next.assigneeId =
+								"Add the member to the project and then assign task";
+						} else {
+							delete next.assigneeId;
+						}
+					}
+				} else {
+					delete next.assigneeId;
+				}
+			}
+			if (formData.startDate && formData.dueDate) {
+				const start = new Date(
+					field === "startDate" ? value : formData.startDate,
+				);
+				const due = new Date(field === "dueDate" ? value : formData.dueDate);
+				if (start > due) {
+					next.startDate = "Start date cannot be after due date";
+					next.dueDate = "Due date cannot be before start date";
+				} else {
+					if (next.startDate === "Start date cannot be after due date")
+						delete next.startDate;
+					if (next.dueDate === "Due date cannot be before start date")
+						delete next.dueDate;
+				}
+			}
+			return next;
+		});
 	};
 
 	const nextStep = () => {
@@ -132,13 +221,49 @@ export function TaskWizardModal({
 		}
 	};
 
+	const isStep1Valid = !!(
+		formData.projectId &&
+		formData.title?.trim() &&
+		formData.title.trim().length >= 3 &&
+		formData.description?.trim() &&
+		formData.description.trim().length >= 10 &&
+		formData.priority &&
+		!errors.projectId &&
+		!errors.title &&
+		!errors.description &&
+		!errors.priority
+	);
+
+	const isAssigneeValid =
+		!formData.assigneeId ||
+		!formData.projectId ||
+		(() => {
+			const project = projects.find((p) => p.id === formData.projectId);
+			if (!project) return true;
+			return (
+				project.ownerId === formData.assigneeId ||
+				(Array.isArray(project.members) &&
+					project.members.includes(formData.assigneeId))
+			);
+		})();
+
+	const isStep2Valid = !!(
+		formData.status &&
+		formData.startDate &&
+		formData.dueDate &&
+		(!formData.startDate ||
+			!formData.dueDate ||
+			new Date(formData.startDate) <= new Date(formData.dueDate)) &&
+		!errors.status &&
+		!errors.startDate &&
+		!errors.dueDate &&
+		!errors.assigneeId &&
+		isAssigneeValid
+	);
+
 	const isContinueDisabled = () => {
-		if (step === 1) {
-			return !formData.projectId || !formData.title?.trim() || !formData.description?.trim() || !formData.priority;
-		}
-		if (step === 2) {
-			return !formData.status || !formData.startDate || !formData.dueDate;
-		}
+		if (step === 1) return !isStep1Valid;
+		if (step === 2) return !isStep2Valid;
 		return false;
 	};
 
@@ -155,14 +280,27 @@ export function TaskWizardModal({
 	};
 
 	const handleSubmit = async () => {
-		if (!validateStep(4)) {
-			toast.error("Validation failed");
+		if (!validateStep(4) || !isAssigneeValid) {
+			if (!isAssigneeValid) {
+				toast.error("Add the member to the project and then assign task");
+				setErrors((prev) => ({
+					...prev,
+					assigneeId: "Add the member to the project and then assign task",
+				}));
+			} else {
+				toast.error("Validation failed");
+			}
 			return;
 		}
 
 		setIsSubmitting(true);
 		try {
 			const submitData = { ...formData, isDraft: false };
+			if (!submitData.assigneeId && submitData.status === "TODO") {
+				submitData.status = "BACKLOG";
+			} else if (submitData.assigneeId && (!submitData.status || submitData.status === "BACKLOG")) {
+				submitData.status = "TODO";
+			}
 			if (taskToEdit) {
 				await updateTask.mutateAsync({
 					id: taskToEdit.id,
@@ -178,7 +316,9 @@ export function TaskWizardModal({
 			}
 			handleClose();
 		} catch (err: any) {
-			toast.error(err.message || "Failed to save task");
+			toast.error(
+				err.response?.data?.message || err.message || "Failed to save task",
+			);
 		} finally {
 			setIsSubmitting(false);
 		}
@@ -250,6 +390,7 @@ export function TaskWizardModal({
 							setFormData={setFormData}
 							errors={errors}
 							isFixedProject={!!initialProjectId}
+							onBlurField={handleBlurField}
 						/>
 					)}
 					{step === 2 && (
@@ -257,6 +398,7 @@ export function TaskWizardModal({
 							formData={formData}
 							setFormData={setFormData}
 							errors={errors}
+							onBlurField={handleBlurField}
 						/>
 					)}
 					{step === 3 && (
@@ -270,15 +412,7 @@ export function TaskWizardModal({
 				</div>
 
 				{/* Footer */}
-				<div className="px-6 py-4 border-t border-[#E0E3E8] dark:border-[#222F49] bg-[#F8FAFC] dark:bg-[#0E1526] rounded-b-md flex items-center justify-between shrink-0">
-					<Button
-						variant="secondary"
-						onClick={handleClose}
-						disabled={isSubmitting}
-					>
-						Cancel
-					</Button>
-
+				<div className="px-6 py-4 border-t border-[#E0E3E8] dark:border-[#222F49] bg-[#F8FAFC] dark:bg-[#0E1526] rounded-b-md flex items-center justify-end shrink-0">
 					<div className="flex items-center gap-3">
 						{step > 1 && (
 							<Button
@@ -300,7 +434,11 @@ export function TaskWizardModal({
 								Continue
 							</Button>
 						) : (
-							<Button variant="primary" onClick={handleSubmit} disabled={isSubmitting}>
+							<Button
+								variant="primary"
+								onClick={handleSubmit}
+								disabled={isSubmitting || !isStep1Valid || !isStep2Valid}
+							>
 								{isSubmitting && (
 									<Loader2 className="w-4 h-4 mr-2 animate-spin" />
 								)}

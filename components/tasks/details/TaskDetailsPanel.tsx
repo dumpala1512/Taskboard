@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { X, CheckSquare, MessageSquare, MoreVertical } from 'lucide-react';
+import { X, CheckSquare, MessageSquare, MoreVertical, Trash2 } from 'lucide-react';
 import { TaskSummary } from './TaskSummary';
 import { DetailsTab } from './tabs/DetailsTab';
 import { CommentsTab } from './tabs/CommentsTab';
 import { Button } from '@/components/ui/Button';
 import { toast } from 'react-hot-toast';
-import { useUpdateTask } from '../../../hooks/useTasks';
+import { useUpdateTask, useDeleteTask } from '../../../hooks/useTasks';
 import { useSession } from 'next-auth/react';
 import { useProjects } from '../../../hooks/useProjects';
 
@@ -54,6 +54,8 @@ export function TaskDetailsPanel({ task, users, isOpen, onClose, project: propPr
   const [newComment, setNewComment] = useState('');
 
   const { mutate: updateTask, isPending } = useUpdateTask();
+  const deleteTask = useDeleteTask();
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   // Mock fetching data
   useEffect(() => {
@@ -85,11 +87,42 @@ export function TaskDetailsPanel({ task, users, isOpen, onClose, project: propPr
   };
 
   const handleAssigneeChange = (userId: string | null) => {
+    if (userId && project) {
+      const isMember =
+        project.ownerId === userId ||
+        (Array.isArray(project.members) && project.members.includes(userId));
+      if (!isMember) {
+        toast.error("Add the member to the project and then assign task");
+        return;
+      }
+    }
+    const updates: any = {
+      id: task.id,
+      assigneeId: userId || "",
+      projectId: task.projectId,
+    };
+    if (!userId && task.status === "TODO") {
+      updates.status = "BACKLOG";
+    } else if (userId && (!task.status || task.status === "BACKLOG")) {
+      updates.status = "TODO";
+    }
+
     updateTask(
-      { id: task.id, assigneeId: userId ?? undefined },
+      updates,
       {
-        onSuccess: () => toast.success(userId ? 'Assignee updated' : 'Assignee removed'),
-        onError: () => toast.error('Failed to update assignee')
+        onSuccess: () =>
+          toast.success(
+            userId
+              ? "Task assigned and moved to To Do"
+              : "Task moved to unassigned"
+          ),
+        onError: (err: any) => {
+          const msg =
+            err?.response?.data?.message ||
+            err?.message ||
+            'Failed to update assignee';
+          toast.error(msg);
+        }
       }
     );
   };
@@ -129,16 +162,14 @@ export function TaskDetailsPanel({ task, users, isOpen, onClose, project: propPr
               <span>Projects</span>
               <span>/</span>
               <span>Task</span>
-              <span>/</span>
-              <span className="font-medium text-gray-700 truncate" title={task.id}>{task.id}</span>
             </div>
-            <div className="flex items-center space-x-3">
+            <div className="flex items-center flex-wrap gap-2">
               <h2 className="text-xl font-semibold text-gray-900 break-all sm:break-words line-clamp-2" title={task.title}>{task.title}</h2>
               <select
                 value={editedStatus || ""}
                 onChange={(e) => handleStatusChange(e.target.value as TaskStatus)}
                 disabled={isPending}
-                className="px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border-none cursor-pointer focus:ring-2 focus:ring-blue-500 hover:bg-blue-200 transition-colors disabled:opacity-50"
+                className="px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border-none cursor-pointer focus:ring-2 focus:ring-blue-500 hover:bg-blue-200 transition-colors disabled:opacity-50 shrink-0"
               >
                 {availableColumns.map((col) => (
                   <option key={col.id} value={col.id}>
@@ -150,7 +181,7 @@ export function TaskDetailsPanel({ task, users, isOpen, onClose, project: propPr
                 value={editedPriority}
                 onChange={(e) => handlePriorityChange(e.target.value as TaskPriority)}
                 disabled={isPending || !isAdmin}
-                className="px-2.5 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 border-none cursor-pointer focus:ring-2 focus:ring-red-500 hover:bg-red-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-2.5 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 border-none cursor-pointer focus:ring-2 focus:ring-red-500 hover:bg-red-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
               >
                 <option value="LOW">Low</option>
                 <option value="MEDIUM">Medium</option>
@@ -159,6 +190,17 @@ export function TaskDetailsPanel({ task, users, isOpen, onClose, project: propPr
             </div>
           </div>
           <div className="flex items-center space-x-2">
+            {(isAdmin || task.assigneeId === (session?.user as any)?.id) && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-slate-400 hover:text-red-600 hover:bg-red-50 p-1.5"
+                title="Delete Task"
+                onClick={() => setShowDeleteConfirm(true)}
+              >
+                <Trash2 className="w-4 h-4" />
+              </Button>
+            )}
             <Button variant="ghost" size="sm" className="text-gray-500" onClick={onClose}>
               <X className="w-5 h-5" />
             </Button>
@@ -209,13 +251,52 @@ export function TaskDetailsPanel({ task, users, isOpen, onClose, project: propPr
 
               {/* Tab Content */}
               <div className="mt-6 h-full">
-                {activeTab === 'details' && <DetailsTab task={task} users={users} onAssign={handleAssigneeChange} />}
+                {activeTab === 'details' && <DetailsTab task={task} users={users} project={project} onAssign={handleAssigneeChange} />}
                 {activeTab === 'comments' && <CommentsTab comments={comments} setComments={setComments} newComment={newComment} setNewComment={setNewComment} />}
               </div>
             </div>
           )}
         </div>
       </div>
+
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-sm w-full p-6 space-y-4">
+            <h3 className="text-lg font-bold text-slate-900">Delete Task</h3>
+            <p className="text-sm text-slate-600">
+              Are you sure you want to delete <span className="font-semibold text-slate-900">"{task.title}"</span>? This action is permanent and cannot be undone.
+            </p>
+            <div className="flex justify-end gap-2 pt-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowDeleteConfirm(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                size="sm"
+                className="bg-red-600 hover:bg-red-700 text-white"
+                disabled={deleteTask.isPending}
+                onClick={() => {
+                  deleteTask.mutate(task.id, {
+                    onSuccess: () => {
+                      toast.success("Task deleted successfully");
+                      setShowDeleteConfirm(false);
+                      onClose();
+                    },
+                    onError: (err: any) => {
+                      toast.error(err?.response?.data?.message || "Failed to delete task");
+                    }
+                  });
+                }}
+              >
+                Delete Task
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

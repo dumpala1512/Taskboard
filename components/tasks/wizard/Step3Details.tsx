@@ -34,7 +34,7 @@ export function Step3Details({ formData, setFormData, errors }: Step3Props) {
 	};
 
 	const handleAddCustomTag = () => {
-		const tag = customTag.trim().toUpperCase();
+		const tag = customTag.trim().slice(0, 30).toUpperCase();
 		if (tag) {
 			const tags = formData.tags || [];
 			if (!tags.includes(tag) && tags.length < 20) {
@@ -78,6 +78,7 @@ export function Step3Details({ formData, setFormData, errors }: Step3Props) {
 				<div className="flex gap-2">
 					<input 
 						type="text" 
+						maxLength={30}
 						value={customTag}
 						onChange={(e) => setCustomTag(e.target.value)}
 						onKeyDown={(e) => {

@@ -10,9 +10,456 @@
       "createdAt": "2026-08-03T04:26:35.622Z",
       "resetToken": "c4d0a9cb93b5bb8d9e2049e07ab3b49b28ebf68c23154775e06067614dd4f4fc",
       "resetTokenExpiry": 1788673529721
+    },
+    {
+      "name": "skivjcvsd uifbsfid",
+      "firstName": "skivjcvsd",
+      "lastName": "uifbsfid",
+      "email": "test@gmail.com",
+      "role": "MEMBER",
+      "status": "ACTIVE",
+      "department": "",
+      "jobTitle": "",
+      "joiningDate": "",
+      "passwordHash": "$2b$10$PCWA3VqH06BlLDQuiem6Puj8b8yWRah89hcdufQ./mqLtSD7BZABG",
+      "isFirstLogin": false,
+      "createdBy": "admin-1",
+      "id": "12442186-aaec-4b78-82bd-4be0c4e02766",
+      "createdAt": "2026-09-07T11:27:30.023Z",
+      "passwordChangedAt": "2026-09-07T11:28:03.703Z"
+    },
+    {
+      "name": "fgvdfvgdf srgdgfd",
+      "firstName": "fgvdfvgdf",
+      "lastName": "srgdgfd",
+      "email": "test1@gmail.com",
+      "role": "MEMBER",
+      "status": "ACTIVE",
+      "department": "",
+      "jobTitle": "",
+      "joiningDate": "",
+      "passwordHash": "$2b$10$6xMuTQZoxZwYENXrjFcjyeyrczIWRI./IQUCXwecgcZvctvBZvTxe",
+      "isFirstLogin": false,
+      "createdBy": "admin-1",
+      "id": "2a7c309f-e5f4-4d35-9318-baf0983d5019",
+      "createdAt": "2026-09-07T11:28:50.916Z",
+      "passwordChangedAt": "2026-09-07T11:29:26.570Z"
+    },
+    {
+      "name": "Jadahad Sahd",
+      "firstName": "Jadahad",
+      "lastName": "Sahd",
+      "email": "jhajd2gmail@gmail.com",
+      "role": "MEMBER",
+      "status": "ACTIVE",
+      "department": "",
+      "jobTitle": "",
+      "joiningDate": "",
+      "passwordHash": "$2b$10$Ne0byxUVOmMrIrUWr3w8MupJ67sg4KcgcXDHzyhxGbmAzhPqHwLSW",
+      "isFirstLogin": true,
+      "createdBy": "admin-1",
+      "id": "c1315b51-512d-4bcd-a705-2aed95151cf6",
+      "createdAt": "2026-09-07T11:52:05.514Z"
     }
   ],
-  "projects": [],
-  "tasks": [],
-  "activities": []
+  "projects": [
+    {
+      "columns": [
+        {
+          "id": "TODO",
+          "title": "To Do"
+        },
+        {
+          "id": "IN_PROGRESS",
+          "title": "In Progress"
+        },
+        {
+          "id": "REVIEW",
+          "title": "Review"
+        },
+        {
+          "id": "DONE",
+          "title": "Done"
+        }
+      ],
+      "name": "cbsdviljsvifrgdrg",
+      "description": "srgdfdboijkdfvbi srgdfdboijkdfvbi srgdfdboijkdfvbi srgdfdboijkdfvbi srgdfdboijkdfvbi srgdfdboijkdfvbi srgdfdboijkdfvbi srgdfdboijkdfvbi srgdfdboijkdfvbi srgdfdboijkdfvbi srgdfdboijkdfvbi srgdfdboijkdfvbi srgdfdboijkdfvbi srgdfdboijkdfvbi srgdfdboijkdfvbi srgdfdboijkdfvbi srgdfdboijkdfvbi srgdfdboijkdfvbi srgdfdboijkdfvbi ",
+      "status": "PLANNING",
+      "progress": 0,
+      "ownerId": "admin-1",
+      "members": [],
+      "tags": [
+        "gfdfdfddf"
+      ],
+      "startDate": "2026-09-07",
+      "dueDate": "2026-10-02",
+      "key": "PRJ-919",
+      "id": "84dea121-38c2-4fa9-87d7-0314924924c7",
+      "createdAt": "2026-09-07T10:11:31.421Z",
+      "updatedAt": "2026-09-07T10:11:31.421Z"
+    },
+    {
+      "columns": [
+        {
+          "id": "TODO",
+          "title": "To Do"
+        },
+        {
+          "id": "IN_PROGRESS",
+          "title": "In Progress"
+        },
+        {
+          "id": "REVIEW",
+          "title": "Review"
+        },
+        {
+          "id": "DONE",
+          "title": "Done"
+        }
+      ],
+      "name": "Develop Team hub application",
+      "description": "jycgmcir",
+      "status": "PLANNING",
+      "progress": 0,
+      "ownerId": "admin-1",
+      "members": [],
+      "tags": [],
+      "startDate": "2026-09-08",
+      "dueDate": "2026-09-14",
+      "key": "PRJ-130",
+      "id": "b13b1e82-939e-454c-b8d9-039321b2cf95",
+      "createdAt": "2026-09-07T10:57:28.352Z",
+      "updatedAt": "2026-09-07T10:57:28.352Z"
+    },
+    {
+      "columns": [
+        {
+          "id": "TODO",
+          "title": "To Do"
+        },
+        {
+          "id": "IN_PROGRESS",
+          "title": "In Progress"
+        },
+        {
+          "id": "REVIEW",
+          "title": "Review"
+        },
+        {
+          "id": "DONE",
+          "title": "Done"
+        }
+      ],
+      "name": "dffddd",
+      "description": "uabsk.dliub.lfs jduibud",
+      "status": "PLANNING",
+      "progress": 0,
+      "ownerId": "admin-1",
+      "members": [
+        "12442186-aaec-4b78-82bd-4be0c4e02766",
+        "2a7c309f-e5f4-4d35-9318-baf0983d5019"
+      ],
+      "tags": [],
+      "startDate": "2026-09-07",
+      "key": "PRJ-25",
+      "id": "d8c18ac1-f35b-4d5b-84e8-a0b21a519e58",
+      "createdAt": "2026-09-07T11:30:30.385Z",
+      "updatedAt": "2026-09-07T11:30:30.385Z"
+    },
+    {
+      "columns": [],
+      "name": "zdfgdg",
+      "description": "sdfdfdr",
+      "status": "PLANNING",
+      "progress": 0,
+      "ownerId": "admin-1",
+      "members": [],
+      "tags": [
+        "weawaea",
+        "efasf",
+        "zdsfzfz",
+        "sdfsf",
+        "sdff",
+        "asdfafdff"
+      ],
+      "startDate": "2026-09-17",
+      "dueDate": "2026-10-09",
+      "key": "PRJ-918",
+      "id": "33dc2ddc-5a48-4b56-a7d0-fa4801ce1c55",
+      "createdAt": "2026-09-07T11:54:56.829Z",
+      "updatedAt": "2026-09-07T12:12:51.653Z"
+    }
+  ],
+  "tasks": [
+    {
+      "title": "izusbdj, ",
+      "description": "<p>iauebs sld iusdbcjk </p>",
+      "projectId": "d8c18ac1-f35b-4d5b-84e8-a0b21a519e58",
+      "priority": "MEDIUM",
+      "taskType": "",
+      "assigneeId": "12442186-aaec-4b78-82bd-4be0c4e02766",
+      "status": "TODO",
+      "startDate": "2026-09-07",
+      "dueDate": "2026-09-23",
+      "estimatedTime": null,
+      "tags": [],
+      "attachments": [],
+      "notes": "",
+      "isDraft": false,
+      "id": "ebd27579-85b8-4d4c-8103-519647b7a06b",
+      "createdAt": "2026-09-07T11:30:54.734Z",
+      "updatedAt": "2026-09-07T11:32:16.342Z"
+    },
+    {
+      "title": "sdivjsdivsdzj n",
+      "description": "<p>szdf vb rfvbidsj nb c</p>",
+      "projectId": "d8c18ac1-f35b-4d5b-84e8-a0b21a519e58",
+      "priority": "MEDIUM",
+      "taskType": "",
+      "assigneeId": "",
+      "status": "BACKLOG",
+      "startDate": "2026-09-07",
+      "dueDate": "2026-09-25",
+      "estimatedTime": null,
+      "tags": [],
+      "attachments": [],
+      "notes": "",
+      "isDraft": false,
+      "id": "c8e999c7-c470-40fe-8872-2b59efa72dba",
+      "createdAt": "2026-09-07T11:31:23.205Z",
+      "updatedAt": "2026-09-07T12:41:30.991Z"
+    },
+    {
+      "title": "sdfSDDS",
+      "description": "<p>mshbdjhSDhDSb</p>",
+      "projectId": "33dc2ddc-5a48-4b56-a7d0-fa4801ce1c55",
+      "priority": "MEDIUM",
+      "taskType": "",
+      "assigneeId": "",
+      "status": "BACKLOG",
+      "startDate": "2026-09-04",
+      "dueDate": "2026-09-25",
+      "estimatedTime": null,
+      "tags": [],
+      "attachments": [],
+      "notes": "",
+      "isDraft": false,
+      "id": "66a05850-e04d-4899-975f-0369d955c331",
+      "createdAt": "2026-09-07T11:55:28.126Z",
+      "updatedAt": "2026-09-07T12:12:43.459Z"
+    },
+    {
+      "title": "ayufleivbjds v jdslvi js",
+      "description": "<p>ayufleivbjds v jdslvi jsayufleivbjds v jdslvi jsayufleivbjds v jdslvi jsayufleivbjds v jdslvi jsayufleivbjds v jdslvi jsayufleivbjds v jdslvi jsayufleivbjds v jdslvi jsayufleivbjds v jdslvi jsayufleivbjds v jdslvi js</p>",
+      "projectId": "33dc2ddc-5a48-4b56-a7d0-fa4801ce1c55",
+      "priority": "MEDIUM",
+      "taskType": "",
+      "assigneeId": "",
+      "status": "BACKLOG",
+      "startDate": "2026-09-07",
+      "dueDate": "2026-09-17",
+      "estimatedTime": null,
+      "tags": [
+        "SEUFILEWIFESOB;",
+        "EFHSNIODFOIODSHPF9IOBKJFESLFHE"
+      ],
+      "attachments": [],
+      "notes": "",
+      "isDraft": false,
+      "id": "15782f34-6bf5-4156-9fb6-f17dfef37943",
+      "createdAt": "2026-09-07T12:14:04.066Z",
+      "updatedAt": "2026-09-07T12:14:04.066Z"
+    }
+  ],
+  "activities": [
+    {
+      "type": "PROJECT_CREATED",
+      "userId": "admin-1",
+      "projectId": "84dea121-38c2-4fa9-87d7-0314924924c7",
+      "details": "cbsdviljsvifrgdrg",
+      "id": "c105b211-a430-4f27-ac32-f00bece6dfdf",
+      "createdAt": "2026-09-07T10:11:31.464Z"
+    },
+    {
+      "type": "PROJECT_CREATED",
+      "userId": "admin-1",
+      "projectId": "c85421e6-ed83-424b-aec9-4315c7869381",
+      "details": "cbsdviljsvifrgdrg",
+      "id": "4489f04f-f42d-428e-8940-ff55b6f5985d",
+      "createdAt": "2026-09-07T10:19:21.307Z"
+    },
+    {
+      "type": "TASK_CREATED",
+      "userId": "admin-1",
+      "projectId": "c85421e6-ed83-424b-aec9-4315c7869381",
+      "taskId": "50ba0ca7-fa47-4e67-b9c1-481af433dc97",
+      "details": "aj skdcvuisuduj ,ewfvij scugsuiaj skdcvuisuduj ,ewfvij scugsuiaj skdcvuisuduj ,ewfvij scugsui",
+      "id": "816f0a51-a7f7-42ea-98e9-b59a18de483d",
+      "createdAt": "2026-09-07T10:20:20.255Z"
+    },
+    {
+      "type": "TASK_UPDATED",
+      "userId": "admin-1",
+      "projectId": "c85421e6-ed83-424b-aec9-4315c7869381",
+      "taskId": "50ba0ca7-fa47-4e67-b9c1-481af433dc97",
+      "details": "aj skdcvuisuduj ,ewfvij scugsuiaj skdcvuisuduj ,ewfvij scugsuiaj skdcvuisuduj ,ewfvij scugsui",
+      "id": "62a533a8-9642-4493-9cc8-0a5ef2c4a99b",
+      "createdAt": "2026-09-07T10:42:12.979Z"
+    },
+    {
+      "type": "TASK_UPDATED",
+      "userId": "admin-1",
+      "projectId": "c85421e6-ed83-424b-aec9-4315c7869381",
+      "taskId": "50ba0ca7-fa47-4e67-b9c1-481af433dc97",
+      "details": "aj skdcvuisuduj ,ewfvij scugsuiaj skdcvuisuduj ,ewfvij scugsuiaj skdcvuisuduj ,ewfvij scugsui",
+      "id": "6f9daf17-29dd-4536-94ce-4bc181b4ade1",
+      "createdAt": "2026-09-07T10:50:11.902Z"
+    },
+    {
+      "type": "TASK_UPDATED",
+      "userId": "admin-1",
+      "projectId": "c85421e6-ed83-424b-aec9-4315c7869381",
+      "taskId": "50ba0ca7-fa47-4e67-b9c1-481af433dc97",
+      "details": "aj skdcvuisuduj ,ewfvij scugsuiaj skdcvuisuduj ,ewfvij scugsuiaj skdcvuisuduj ,ewfvij scugsui",
+      "id": "19d93851-c093-4285-8875-8854e75050a4",
+      "createdAt": "2026-09-07T10:50:13.416Z"
+    },
+    {
+      "type": "PROJECT_CREATED",
+      "userId": "admin-1",
+      "projectId": "b13b1e82-939e-454c-b8d9-039321b2cf95",
+      "details": "Develop Team hub application",
+      "id": "0a29c223-77e8-4d0f-84f9-c8c571c10098",
+      "createdAt": "2026-09-07T10:57:28.384Z"
+    },
+    {
+      "type": "PROJECT_CREATED",
+      "userId": "admin-1",
+      "projectId": "d8c18ac1-f35b-4d5b-84e8-a0b21a519e58",
+      "details": "dffddd",
+      "id": "0cf7b9d7-1129-482d-9e4e-758298e1a055",
+      "createdAt": "2026-09-07T11:30:30.443Z"
+    },
+    {
+      "type": "TASK_CREATED",
+      "userId": "admin-1",
+      "projectId": "d8c18ac1-f35b-4d5b-84e8-a0b21a519e58",
+      "taskId": "ebd27579-85b8-4d4c-8103-519647b7a06b",
+      "details": "izusbdj, ",
+      "id": "0f73eca1-3884-4a02-ba76-eb3245f39580",
+      "createdAt": "2026-09-07T11:30:54.790Z"
+    },
+    {
+      "type": "TASK_CREATED",
+      "userId": "admin-1",
+      "projectId": "d8c18ac1-f35b-4d5b-84e8-a0b21a519e58",
+      "taskId": "c8e999c7-c470-40fe-8872-2b59efa72dba",
+      "details": "sdivjsdivsdzj n",
+      "id": "5b54aa58-2ed0-46cb-836a-63a67f4b7f77",
+      "createdAt": "2026-09-07T11:31:23.259Z"
+    },
+    {
+      "type": "TASK_UPDATED",
+      "userId": "admin-1",
+      "projectId": "d8c18ac1-f35b-4d5b-84e8-a0b21a519e58",
+      "taskId": "ebd27579-85b8-4d4c-8103-519647b7a06b",
+      "details": "izusbdj, ",
+      "id": "31c2673e-b366-481e-9b8f-b102c6be8511",
+      "createdAt": "2026-09-07T11:31:37.725Z"
+    },
+    {
+      "type": "TASK_UPDATED",
+      "userId": "12442186-aaec-4b78-82bd-4be0c4e02766",
+      "projectId": "d8c18ac1-f35b-4d5b-84e8-a0b21a519e58",
+      "taskId": "ebd27579-85b8-4d4c-8103-519647b7a06b",
+      "details": "izusbdj, ",
+      "id": "bfd671d6-94d2-42a6-813e-af67a7ec799e",
+      "createdAt": "2026-09-07T11:32:13.679Z"
+    },
+    {
+      "type": "TASK_UPDATED",
+      "userId": "12442186-aaec-4b78-82bd-4be0c4e02766",
+      "projectId": "d8c18ac1-f35b-4d5b-84e8-a0b21a519e58",
+      "taskId": "ebd27579-85b8-4d4c-8103-519647b7a06b",
+      "details": "izusbdj, ",
+      "id": "1e82a0b4-271e-4bf3-b827-8dd2bc4fb410",
+      "createdAt": "2026-09-07T11:32:16.415Z"
+    },
+    {
+      "type": "PROJECT_CREATED",
+      "userId": "admin-1",
+      "projectId": "33dc2ddc-5a48-4b56-a7d0-fa4801ce1c55",
+      "details": "zdfgdg",
+      "id": "70f2ebb9-26f6-4fd8-bd68-4226ea0439ed",
+      "createdAt": "2026-09-07T11:54:56.891Z"
+    },
+    {
+      "type": "TASK_CREATED",
+      "userId": "admin-1",
+      "projectId": "33dc2ddc-5a48-4b56-a7d0-fa4801ce1c55",
+      "taskId": "66a05850-e04d-4899-975f-0369d955c331",
+      "details": "sdfSDDS",
+      "id": "4c021ffb-02ec-47ed-84e7-301ab7a237ba",
+      "createdAt": "2026-09-07T11:55:28.211Z"
+    },
+    {
+      "type": "PROJECT_UPDATED",
+      "userId": "admin-1",
+      "projectId": "33dc2ddc-5a48-4b56-a7d0-fa4801ce1c55",
+      "details": "Deleted column To Do",
+      "id": "426218ea-0f16-4e5d-9453-ef9fc3ff5d9f",
+      "createdAt": "2026-09-07T11:56:23.570Z"
+    },
+    {
+      "type": "TASK_UPDATED",
+      "userId": "admin-1",
+      "projectId": "33dc2ddc-5a48-4b56-a7d0-fa4801ce1c55",
+      "taskId": "66a05850-e04d-4899-975f-0369d955c331",
+      "details": "sdfSDDS",
+      "id": "28d84985-8b3d-42f7-ae64-019352dab9b4",
+      "createdAt": "2026-09-07T11:56:41.110Z"
+    },
+    {
+      "type": "PROJECT_UPDATED",
+      "userId": "admin-1",
+      "projectId": "33dc2ddc-5a48-4b56-a7d0-fa4801ce1c55",
+      "details": "Deleted column In Progress",
+      "id": "2ebcf272-79a6-480f-a22e-9ad2c808c194",
+      "createdAt": "2026-09-07T12:12:43.512Z"
+    },
+    {
+      "type": "PROJECT_UPDATED",
+      "userId": "admin-1",
+      "projectId": "33dc2ddc-5a48-4b56-a7d0-fa4801ce1c55",
+      "details": "Deleted column Review",
+      "id": "ceea975d-5f9f-45ce-ae1f-b04a7487690e",
+      "createdAt": "2026-09-07T12:12:47.590Z"
+    },
+    {
+      "type": "PROJECT_UPDATED",
+      "userId": "admin-1",
+      "projectId": "33dc2ddc-5a48-4b56-a7d0-fa4801ce1c55",
+      "details": "Deleted column Done",
+      "id": "a3eebfc4-3b56-49b6-a7cc-f217a230e9ab",
+      "createdAt": "2026-09-07T12:12:51.671Z"
+    },
+    {
+      "type": "TASK_CREATED",
+      "userId": "admin-1",
+      "projectId": "33dc2ddc-5a48-4b56-a7d0-fa4801ce1c55",
+      "taskId": "15782f34-6bf5-4156-9fb6-f17dfef37943",
+      "details": "ayufleivbjds v jdslvi js",
+      "id": "c4fb0729-e0dd-418d-8c1a-a67504503985",
+      "createdAt": "2026-09-07T12:14:04.097Z"
+    },
+    {
+      "type": "TASK_UPDATED",
+      "userId": "admin-1",
+      "projectId": "d8c18ac1-f35b-4d5b-84e8-a0b21a519e58",
+      "taskId": "c8e999c7-c470-40fe-8872-2b59efa72dba",
+      "details": "sdivjsdivsdzj n",
+      "id": "40a60f43-96cc-497f-96a6-46bc1e8d41ef",
+      "createdAt": "2026-09-07T12:41:31.028Z"
+    }
+  ]
 }

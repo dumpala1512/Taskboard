@@ -7,6 +7,7 @@ import MembersTable from "../../components/members/MembersTable";
 import { CreateUserModal } from "../../components/members/CreateUserModal";
 import { useAdminUsers } from "../../hooks/useUsers";
 import { Skeleton } from "../../components/ui/Skeleton";
+import { Button } from "../../components/ui/Button";
 
 export default function MembersPage() {
 	const { data: users, isLoading, error, refetch } = useAdminUsers();
@@ -25,18 +26,28 @@ export default function MembersPage() {
 				<div className="flex-1 overflow-auto">
 					<div className="w-full space-y-4">
 						{/* Header and Search */}
-						<div className="flex justify-between items-center pt-2 pb-4">
+						<div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 pt-2 pb-4">
 							<h1 className="text-2xl font-bold text-slate-900">Team Members</h1>
 							
-							<div className="relative w-full max-w-xs">
-								<Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
-								<input
-									type="text"
-									placeholder="Search"
-									className="w-full pl-9 pr-4 py-1.5 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-									value={searchTerm}
-									onChange={(e) => setSearchTerm(e.target.value)}
-								/>
+							<div className="flex items-center gap-3">
+								<div className="relative w-full sm:w-64">
+									<Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+									<input
+										type="text"
+										placeholder="Search"
+										className="w-full pl-9 pr-4 py-1.5 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#1E88E5]/30 focus:border-[#1E88E5]"
+										value={searchTerm}
+										onChange={(e) => setSearchTerm(e.target.value)}
+									/>
+								</div>
+
+								<Button
+									variant="primary"
+									leftIcon={<Plus className="w-4 h-4" />}
+									onClick={() => setIsCreateModalOpen(true)}
+								>
+									Add Member
+								</Button>
 							</div>
 						</div>
 

@@ -111,7 +111,12 @@ export class ProjectService {
 		if (!project) {
 			throw new Error("Project not found");
 		}
-		return projectRepository.delete(id);
+		// Delete all tasks associated with this project (both id and key)
+		await taskRepository.deleteByProjectId(project.id);
+		if (project.key) {
+			await taskRepository.deleteByProjectId(project.key);
+		}
+		return projectRepository.delete(project.id);
 	}
 
 	async deleteColumn(projectId: string, columnId: string, userId?: string): Promise<Project> {

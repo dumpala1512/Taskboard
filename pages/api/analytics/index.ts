@@ -24,7 +24,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const effectiveRole = sessionRole !== "ADMIN" ? "MEMBER" : (filter === "my" ? "MEMBER" : "ADMIN");
 
   try {
-    const { localTasks, localProjects, localUsers } = req.body || {};
+    const { localTasks, localProjects, localUsers, deletedProjectIds, deletedTaskIds } = req.body || {};
 
     const data = await analyticsService.getDashboardData(
       effectiveUserId,
@@ -33,6 +33,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         tasks: Array.isArray(localTasks) ? localTasks : undefined,
         projects: Array.isArray(localProjects) ? localProjects : undefined,
         users: Array.isArray(localUsers) ? localUsers : undefined,
+        deletedProjectIds: Array.isArray(deletedProjectIds) ? deletedProjectIds : undefined,
+        deletedTaskIds: Array.isArray(deletedTaskIds) ? deletedTaskIds : undefined,
       }
     );
     return res.status(200).json(data);

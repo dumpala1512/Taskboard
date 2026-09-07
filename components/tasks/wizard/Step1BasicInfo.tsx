@@ -9,6 +9,7 @@ interface Step1Props {
 	setFormData: (data: any) => void;
 	errors: Record<string, string>;
 	isFixedProject?: boolean;
+	onBlurField?: (field: string, value: any) => void;
 }
 
 export function Step1BasicInfo({
@@ -16,6 +17,7 @@ export function Step1BasicInfo({
 	setFormData,
 	errors,
 	isFixedProject,
+	onBlurField,
 }: Step1Props) {
 	const { data: projects = [] } = useProjects();
 
@@ -35,6 +37,7 @@ export function Step1BasicInfo({
 								assigneeId: "",
 							})
 						} // clear assignee on project change
+						onBlur={() => onBlurField?.("projectId", formData.projectId)}
 						className={`w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-[#1A233A] text-slate-900 dark:text-slate-100 ${errors.projectId ? "border-red-500" : "border-slate-200 dark:border-[#222F49]"}`}
 					>
 						<option value="">Select Project</option>
@@ -57,6 +60,7 @@ export function Step1BasicInfo({
 				<Input
 					value={formData.title}
 					onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+					onBlur={() => onBlurField?.("title", formData.title)}
 					placeholder="e.g. Implement login feature"
 					className={errors.title ? "border-red-500" : ""}
 					maxLength={100}
@@ -73,6 +77,7 @@ export function Step1BasicInfo({
 				<RichTextEditor
 					value={formData.description}
 					onChange={(val) => setFormData({ ...formData, description: val })}
+					onBlur={() => onBlurField?.("description", formData.description)}
 					placeholder="Detailed description of the task..."
 					error={!!errors.description}
 					maxLength={1000}
@@ -92,6 +97,7 @@ export function Step1BasicInfo({
 						onChange={(e) =>
 							setFormData({ ...formData, priority: e.target.value })
 						}
+						onBlur={() => onBlurField?.("priority", formData.priority)}
 						className={`w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-[#1A233A] text-slate-900 dark:text-slate-100 ${errors.priority ? "border-red-500" : "border-slate-200 dark:border-[#222F49]"}`}
 					>
 						<option value="LOW">Low</option>

@@ -62,6 +62,21 @@ export class TaskRepository {
 		saveDb();
 		return true;
 	}
+
+	async deleteByProjectId(projectId: string): Promise<number> {
+		loadDb();
+		const initialCount = db.tasks.length;
+		const targetId = projectId.toLowerCase();
+		db.tasks = db.tasks.filter((t: any) => {
+			const pid = (t.projectId || "").toLowerCase();
+			return pid !== targetId;
+		});
+		const deletedCount = initialCount - db.tasks.length;
+		if (deletedCount > 0) {
+			saveDb();
+		}
+		return deletedCount;
+	}
 }
 
 export const taskRepository = new TaskRepository();

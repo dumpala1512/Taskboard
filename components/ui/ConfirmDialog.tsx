@@ -38,8 +38,13 @@ export function ConfirmDialog({
 }: ConfirmDialogProps) {
 	const [isConfirmed, setIsConfirmed] = React.useState(false);
 
+	React.useEffect(() => {
+		if (!isOpen) {
+			setIsConfirmed(false);
+		}
+	}, [isOpen]);
+
 	if (!isOpen) {
-		if (isConfirmed) setIsConfirmed(false);
 		return null;
 	}
 
@@ -52,8 +57,8 @@ export function ConfirmDialog({
 
 	return (
 		<Portal>
-			<div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-[#33475B]/20 animate-in fade-in duration-200">
-				<div className="bg-white rounded-md shadow-[0_4px_20px_rgba(0,0,0,0.12)] max-w-[500px] w-full overflow-hidden border border-[#E0E3E8] relative scale-in-center">
+			<div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
+				<div className="bg-white rounded-xl shadow-2xl max-w-[480px] w-full overflow-hidden border border-slate-200 relative">
 					<button
 						onClick={handleClose}
 						className="absolute right-4 top-4 text-gray-400 hover:text-gray-600 transition-colors p-1.5 rounded-full hover:bg-gray-100 focus:outline-none"
@@ -62,13 +67,13 @@ export function ConfirmDialog({
 						<X className="w-5 h-5" />
 					</button>
 					
-					<div className="p-8 pb-6 flex flex-col items-center text-center">
-						<div className={`w-14 h-14 rounded-full flex items-center justify-center mb-4 ${iconClassName}`}>
+					<div className="p-6 pb-4 flex flex-col items-center text-center">
+						<div className={`w-12 h-12 rounded-full flex items-center justify-center mb-3 ${iconClassName}`}>
 							{icon}
 						</div>
-						<h3 className="text-xl font-semibold text-gray-900 mb-6">{title}</h3>
+						<h3 className="text-lg font-semibold text-gray-900 mb-4">{title}</h3>
 						
-						<div className="text-left w-full space-y-4 text-lg text-gray-700">
+						<div className="text-left w-full space-y-3 text-sm text-gray-600">
 							{typeof description === 'string' ? <p>{description}</p> : description}
 							
 							{requireCheckbox && (
@@ -91,12 +96,12 @@ export function ConfirmDialog({
 						</div>
 					</div>
 
-					<div className="px-8 py-4 bg-gray-50 border-t border-[#E0E3E8] flex justify-between gap-3">
+					<div className="px-6 py-4 bg-slate-50 border-t border-slate-200 flex justify-end gap-3">
 						<Button
 							variant="outline"
 							onClick={handleClose}
 							disabled={isProcessing}
-							className="flex-1 shadow-sm bg-white hover:bg-gray-50 border-[#E0E3E8] text-[#33475B]"
+							className="px-4 shadow-sm bg-white hover:bg-slate-100 border-slate-200 text-slate-700"
 						>
 							{cancelText}
 						</Button>
@@ -104,7 +109,7 @@ export function ConfirmDialog({
 							variant={confirmButtonVariant}
 							onClick={onConfirm}
 							disabled={isProcessing || !canConfirm}
-							className={`flex-1 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed ${confirmButtonClassName}`}
+							className={`px-4 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed ${confirmButtonClassName}`}
 							leftIcon={isProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : undefined}
 						>
 							{isProcessing ? "Processing..." : confirmText}

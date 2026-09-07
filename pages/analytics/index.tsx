@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import Head from "next/head";
+import { useRouter } from "next/router";
 import { AppLayout } from "../../components/layout/AppLayout";
 import { useSession } from "next-auth/react";
 import { 
@@ -39,6 +40,14 @@ function computeClientAnalytics(filter: "all" | "my", sessionUser: any) {
   let projects = clientStorage.getProjects();
   let tasks = clientStorage.getTasks();
   const allUsers = clientStorage.getUsers();
+
+  // Exclude tasks for deleted projects
+  const validProjectIds = new Set<string>();
+  projects.forEach((p) => {
+    if (p.id) validProjectIds.add(p.id.toLowerCase());
+    if (p.key) validProjectIds.add(p.key.toLowerCase());
+  });
+  tasks = tasks.filter((t) => t.projectId && validProjectIds.has(t.projectId.toLowerCase()));
 
   if (isMember) {
     projects = projects.filter(
@@ -175,6 +184,7 @@ function computeClientAnalytics(filter: "all" | "my", sessionUser: any) {
 }
 
 export default function AnalyticsDashboard() {
+  const router = useRouter();
   const { data: session } = useSession();
   const isAdmin = (session?.user as any)?.role === "ADMIN";
   const [data, setData] = useState<any>(null);
@@ -190,11 +200,15 @@ export default function AnalyticsDashboard() {
       const localTasks = clientStorage.getTasks();
       const localProjects = clientStorage.getProjects();
       const localUsers = clientStorage.getUsers();
+      const deletedProjectIds = clientStorage.getDeletedProjectIds();
+      const deletedTaskIds = clientStorage.getDeletedTaskIds();
 
       const res = await apiClient.post(`/analytics?filter=${effectiveFilter}`, {
         localTasks,
         localProjects,
         localUsers,
+        deletedProjectIds,
+        deletedTaskIds,
       });
       setData(res.data);
       setError(null);
@@ -215,7 +229,7 @@ export default function AnalyticsDashboard() {
     if (session) {
       fetchAnalytics();
     }
-  }, [session, effectiveFilter]);
+  }, [session, effectiveFilter, router.asPath]);
 
   useEffect(() => {
     const handleFocus = () => {
@@ -223,9 +237,13 @@ export default function AnalyticsDashboard() {
     };
     window.addEventListener("focus", handleFocus);
     window.addEventListener("storage", handleFocus);
+    const interval = setInterval(() => {
+      if (session) fetchAnalytics();
+    }, 15000);
     return () => {
       window.removeEventListener("focus", handleFocus);
       window.removeEventListener("storage", handleFocus);
+      clearInterval(interval);
     };
   }, [session, effectiveFilter]);
 

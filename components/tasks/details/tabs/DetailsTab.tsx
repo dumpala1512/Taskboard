@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { User, AlignLeft, CheckSquare, Plus, Trash2, GripVertical } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { useSession } from 'next-auth/react';
+import { toast } from 'react-hot-toast';
 
 import type { Task, User as UserType } from '../../../../server/types';
 
@@ -14,10 +15,11 @@ interface ChecklistItem {
 interface DetailsTabProps {
   task?: Task | null;
   users?: UserType[];
+  project?: any;
   onAssign?: (userId: string | null) => void;
 }
 
-export function DetailsTab({ task, users = [], onAssign }: DetailsTabProps) {
+export function DetailsTab({ task, users = [], project, onAssign }: DetailsTabProps) {
   const { data: session } = useSession();
   const isAdmin = (session?.user as any)?.role === 'ADMIN';
 
@@ -159,21 +161,38 @@ export function DetailsTab({ task, users = [], onAssign }: DetailsTabProps) {
             <div className="absolute top-full left-0 mt-2 w-64 bg-white rounded-lg shadow-xl border border-gray-100 z-10 p-2">
               <div className="text-xs font-semibold text-gray-500 mb-2 px-2 uppercase tracking-wider">Select User</div>
               <div className="space-y-1 max-h-48 overflow-y-auto">
-                {users.map(user => (
-                  <button
-                    key={user.id}
-                    onClick={() => {
-                      onAssign?.(user.id);
-                      setIsAssigning(false);
-                    }}
-                    className="w-full text-left px-2 py-1.5 hover:bg-blue-50 rounded-md text-sm text-gray-700 flex items-center space-x-2"
-                  >
-                    <div className="h-6 w-6 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-medium text-xs">
-                      {user.name.charAt(0)}
-                    </div>
-                    <span>{user.name}</span>
-                  </button>
-                ))}
+                {users.map(user => {
+                  const isMember =
+                    !project ||
+                    project.ownerId === user.id ||
+                    (Array.isArray(project.members) && project.members.includes(user.id));
+                  return (
+                    <button
+                      key={user.id}
+                      onClick={() => {
+                        if (project && !isMember) {
+                          toast.error("Add the member to the project and then assign task");
+                          return;
+                        }
+                        onAssign?.(user.id);
+                        setIsAssigning(false);
+                      }}
+                      className="w-full text-left px-2 py-1.5 hover:bg-blue-50 rounded-md text-sm text-gray-700 flex items-center justify-between"
+                    >
+                      <div className="flex items-center space-x-2">
+                        <div className="h-6 w-6 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-medium text-xs">
+                          {user.name.charAt(0)}
+                        </div>
+                        <span>{user.name}</span>
+                      </div>
+                      {!isMember && (
+                        <span className="text-[10px] text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">
+                          Not in project
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
                 {users.length === 0 && (
                   <div className="text-xs text-gray-500 px-2 py-1">No users found.</div>
                 )}

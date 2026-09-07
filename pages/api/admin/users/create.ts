@@ -18,16 +18,20 @@ export default async function handler(
 			return res.status(403).json({ message: "Forbidden" });
 		}
 
-		const { firstName, lastName, email, role, department, jobTitle, phone, joiningDate } =
+		const { fullName, name, firstName, lastName, email, role, department, jobTitle, phone, joiningDate } =
 			req.body;
 
-		if (!firstName || !lastName || !email || !role) {
+		const displayName = (fullName || name || `${firstName || ""} ${lastName || ""}`).trim();
+
+		if (!displayName || !email || !role) {
 			return res.status(400).json({ message: "Missing required fields" });
 		}
 
 		const createdBy = (session?.user as any)?.id;
 
 		const { user, temporaryPasswordPlain } = await adminService.createUser({
+			fullName: displayName,
+			name: displayName,
 			firstName,
 			lastName,
 			email,

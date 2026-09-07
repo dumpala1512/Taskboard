@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from "uuid";
-import db, { loadDb, saveDb, markUserDeleted } from "../data";
+import db, { loadDb, markUserDeleted, saveDb } from "../data";
 import type { User } from "../types";
 
 export class UserRepository {
@@ -24,7 +24,9 @@ export class UserRepository {
 		const freshDb = loadDb();
 		db.users = freshDb.users;
 		const clean = email?.trim().toLowerCase();
-		return freshDb.users.find((u: any) => u.email?.trim().toLowerCase() === clean);
+		return freshDb.users.find(
+			(u: any) => u.email?.trim().toLowerCase() === clean,
+		);
 	}
 
 	async findById(id: string): Promise<User | undefined> {
@@ -33,7 +35,9 @@ export class UserRepository {
 		return freshDb.users.find((u: any) => u.id === id);
 	}
 
-	async create(user: Omit<User, "id" | "createdAt"> & { id?: string; createdAt?: string }): Promise<User> {
+	async create(
+		user: Omit<User, "id" | "createdAt"> & { id?: string; createdAt?: string },
+	): Promise<User> {
 		loadDb();
 		const cleanEmail = user.email?.trim().toLowerCase();
 		if (cleanEmail) {
@@ -84,20 +88,26 @@ export class UserRepository {
 	async delete(id: string): Promise<boolean> {
 		markUserDeleted(id);
 		const freshDb = loadDb();
-		const userToDelete = freshDb.users.find((u: any) => u.id === id || u.email === id);
+		const userToDelete = freshDb.users.find(
+			(u: any) => u.id === id || u.email === id,
+		);
 		if (userToDelete) {
 			markUserDeleted(userToDelete.id);
 			if (userToDelete.email) markUserDeleted(userToDelete.email);
 		}
 
-		db.users = (freshDb.users || []).filter((u: any) => u.id !== id && u.email !== id);
+		db.users = (freshDb.users || []).filter(
+			(u: any) => u.id !== id && u.email !== id,
+		);
 		if (freshDb.projects) db.projects = freshDb.projects;
 		if (freshDb.tasks) db.tasks = freshDb.tasks;
 
 		const targetId = userToDelete ? userToDelete.id : id;
 
 		// Remove user from all project members & owners
-		const idsToRemove = new Set([id, targetId, userToDelete?.email].filter(Boolean));
+		const idsToRemove = new Set(
+			[id, targetId, userToDelete?.email].filter(Boolean),
+		);
 		if (db.projects) {
 			db.projects.forEach((p: any) => {
 				if (p.members) {

@@ -9,18 +9,24 @@ interface Step2Props {
 	formData: any;
 	setFormData: (data: any) => void;
 	errors: Record<string, string>;
+	onBlurField?: (field: string, value: any) => void;
 }
 
-export function Step2Assignment({ formData, setFormData, errors }: Step2Props) {
+export function Step2Assignment({
+	formData,
+	setFormData,
+	errors,
+	onBlurField,
+}: Step2Props) {
 	const { data: users = [] } = useUsers();
 	const { data: projects = [] } = useProjects();
+
+	const project = projects.find((p) => p.id === formData.projectId);
 
 	const projectMembers = useMemo(() => {
 		if (!formData.projectId) return [];
 		return users;
 	}, [formData.projectId, users]);
-
-	const project = projects.find(p => p.id === formData.projectId);
 
 	React.useEffect(() => {
 		if (project?.columns && project.columns.length > 0) {
@@ -38,30 +44,49 @@ export function Step2Assignment({ formData, setFormData, errors }: Step2Props) {
 		<div className="space-y-6">
 			<div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
 				<div className="space-y-1">
-					<label className="text-sm font-medium text-slate-700 dark:text-slate-200">Assignee <span className="text-red-500">*</span></label>
+					<label className="text-sm font-medium text-slate-700 dark:text-slate-200">
+						Assignee
+					</label>
 					{!formData.projectId ? (
 						<div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-lg text-sm text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-[#222F49]">
 							Select a project in Step 1 first.
 						</div>
-					) : projectMembers.length === 0 ? (
-						<div className="p-3 bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 rounded-lg text-sm border border-amber-200 dark:border-amber-800">
-							No project members available. Add members to the project before assigning tasks.
-						</div>
 					) : (
 						<select
-							value={formData.assigneeId}
-							onChange={(e) => setFormData({ ...formData, assigneeId: e.target.value })}
-							className={`w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-[#1A233A] text-slate-900 dark:text-slate-100 ${errors.assigneeId ? "border-red-500" : "border-slate-200 dark:border-[#222F49]"}`}
+							value={formData.assigneeId || ""}
+							onChange={(e) => {
+								const val = e.target.value;
+								setFormData({ ...formData, assigneeId: val });
+								onBlurField?.("assigneeId", val);
+							}}
+							onBlur={() => onBlurField?.("assigneeId", formData.assigneeId)}
+							className={`w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-[#1A233A] text-slate-900 dark:text-slate-100 ${
+								errors.assigneeId
+									? "border-red-500 focus:ring-red-500"
+									: "border-slate-200 dark:border-[#222F49]"
+							}`}
 						>
 							<option value="">Unassigned</option>
-							{projectMembers.map((u) => (
-								<option key={u.id} value={u.id} className="dark:bg-[#1A233A]">
-									{u.name} ({u.email})
-								</option>
-							))}
+							{projectMembers.map((u) => {
+								const isMember =
+									project &&
+									(project.ownerId === u.id ||
+										(Array.isArray(project.members) &&
+											project.members.includes(u.id)));
+								return (
+									<option key={u.id} value={u.id} className="dark:bg-[#1A233A]">
+										{u.name} ({u.email})
+										{isMember ? "" : " — (Not in project)"}
+									</option>
+								);
+							})}
 						</select>
 					)}
-					{errors.assigneeId && <p className="text-xs text-red-500 mt-1">{errors.assigneeId}</p>}
+					{errors.assigneeId && (
+						<p className="text-xs text-red-500 mt-1 font-medium">
+							{errors.assigneeId}
+						</p>
+					)}
 				</div>
 
 				<div className="space-y-1">
@@ -69,6 +94,7 @@ export function Step2Assignment({ formData, setFormData, errors }: Step2Props) {
 					<select
 						value={formData.status}
 						onChange={(e) => setFormData({ ...formData, status: e.target.value as TaskStatus })}
+						onBlur={() => onBlurField?.("status", formData.status)}
 						className={`w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-[#1A233A] text-slate-900 dark:text-slate-100 ${errors.status ? "border-red-500" : "border-slate-200 dark:border-[#222F49]"}`}
 					>
 						<option value="BACKLOG" className="dark:bg-[#1A233A]">Backlog</option>
@@ -96,6 +122,7 @@ export function Step2Assignment({ formData, setFormData, errors }: Step2Props) {
 						type="date"
 						value={formData.startDate || ""}
 						onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+						onBlur={() => onBlurField?.("startDate", formData.startDate)}
 						className={errors.startDate ? "border-red-500" : ""}
 					/>
 					{errors.startDate && <p className="text-xs text-red-500 mt-1">{errors.startDate}</p>}
@@ -107,6 +134,7 @@ export function Step2Assignment({ formData, setFormData, errors }: Step2Props) {
 						type="date"
 						value={formData.dueDate || ""}
 						onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
+						onBlur={() => onBlurField?.("dueDate", formData.dueDate)}
 						className={errors.dueDate ? "border-red-500" : ""}
 					/>
 					{errors.dueDate && <p className="text-xs text-red-500 mt-1">{errors.dueDate}</p>}

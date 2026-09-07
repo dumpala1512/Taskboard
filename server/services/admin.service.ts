@@ -48,8 +48,10 @@ export class AdminService {
 	}
 
 	async createUser(data: {
-		firstName: string;
-		lastName: string;
+		fullName?: string;
+		name?: string;
+		firstName?: string;
+		lastName?: string;
 		email: string;
 		role: UserRole;
 		department?: string;
@@ -66,10 +68,15 @@ export class AdminService {
 		const temporaryPasswordPlain = this.generateTemporaryPassword();
 		const hashedPassword = bcrypt.hashSync(temporaryPasswordPlain, 10);
 
+		const displayName = (data.fullName || data.name || `${data.firstName || ""} ${data.lastName || ""}`).trim();
+		const nameParts = displayName.split(/\s+/);
+		const fName = data.firstName || nameParts[0] || displayName;
+		const lName = data.lastName || nameParts.slice(1).join(" ") || "";
+
 		const user = await userRepository.create({
-			name: `${data.firstName} ${data.lastName}`,
-			firstName: data.firstName,
-			lastName: data.lastName,
+			name: displayName,
+			firstName: fName,
+			lastName: lName,
 			email: data.email,
 			role: data.role,
 			status: "ACTIVE",

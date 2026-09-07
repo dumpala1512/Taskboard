@@ -41,8 +41,11 @@ export default async function handler(
 		}
 
 		return res.status(405).json({ message: "Method not allowed" });
-	} catch (error) {
+	} catch (error: any) {
 		console.error("Error managing task:", error);
-		return res.status(500).json({ message: "Internal server error" });
+		if (error?.message === "Add the member to the project and then assign task") {
+			return res.status(400).json({ message: error.message });
+		}
+		return res.status(500).json({ message: error?.message || "Internal server error" });
 	}
 }

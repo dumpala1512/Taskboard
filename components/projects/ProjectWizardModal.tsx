@@ -47,6 +47,9 @@ export function ProjectWizardModal({
 	const [membersDropdownOpen, setMembersDropdownOpen] = useState(false);
 	const [projectId, setProjectId] = useState<string | null>(null);
 
+	const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+	const [touched, setTouched] = useState<Record<string, boolean>>({});
+
 	// Form State
 	const [formData, setFormData] = useState<Partial<Project>>({
 		name: "",
@@ -62,10 +65,70 @@ export function ProjectWizardModal({
 	});
 	const [tagInput, setTagInput] = useState("");
 
+	const validateField = (field: string, currentData = formData) => {
+		setFieldErrors((prev) => {
+			const next = { ...prev };
+			if (field === "name") {
+				if (!currentData.name?.trim()) {
+					next.name = "Project name is required";
+				} else {
+					delete next.name;
+				}
+			}
+			if (field === "description") {
+				if (!currentData.description?.trim()) {
+					next.description = "Description is required";
+				} else {
+					delete next.description;
+				}
+			}
+			if (field === "status") {
+				if (!currentData.status) {
+					next.status = "Status is required";
+				} else {
+					delete next.status;
+				}
+			}
+			if (field === "ownerId") {
+				if (!currentData.ownerId) {
+					next.ownerId = "Project owner is required";
+				} else {
+					delete next.ownerId;
+				}
+			}
+			if (field === "startDate") {
+				if (!currentData.startDate) {
+					next.startDate = "Start date is required";
+				} else {
+					delete next.startDate;
+				}
+			}
+			if (field === "dueDate") {
+				if (
+					currentData.dueDate &&
+					currentData.startDate &&
+					currentData.dueDate < currentData.startDate
+				) {
+					next.dueDate = "Due date cannot be before start date";
+				} else {
+					delete next.dueDate;
+				}
+			}
+			return next;
+		});
+	};
+
+	const handleBlur = (field: string) => {
+		setTouched((prev) => ({ ...prev, [field]: true }));
+		validateField(field);
+	};
+
 	const handleClose = () => {
 		setStep(1);
 		setError(null);
 		setProjectId(null);
+		setFieldErrors({});
+		setTouched({});
 		setFormData({
 			name: "",
 			description: "",
@@ -86,6 +149,8 @@ export function ProjectWizardModal({
 		if (isOpen) {
 			setStep(1);
 			setError(null);
+			setFieldErrors({});
+			setTouched({});
 			if (project) {
 				setProjectId(project.id);
 				setFormData({
@@ -118,6 +183,8 @@ export function ProjectWizardModal({
 			setStep(1);
 			setError(null);
 			setProjectId(null);
+			setFieldErrors({});
+			setTouched({});
 			setFormData({
 				name: "",
 				description: "",
@@ -144,11 +211,18 @@ export function ProjectWizardModal({
 	if (!isOpen) return null;
 
 	const isStep1Valid = !!(
-		formData.name &&
-		formData.description &&
+		formData.name?.trim() &&
+		formData.description?.trim() &&
 		formData.status
 	);
-	const isStep2Valid = !!(formData.ownerId && formData.startDate);
+	const isStep2Valid = !!(
+		formData.ownerId &&
+		formData.startDate &&
+		(!formData.dueDate ||
+			!formData.startDate ||
+			formData.dueDate >= formData.startDate)
+	);
+	const isAllRequiredValid = isStep1Valid && isStep2Valid;
 
 	const handleNext = () => {
 		setError(null);
@@ -179,19 +253,45 @@ export function ProjectWizardModal({
 		}
 
 		if (step === 3) {
-			const tags = formData.tags || [];
-			if (tags.length > 10) {
+			let currentTags = formData.tags || [];
+			if (tagInput.trim()) {
+				const pending = tagInput
+					.split(",")
+					.map((t) => t.trim())
+					.filter(Boolean);
+				currentTags = Array.from(new Set([...currentTags, ...pending]));
+				setFormData((prev) => ({ ...prev, tags: currentTags }));
+				setTagInput("");
+			}
+			if (currentTags.length > 10) {
 				setError("You can add a maximum of 10 tags.");
 				return;
 			}
-			const invalidTags = tags.filter((t) => t.length < 2 || t.length > 20);
+			const invalidTags = currentTags.filter((t) => t.length < 2 || t.length > 30);
 			if (invalidTags.length > 0) {
-				setError("Each tag must be between 2 and 20 characters long.");
+				setError("Each tag must be between 2 and 30 characters long.");
 				return;
 			}
 		}
 
 		setStep((prev) => prev + 1);
+	};
+
+	const handleAddTag = () => {
+		if (!tagInput.trim()) return;
+		const newTags = tagInput
+			.split(",")
+			.map((t) => t.trim().slice(0, 30))
+			.filter((t) => t.length >= 2);
+		const existingTags = formData.tags || [];
+		const combined = Array.from(new Set([...existingTags, ...newTags]));
+		setFormData((prev) => ({ ...prev, tags: combined }));
+		setTagInput("");
+	};
+
+	const handleRemoveTag = (tagToRemove: string) => {
+		const updated = (formData.tags || []).filter((t) => t !== tagToRemove);
+		setFormData((prev) => ({ ...prev, tags: updated }));
 	};
 
 	const handleBack = () => {
@@ -333,9 +433,15 @@ export function ProjectWizardModal({
 											label="Project Name *"
 											placeholder="e.g. Website Redesign"
 											value={formData.name}
-											onChange={(e) =>
-												setFormData({ ...formData, name: e.target.value })
-											}
+											onChange={(e) => {
+												const val = e.target.value;
+												setFormData({ ...formData, name: val });
+												if (touched.name) {
+													validateField("name", { ...formData, name: val });
+												}
+											}}
+											onBlur={() => handleBlur("name")}
+											error={touched.name ? fieldErrors.name : undefined}
 											maxLength={100}
 										/>
 									</div>
@@ -355,20 +461,32 @@ export function ProjectWizardModal({
 											Status *
 										</label>
 										<select
-											className="w-full px-3 py-2 bg-white dark:bg-[#1A233A] border border-gray-300 dark:border-[#222F49] rounded-lg text-sm text-gray-900 dark:text-slate-100 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors"
+											className={`w-full px-3 py-2 bg-white dark:bg-[#1A233A] border ${
+												touched.status && fieldErrors.status
+													? "border-red-500"
+													: "border-gray-300 dark:border-[#222F49]"
+											} rounded-lg text-sm text-gray-900 dark:text-slate-100 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors`}
 											value={formData.status}
-											onChange={(e) =>
+											onBlur={() => handleBlur("status")}
+											onChange={(e) => {
+												const val = e.target.value as any;
 												setFormData({
 													...formData,
-													status: e.target.value as any,
-												})
-											}
+													status: val,
+												});
+												if (touched.status) {
+													validateField("status", { ...formData, status: val });
+												}
+											}}
 										>
 											<option value="PLANNING" className="dark:bg-[#1A233A]">Planning</option>
 											<option value="ACTIVE" className="dark:bg-[#1A233A]">Active</option>
 											<option value="ON_HOLD" className="dark:bg-[#1A233A]">On Hold</option>
 											<option value="COMPLETED" className="dark:bg-[#1A233A]">Completed</option>
 										</select>
+										{touched.status && fieldErrors.status && (
+											<p className="mt-1 text-xs text-red-500">{fieldErrors.status}</p>
+										)}
 									</div>
 
 									<div className="sm:col-span-2">
@@ -376,17 +494,32 @@ export function ProjectWizardModal({
 											Description *
 										</label>
 										<textarea
-											className="w-full px-3 py-2 bg-white dark:bg-[#1A233A] border border-gray-300 dark:border-[#222F49] rounded-lg text-sm text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-500 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors min-h-[100px]"
+											className={`w-full px-3 py-2 bg-white dark:bg-[#1A233A] border ${
+												touched.description && fieldErrors.description
+													? "border-red-500 focus:border-red-500 focus:ring-red-500/20"
+													: "border-gray-300 dark:border-[#222F49] focus:border-indigo-500 focus:ring-indigo-500/20"
+											} rounded-lg text-sm text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-500 shadow-sm focus:outline-none focus:ring-2 transition-colors min-h-[100px]`}
 											placeholder="Briefly describe the project goals..."
 											value={formData.description}
-											onChange={(e) =>
+											onChange={(e) => {
+												const val = e.target.value;
 												setFormData({
 													...formData,
-													description: e.target.value,
-												})
-											}
+													description: val,
+												});
+												if (touched.description) {
+													validateField("description", {
+														...formData,
+														description: val,
+													});
+												}
+											}}
+											onBlur={() => handleBlur("description")}
 											maxLength={1000}
 										/>
+										{touched.description && fieldErrors.description && (
+											<p className="mt-1 text-xs text-red-500">{fieldErrors.description}</p>
+										)}
 									</div>
 								</div>
 							</div>
@@ -471,6 +604,9 @@ export function ProjectWizardModal({
 												))}
 											</div>
 										)}
+										{touched.ownerId && fieldErrors.ownerId && (
+											<p className="mt-1 text-xs text-red-500">{fieldErrors.ownerId}</p>
+										)}
 									</div>
 
 									<div className="sm:col-span-2 relative">
@@ -541,13 +677,22 @@ export function ProjectWizardModal({
 
 									<div className="sm:col-span-1">
 										<Input
-											label="Start Date"
+											label="Start Date *"
 											type="date"
 											required
 											value={formData.startDate || ""}
-											onChange={(e) =>
-												setFormData({ ...formData, startDate: e.target.value })
-											}
+											onChange={(e) => {
+												const val = e.target.value;
+												setFormData({ ...formData, startDate: val });
+												if (touched.startDate) {
+													validateField("startDate", { ...formData, startDate: val });
+												}
+												if (touched.dueDate) {
+													validateField("dueDate", { ...formData, startDate: val });
+												}
+											}}
+											onBlur={() => handleBlur("startDate")}
+											error={touched.startDate ? fieldErrors.startDate : undefined}
 										/>
 									</div>
 
@@ -556,9 +701,15 @@ export function ProjectWizardModal({
 											label="Target Due Date"
 											type="date"
 											value={formData.dueDate || ""}
-											onChange={(e) =>
-												setFormData({ ...formData, dueDate: e.target.value })
-											}
+											onChange={(e) => {
+												const val = e.target.value;
+												setFormData({ ...formData, dueDate: val });
+												if (touched.dueDate) {
+													validateField("dueDate", { ...formData, dueDate: val });
+												}
+											}}
+											onBlur={() => handleBlur("dueDate")}
+											error={touched.dueDate ? fieldErrors.dueDate : undefined}
 										/>
 									</div>
 								</div>
@@ -587,23 +738,53 @@ export function ProjectWizardModal({
 										<label className="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1.5">
 											Project Tags (comma separated)
 										</label>
-										<input
-											type="text"
-											className="w-full px-3 py-2 bg-white dark:bg-[#1A233A] border border-gray-300 dark:border-[#222F49] rounded-lg text-sm text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-500 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors"
-											placeholder="e.g. Frontend, API, Q3, Important"
-											value={tagInput}
-											onChange={(e) => {
-												setTagInput(e.target.value);
-												const tags = e.target.value
-													.split(",")
-													.map((t) => t.trim())
-													.filter(Boolean);
-												setFormData({ ...formData, tags });
-											}}
-										/>
+										<div className="flex gap-2">
+											<input
+												type="text"
+												maxLength={30}
+												className="flex-1 px-3 py-2 bg-white dark:bg-[#1A233A] border border-gray-300 dark:border-[#222F49] rounded-lg text-sm text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-500 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors"
+												placeholder="e.g. Frontend, API, Q3, Important"
+												value={tagInput}
+												onChange={(e) => setTagInput(e.target.value)}
+												onKeyDown={(e) => {
+													if (e.key === "Enter") {
+														e.preventDefault();
+														handleAddTag();
+													}
+												}}
+											/>
+											<Button
+												type="button"
+												variant="secondary"
+												onClick={handleAddTag}
+												disabled={!tagInput.trim()}
+											>
+												Add
+											</Button>
+										</div>
 										<p className="text-xs text-gray-500 dark:text-slate-400 mt-2">
 											These help in searching and filtering projects.
 										</p>
+
+										{formData.tags && formData.tags.length > 0 && (
+											<div className="flex flex-wrap gap-2 mt-3">
+												{formData.tags.map((tag) => (
+													<span
+														key={tag}
+														className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800"
+													>
+														{tag}
+														<button
+															type="button"
+															onClick={() => handleRemoveTag(tag)}
+															className="text-indigo-400 hover:text-indigo-600 dark:hover:text-indigo-200 focus:outline-none"
+														>
+															<X className="w-3.5 h-3.5" />
+														</button>
+													</span>
+												))}
+											</div>
+										)}
 									</div>
 								</div>
 							</div>
@@ -690,15 +871,7 @@ export function ProjectWizardModal({
 					</div>
 
 					{/* Footer Controls */}
-					<div className="px-6 py-4 border-t border-[#E0E3E8] dark:border-[#222F49] bg-[#F8FAFC] dark:bg-[#0E1526] rounded-b-md flex items-center justify-between shrink-0">
-						<Button
-							variant="secondary"
-							onClick={handleClose}
-							disabled={isSubmitting}
-						>
-							Cancel
-						</Button>
-
+					<div className="px-6 py-4 border-t border-[#E0E3E8] dark:border-[#222F49] bg-[#F8FAFC] dark:bg-[#0E1526] rounded-b-md flex items-center justify-end shrink-0">
 						<div className="flex items-center gap-3">
 							{step > 1 && (
 								<Button
@@ -734,7 +907,7 @@ export function ProjectWizardModal({
 								<Button
 									variant="primary"
 									onClick={handleSubmit}
-									disabled={isSubmitting}
+									disabled={isSubmitting || !isAllRequiredValid}
 									leftIcon={isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
 								>
 									{project ? "Save Changes" : "Create Project"}

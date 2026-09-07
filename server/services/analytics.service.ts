@@ -26,7 +26,13 @@ export class AnalyticsService {
   async getDashboardData(
     userId: string,
     role: UserRole,
-    clientData?: { tasks?: Task[]; projects?: Project[]; users?: User[] }
+    clientData?: {
+      tasks?: Task[];
+      projects?: Project[];
+      users?: User[];
+      deletedProjectIds?: string[];
+      deletedTaskIds?: string[];
+    }
   ): Promise<AnalyticsData> {
     const isMember = role === "MEMBER";
 
@@ -34,22 +40,79 @@ export class AnalyticsService {
     const dbTasks = await taskRepository.findAll();
     const dbUsers = await userRepository.findAll();
 
+    const deletedProjects = new Set(
+      (clientData?.deletedProjectIds || []).map((id) => (id || "").toLowerCase())
+    );
+    const deletedTasks = new Set(
+      (clientData?.deletedTaskIds || []).map((id) => (id || "").toLowerCase())
+    );
+
     // Merge database and clientData so analytics reflects all updated projects and tasks
     const projectsMap = new Map<string, Project>();
     for (const p of dbProjects) {
-      if (p && p.id) projectsMap.set(p.id, p);
+      if (
+        p &&
+        p.id &&
+        !deletedProjects.has(p.id.toLowerCase()) &&
+        (!p.key || !deletedProjects.has(p.key.toLowerCase()))
+      ) {
+        projectsMap.set(p.id, p);
+      }
     }
-    for (const p of (clientData?.projects || [])) {
-      if (p && p.id) projectsMap.set(p.id, { ...(projectsMap.get(p.id) || {}), ...p });
+    for (const p of clientData?.projects || []) {
+      if (
+        p &&
+        p.id &&
+        !deletedProjects.has(p.id.toLowerCase()) &&
+        (!p.key || !deletedProjects.has(p.key.toLowerCase()))
+      ) {
+        const existing = projectsMap.get(p.id);
+        if (!existing) {
+          projectsMap.set(p.id, p);
+        } else {
+          const localTime = new Date(p.updatedAt || p.createdAt || 0).getTime();
+          const serverTime = new Date(existing.updatedAt || existing.createdAt || 0).getTime();
+          projectsMap.set(p.id, localTime >= serverTime ? { ...existing, ...p } : { ...p, ...existing });
+        }
+      }
     }
     let projects = Array.from(projectsMap.values());
 
+    const validProjectIds = new Set<string>();
+    for (const p of projects) {
+      if (p.id) validProjectIds.add(p.id.toLowerCase());
+      if (p.key) validProjectIds.add(p.key.toLowerCase());
+    }
+
     const tasksMap = new Map<string, Task>();
     for (const t of dbTasks) {
-      if (t && t.id) tasksMap.set(t.id, t);
+      if (
+        t &&
+        t.id &&
+        !deletedTasks.has(t.id.toLowerCase()) &&
+        t.projectId &&
+        validProjectIds.has(t.projectId.toLowerCase())
+      ) {
+        tasksMap.set(t.id, t);
+      }
     }
-    for (const t of (clientData?.tasks || [])) {
-      if (t && t.id) tasksMap.set(t.id, { ...(tasksMap.get(t.id) || {}), ...t });
+    for (const t of clientData?.tasks || []) {
+      if (
+        t &&
+        t.id &&
+        !deletedTasks.has(t.id.toLowerCase()) &&
+        t.projectId &&
+        validProjectIds.has(t.projectId.toLowerCase())
+      ) {
+        const existing = tasksMap.get(t.id);
+        if (!existing) {
+          tasksMap.set(t.id, t);
+        } else {
+          const localTime = new Date(t.updatedAt || t.createdAt || 0).getTime();
+          const serverTime = new Date(existing.updatedAt || existing.createdAt || 0).getTime();
+          tasksMap.set(t.id, localTime >= serverTime ? { ...existing, ...t } : { ...t, ...existing });
+        }
+      }
     }
     let tasks = Array.from(tasksMap.values());
 

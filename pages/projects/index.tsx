@@ -10,7 +10,6 @@ import { useSession } from "next-auth/react";
 import React, { useState } from "react";
 import { toast } from "react-hot-toast";
 import { AppLayout } from "../../components/layout/AppLayout";
-import { ArchiveProjectDialog } from "../../components/projects/ArchiveProjectDialog";
 import { DeleteProjectDialog } from "../../components/projects/DeleteProjectDialog";
 import { ProjectCard } from "../../components/projects/ProjectCard";
 import { ProjectTable } from "../../components/projects/ProjectTable";
@@ -43,11 +42,14 @@ export default function ProjectsPage() {
 	const { data: allProjects = [], isLoading, error } = useProjects();
 	const currentUserId = (session?.user as any)?.id;
 	const currentUserEmail = session?.user?.email;
-	const allUsers = typeof window !== "undefined" ? clientStorage.getUsers() : [];
+	const allUsers =
+		typeof window !== "undefined" ? clientStorage.getUsers() : [];
 	const userInStorage = allUsers.find(
 		(u) =>
 			(currentUserId && u.id === currentUserId) ||
-			(currentUserEmail && u.email && u.email.trim().toLowerCase() === currentUserEmail.trim().toLowerCase()),
+			(currentUserEmail &&
+				u.email &&
+				u.email.trim().toLowerCase() === currentUserEmail.trim().toLowerCase()),
 	);
 	const assignedIds = new Set(userInStorage?.assignedProjectIds || []);
 
@@ -82,9 +84,6 @@ export default function ProjectsPage() {
 	const [wizardOpen, setWizardOpen] = useState(false);
 	const [projectToEdit, setProjectToEdit] = useState<Project | null>(null);
 	const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
-	const [projectToArchive, setProjectToArchive] = useState<Project | null>(
-		null,
-	);
 
 	// Stats
 	const totalProjects = projects.length;
@@ -102,15 +101,6 @@ export default function ProjectsPage() {
 			toast.success("Project deleted successfully");
 		} catch (error) {
 			toast.error("Failed to delete project");
-		}
-	};
-
-	const handleArchiveProject = async (id: string) => {
-		try {
-			await updateProject.mutateAsync({ id, status: "ARCHIVED" as any });
-			toast.success("Project archived successfully");
-		} catch (error) {
-			toast.error("Failed to archive project");
 		}
 	};
 
@@ -177,7 +167,7 @@ export default function ProjectsPage() {
 						</p>
 					</div>
 
-					{isAdmin && (
+					{isAdmin && allProjects.length > 0 && (
 						<Button
 							variant="primary"
 							leftIcon={<Plus className="w-5 h-5" />}
@@ -193,67 +183,86 @@ export default function ProjectsPage() {
 
 				{/* Stats Row */}
 				<div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-					<div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
-						<p className="text-sm font-medium text-gray-500">Total Projects</p>
-						<p className="text-2xl font-bold text-gray-900 mt-2">
+					<div className="bg-white dark:bg-[#131B2E] rounded-xl shadow-sm border border-gray-200 dark:border-[#222F49] p-5">
+						<p className="text-sm font-medium text-gray-500 dark:text-slate-400">
+							Total Projects
+						</p>
+						<p className="text-2xl font-bold text-gray-900 dark:text-slate-100 mt-2">
 							{totalProjects}
 						</p>
 					</div>
-					<div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
-						<p className="text-sm font-medium text-emerald-600">Active</p>
-						<p className="text-2xl font-bold text-gray-900 mt-2">
+					<div className="bg-white dark:bg-[#131B2E] rounded-xl shadow-sm border border-gray-200 dark:border-[#222F49] p-5">
+						<p className="text-sm font-medium text-emerald-600 dark:text-emerald-400">
+							Active
+						</p>
+						<p className="text-2xl font-bold text-gray-900 dark:text-slate-100 mt-2">
 							{activeProjects}
 						</p>
 					</div>
-					<div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
-						<p className="text-sm font-medium text-gray-600">Completed</p>
-						<p className="text-2xl font-bold text-gray-900 mt-2">
+					<div className="bg-white dark:bg-[#131B2E] rounded-xl shadow-sm border border-gray-200 dark:border-[#222F49] p-5">
+						<p className="text-sm font-medium text-gray-600 dark:text-slate-300">
+							Completed
+						</p>
+						<p className="text-2xl font-bold text-gray-900 dark:text-slate-100 mt-2">
 							{completedProjects}
 						</p>
 					</div>
-					<div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
-						<p className="text-sm font-medium text-amber-600">On Hold</p>
-						<p className="text-2xl font-bold text-gray-900 mt-2">
+					<div className="bg-white dark:bg-[#131B2E] rounded-xl shadow-sm border border-gray-200 dark:border-[#222F49] p-5">
+						<p className="text-sm font-medium text-amber-600 dark:text-amber-400">
+							On Hold
+						</p>
+						<p className="text-2xl font-bold text-gray-900 dark:text-slate-100 mt-2">
 							{onHoldProjects}
 						</p>
 					</div>
 				</div>
 
 				{/* Filters and Controls */}
-				<div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-6 flex flex-col sm:flex-row gap-4 justify-between items-center">
+				<div className="bg-white dark:bg-[#131B2E] rounded-xl shadow-sm border border-gray-200 dark:border-[#222F49] p-4 mb-6 flex flex-col sm:flex-row gap-4 justify-between items-center">
 					<div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
 						<div className="w-full sm:w-72">
 							<Input
-								leftIcon={<Search className="w-4 h-4 text-gray-400" />}
+								leftIcon={
+									<Search className="w-4 h-4 text-gray-400 dark:text-slate-400" />
+								}
 								placeholder="Search projects..."
 								value={searchQuery}
 								onChange={(e) => setSearchQuery(e.target.value)}
 							/>
 						</div>
 						<div className="w-full sm:w-48 relative">
-							<Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+							<Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-slate-400" />
 							<select
-								className="w-full pl-10 pr-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+								className="w-full pl-10 pr-3 py-2 bg-gray-50 dark:bg-[#1A233A] border border-gray-200 dark:border-[#222F49] rounded-lg text-sm text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
 								value={statusFilter}
 								onChange={(e) => setStatusFilter(e.target.value)}
 							>
-								<option value="">All Statuses</option>
-								<option value="PLANNING">Planning</option>
-								<option value="ACTIVE">Active</option>
-								<option value="ON_HOLD">On Hold</option>
-								<option value="COMPLETED">Completed</option>
-								{isAdmin && <option value="ARCHIVED">Archived</option>}
+								<option value="" className="dark:bg-[#1A233A]">
+									All Statuses
+								</option>
+								<option value="PLANNING" className="dark:bg-[#1A233A]">
+									Planning
+								</option>
+								<option value="ACTIVE" className="dark:bg-[#1A233A]">
+									Active
+								</option>
+								<option value="ON_HOLD" className="dark:bg-[#1A233A]">
+									On Hold
+								</option>
+								<option value="COMPLETED" className="dark:bg-[#1A233A]">
+									Completed
+								</option>
 							</select>
 						</div>
 					</div>
 
-					<div className="flex items-center gap-1 bg-gray-100 p-1 rounded-lg">
+					<div className="flex items-center gap-1 bg-gray-100 dark:bg-[#1A233A] p-1 rounded-lg">
 						<button
 							onClick={() => setView("grid")}
 							className={`p-1.5 rounded-md transition-colors ${
 								view === "grid"
-									? "bg-white text-indigo-600 shadow-sm"
-									: "text-gray-500 hover:text-gray-900"
+									? "bg-white dark:bg-[#131B2E] text-indigo-600 dark:text-indigo-400 shadow-sm"
+									: "text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:hover:text-slate-200"
 							}`}
 						>
 							<LayoutGrid className="w-4 h-4" />
@@ -262,8 +271,8 @@ export default function ProjectsPage() {
 							onClick={() => setView("table")}
 							className={`p-1.5 rounded-md transition-colors ${
 								view === "table"
-									? "bg-white text-indigo-600 shadow-sm"
-									: "text-gray-500 hover:text-gray-900"
+									? "bg-white dark:bg-[#131B2E] text-indigo-600 dark:text-indigo-400 shadow-sm"
+									: "text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:hover:text-slate-200"
 							}`}
 						>
 							<ListIcon className="w-4 h-4" />
@@ -314,7 +323,6 @@ export default function ProjectsPage() {
 									setProjectToEdit(p);
 									setWizardOpen(true);
 								}}
-								onArchive={setProjectToArchive}
 								onDelete={setProjectToDelete}
 							/>
 						))}
@@ -326,7 +334,6 @@ export default function ProjectsPage() {
 							setProjectToEdit(p);
 							setWizardOpen(true);
 						}}
-						onArchive={setProjectToArchive}
 						onDelete={setProjectToDelete}
 					/>
 				)}
@@ -344,12 +351,6 @@ export default function ProjectsPage() {
 							project={projectToDelete}
 							onClose={() => setProjectToDelete(null)}
 							onConfirm={handleDeleteProject}
-						/>
-						<ArchiveProjectDialog
-							isOpen={!!projectToArchive}
-							project={projectToArchive}
-							onClose={() => setProjectToArchive(null)}
-							onConfirm={handleArchiveProject}
 						/>
 					</>
 				)}

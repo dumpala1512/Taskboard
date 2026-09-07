@@ -5,7 +5,7 @@ import React, { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { useUpdateProject } from "../../../hooks/useProjects";
-import { useUpdateTask } from "../../../hooks/useTasks";
+import { useUpdateTask, useDeleteTask } from "../../../hooks/useTasks";
 import type { Project, Task, TaskStatus, User } from "../../../server/types";
 import { apiClient } from "../../../lib/axios";
 import { TaskDetailsPanel } from "../../tasks/details/TaskDetailsPanel";
@@ -42,8 +42,10 @@ export default function KanbanBoard({
 	const [searchQuery, setSearchQuery] = useState("");
 	const [selectedTask, setSelectedTask] = useState<Task | null>(null);
 	const [taskToEdit, setTaskToEdit] = useState<Task | null>(null);
+	const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
 
 	const { mutate: updateTask } = useUpdateTask();
+	const deleteTask = useDeleteTask();
 
 	const [isAddingColumn, setIsAddingColumn] = useState(false);
 	const [newColumnName, setNewColumnName] = useState("");
@@ -141,6 +143,23 @@ export default function KanbanBoard({
 		}
 	};
 
+	const executeDeleteTask = async () => {
+		if (!taskToDelete) return;
+		try {
+			await deleteTask.mutateAsync(taskToDelete.id);
+			setTasks((prev) => prev.filter((t) => t.id !== taskToDelete.id));
+			if (selectedTask?.id === taskToDelete.id) {
+				setSelectedTask(null);
+			}
+			setTaskToDelete(null);
+			toast.success("Task deleted successfully");
+		} catch (error: any) {
+			toast.error(
+				error.response?.data?.message || error.message || "Failed to delete task"
+			);
+		}
+	};
+
 	// Handle hydratation mismatch with DragDropContext
 	const [isBrowser, setIsBrowser] = useState(false);
 	useEffect(() => {
@@ -169,6 +188,11 @@ export default function KanbanBoard({
 		}
 
 		const newStatus = destination.droppableId as TaskStatus;
+
+		if (newStatus === "TODO" && !task.assigneeId) {
+			toast.error("Assign this task to a member before moving to To Do");
+			return;
+		}
 
 		// Create a new array and update status
 		const newTasks = [...tasks];
@@ -219,66 +243,66 @@ export default function KanbanBoard({
 	if (!isBrowser) return null; // Avoid SSR hydration error with dnd
 
 	return (
-		<div className="flex flex-col h-full bg-white rounded-lg border border-[#E0E3E8] overflow-hidden shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+		<div className="flex flex-col h-full bg-white dark:bg-[#131B2E] rounded-lg border border-[#E0E3E8] dark:border-[#222F49] overflow-hidden shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
 			{/* Board Toolbar */}
-			<div className="px-4 py-3 border-b border-[#E0E3E8] flex flex-col xl:flex-row justify-between items-start xl:items-center gap-3 bg-white">
+			<div className="px-4 py-3 border-b border-[#E0E3E8] dark:border-[#222F49] flex flex-col xl:flex-row justify-between items-start xl:items-center gap-3 bg-white dark:bg-[#131B2E]">
 				<div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full xl:w-auto">
 					<div className="relative w-full sm:w-64 shrink-0">
 						<Input
 							placeholder="Search tasks..."
 							value={searchQuery}
 							onChange={(e) => setSearchQuery(e.target.value)}
-							className="pl-9 text-sm h-9 border-[#E0E3E8] bg-[#F5F6F8] focus:bg-white w-full"
+							className="pl-9 text-sm h-9 border-[#E0E3E8] dark:border-[#222F49] bg-[#F5F6F8] dark:bg-[#1A233A] focus:bg-white dark:focus:bg-[#131B2E] text-slate-900 dark:text-slate-100 w-full"
 						/>
-						<Search className="w-3.5 h-3.5 text-[#9EAAB7] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+						<Search className="w-3.5 h-3.5 text-[#9EAAB7] dark:text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
 					</div>
 
-					<div className="flex items-center gap-2 text-sm text-slate-500 font-medium shrink-0">
+					<div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400 font-medium shrink-0">
 						<Filter className="w-4 h-4 text-indigo-500" /> Filters:
 					</div>
 
 					<div className="flex flex-wrap items-center gap-2">
 						<select
-							className="h-9 px-3 text-sm bg-white border border-slate-200 rounded-full focus:outline-none focus:ring-1 focus:ring-indigo-500"
+							className="h-9 px-3 text-sm bg-white dark:bg-[#1A233A] text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-[#222F49] rounded-full focus:outline-none focus:ring-1 focus:ring-indigo-500 max-w-[170px] truncate"
 							value={filterStatus}
 							onChange={(e) => setFilterStatus(e.target.value)}
 						>
 							<option value="">Status: All Statuses</option>
 							{boardColumns.map((c) => (
-								<option key={c.id} value={c.id}>
+								<option key={c.id} value={c.id} className="dark:bg-[#1A233A]">
 									{c.title}
 								</option>
 							))}
 						</select>
 
 						<select
-							className="h-9 px-3 text-sm bg-white border border-slate-200 rounded-full focus:outline-none focus:ring-1 focus:ring-indigo-500"
+							className="h-9 px-3 text-sm bg-white dark:bg-[#1A233A] text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-[#222F49] rounded-full focus:outline-none focus:ring-1 focus:ring-indigo-500 max-w-[170px] truncate"
 							value={filterPriority}
 							onChange={(e) => setFilterPriority(e.target.value)}
 						>
 							<option value="">Priority: All Priorities</option>
-							<option value="LOW">Low</option>
-							<option value="MEDIUM">Medium</option>
-							<option value="HIGH">High</option>
+							<option value="LOW" className="dark:bg-[#1A233A]">Low</option>
+							<option value="MEDIUM" className="dark:bg-[#1A233A]">Medium</option>
+							<option value="HIGH" className="dark:bg-[#1A233A]">High</option>
 						</select>
 
 						<select
-							className="h-9 px-3 text-sm bg-white border border-slate-200 rounded-full focus:outline-none focus:ring-1 focus:ring-indigo-500"
+							className="h-9 px-3 text-sm bg-white dark:bg-[#1A233A] text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-[#222F49] rounded-full focus:outline-none focus:ring-1 focus:ring-indigo-500 max-w-[190px] truncate"
 							value={filterAssignee}
 							onChange={(e) => setFilterAssignee(e.target.value)}
 						>
 							<option value="">Assignee: All Assignees</option>
 							{users.map((u) => (
-								<option key={u.id} value={u.id}>
-									{u.name}
+								<option key={u.id} value={u.id} className="dark:bg-[#1A233A]">
+									{u.name && u.name.length > 25 ? `${u.name.slice(0, 22)}...` : (u.name || u.email)}
 								</option>
 							))}
 						</select>
 
-						<label className="flex items-center gap-2 h-9 px-4 bg-white border border-slate-200 rounded-full cursor-pointer hover:bg-slate-50 transition-colors">
-							<span className="text-sm text-slate-700">Only Me</span>
+						<label className="flex items-center gap-2 h-9 px-4 bg-white dark:bg-[#1A233A] border border-slate-200 dark:border-[#222F49] rounded-full cursor-pointer hover:bg-slate-50 dark:hover:bg-[#222F49] transition-colors">
+							<span className="text-sm text-slate-700 dark:text-slate-200">Only Me</span>
 							<div
-								className={`w-8 h-4 rounded-full transition-colors relative ${filterOnlyMe ? "bg-indigo-500" : "bg-slate-200"}`}
+								className={`w-8 h-4 rounded-full transition-colors relative ${filterOnlyMe ? "bg-indigo-500" : "bg-slate-200 dark:bg-slate-700"}`}
 							>
 								<div
 									className={`absolute top-0.5 left-0.5 w-3 h-3 bg-white rounded-full transition-transform ${filterOnlyMe ? "translate-x-4" : ""}`}
@@ -449,8 +473,39 @@ export default function KanbanBoard({
 				</Portal>
 			)}
 
+			{/* Delete Task Modal */}
+			{taskToDelete && (
+				<Portal>
+					<div className="fixed inset-0 bg-[#33475B]/20 z-50 flex items-center justify-center p-4">
+						<div className="bg-white rounded-lg shadow-lg w-[400px] p-6">
+							<h3 className="text-lg font-semibold text-[#33475B] mb-2">
+								Delete Task
+							</h3>
+							<p className="text-sm text-[#6E7B8B] mb-6 leading-relaxed">
+								Are you sure you want to delete <span className="font-semibold text-slate-900">"{taskToDelete.title}"</span>? This action is permanent and cannot be undone.
+							</p>
+							<div className="flex justify-end gap-2">
+								<Button
+									variant="outline"
+									onClick={() => setTaskToDelete(null)}
+								>
+									Cancel
+								</Button>
+								<Button
+									onClick={executeDeleteTask}
+									disabled={deleteTask.isPending}
+									className="bg-[#E53935] hover:bg-[#D32F2F] text-white disabled:opacity-50"
+								>
+									Delete Task
+								</Button>
+							</div>
+						</div>
+					</div>
+				</Portal>
+			)}
+
 			{/* Board Columns */}
-			<div className="flex-1 overflow-x-auto p-4 flex space-x-4 bg-[#F5F6F8]">
+			<div className="flex-1 overflow-x-auto p-4 flex space-x-4 bg-[#F5F6F8] dark:bg-[#0B0F19]">
 				<DragDropContext onDragEnd={onDragEnd}>
 					<div className="flex flex-1 overflow-x-auto overflow-y-hidden gap-5 pb-4 custom-scrollbar items-start">
 						{boardColumns.map((col) => (
@@ -458,7 +513,12 @@ export default function KanbanBoard({
 								key={col.id}
 								id={col.id}
 								title={col.title}
-								tasks={filteredTasks.filter((t) => t.status === col.id)}
+								tasks={filteredTasks.filter((t) => {
+									if (col.id === "TODO") {
+										return t.status === "TODO" && Boolean(t.assigneeId);
+									}
+									return t.status === col.id;
+								})}
 								users={users}
 								onTaskClick={setSelectedTask}
 								onTaskEdit={(task) => {
@@ -467,6 +527,13 @@ export default function KanbanBoard({
 										return;
 									}
 									setTaskToEdit(task);
+								}}
+								onTaskDelete={(task) => {
+									if (!isAdmin && task.assigneeId !== currentUser?.id) {
+										toast.error("You can only delete tasks assigned to you");
+										return;
+									}
+									setTaskToDelete(task);
 								}}
 								isAdmin={isAdmin}
 								onDelete={confirmDeleteColumn}

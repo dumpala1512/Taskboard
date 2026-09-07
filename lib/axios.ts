@@ -1,6 +1,6 @@
 import axios, { type AxiosResponse } from "axios";
-import { clientStorage } from "./client-storage";
 import { v4 as uuidv4 } from "uuid";
+import { clientStorage } from "./client-storage";
 
 export const apiClient = axios.create({
 	baseURL: "/api",
@@ -9,10 +9,17 @@ export const apiClient = axios.create({
 	},
 });
 
-function parseEndpoint(url?: string): { path: string; id?: string; subAction?: string } {
+function parseEndpoint(url?: string): {
+	path: string;
+	id?: string;
+	subAction?: string;
+} {
 	if (!url) return { path: "" };
 	const cleanUrl = url.split("?")[0];
-	const parts = cleanUrl.replace(/^\/api\//, "").replace(/^\//, "").split("/");
+	const parts = cleanUrl
+		.replace(/^\/api\//, "")
+		.replace(/^\//, "")
+		.split("/");
 	return {
 		path: parts[0] || "",
 		id: parts[1],
@@ -69,39 +76,54 @@ apiClient.interceptors.response.use(
 				clientStorage.deleteUser(id);
 			} else if (subAction === "assign-projects" && id) {
 				try {
-					const body = typeof response.config.data === "string" ? JSON.parse(response.config.data) : response.config.data;
+					const body =
+						typeof response.config.data === "string"
+							? JSON.parse(response.config.data)
+							: response.config.data;
 					if (method === "POST" && Array.isArray(body?.projectIds)) {
 						body.projectIds.forEach((projId: string) => {
 							const proj = clientStorage.getProjectById(projId);
 							if (proj) {
 								const members = proj.members || [];
 								if (!members.includes(id)) {
-									clientStorage.updateProject(proj.id, { members: [...members, id] });
+									clientStorage.updateProject(proj.id, {
+										members: [...members, id],
+									});
 								}
 							}
 						});
 						const u = clientStorage.getUserById(id);
 						if (u) {
 							const current = (u as any).assignedProjectIds || [];
-							const nextIds = Array.from(new Set([...current, ...body.projectIds]));
+							const nextIds = Array.from(
+								new Set([...current, ...body.projectIds]),
+							);
 							clientStorage.saveUser({ ...u, assignedProjectIds: nextIds });
 						}
 					} else if (method === "DELETE" && body?.projectId) {
 						const proj = clientStorage.getProjectById(body.projectId);
 						if (proj) {
-							const members = (proj.members || []).filter((m: string) => m !== id);
+							const members = (proj.members || []).filter(
+								(m: string) => m !== id,
+							);
 							clientStorage.updateProject(proj.id, { members });
 						}
 						const u = clientStorage.getUserById(id);
 						if (u) {
 							const current = (u as any).assignedProjectIds || [];
-							const nextIds = current.filter((pid: string) => pid !== body.projectId);
+							const nextIds = current.filter(
+								(pid: string) => pid !== body.projectId,
+							);
 							clientStorage.saveUser({ ...u, assignedProjectIds: nextIds });
 						}
 					}
 				} catch (_) {}
 			}
-		} else if (path === "admin" && id === "users" && response.config.url?.includes("/create")) {
+		} else if (
+			path === "admin" &&
+			id === "users" &&
+			response.config.url?.includes("/create")
+		) {
 			if (method === "POST" && response.data) {
 				const userToSave = response.data.user || response.data;
 				const tempPassword = response.data.temporaryPassword;
@@ -112,15 +134,22 @@ apiClient.interceptors.response.use(
 			}
 		} else if (path === "auth" && id === "setup-account" && method === "POST") {
 			try {
-				const body = typeof response.config.data === "string" ? JSON.parse(response.config.data) : response.config.data;
+				const body =
+					typeof response.config.data === "string"
+						? JSON.parse(response.config.data)
+						: response.config.data;
 				if (body?.newPassword) {
 					const allUsers = clientStorage.getUsers();
 					const targetId = response.data?.user?.id || body?.userId;
 					const targetEmail = response.data?.user?.email || body?.email;
-					const cleanEmail = targetEmail ? targetEmail.trim().toLowerCase() : "";
+					const cleanEmail = targetEmail
+						? targetEmail.trim().toLowerCase()
+						: "";
 					const u = allUsers.find(
 						(x) =>
-							(cleanEmail && x.email && x.email.trim().toLowerCase() === cleanEmail) ||
+							(cleanEmail &&
+								x.email &&
+								x.email.trim().toLowerCase() === cleanEmail) ||
 							(targetId && x.id === targetId),
 					);
 					const baseUser = u || {
@@ -155,19 +184,34 @@ apiClient.interceptors.response.use(
 		const method = config.method?.toUpperCase();
 		const { path, id, subAction } = parseEndpoint(config.url);
 		const status = error.response?.status;
+		if (status === 400 || status === 422) {
+			return Promise.reject(error);
+		}
 
 		// Fallback for Account Setup (only on 404 or server failure, not on 400 bad request)
-		if (path === "auth" && id === "setup-account" && (status === 404 || !status || status >= 500)) {
+		if (
+			path === "auth" &&
+			id === "setup-account" &&
+			(status === 404 || !status || status >= 500)
+		) {
 			try {
-				const body = typeof config.data === "string" ? JSON.parse(config.data) : config.data;
+				const body =
+					typeof config.data === "string"
+						? JSON.parse(config.data)
+						: config.data;
 				if (body?.newPassword) {
 					const allUsers = clientStorage.getUsers();
 					const targetId = body?.userId;
-					const targetEmail = body?.email ? body.email.trim().toLowerCase() : "";
-					const target = allUsers.find((u) => 
-						(targetId && u.id === targetId) ||
-						(targetEmail && u.email && u.email.trim().toLowerCase() === targetEmail) ||
-						u.isFirstLogin
+					const targetEmail = body?.email
+						? body.email.trim().toLowerCase()
+						: "";
+					const target = allUsers.find(
+						(u) =>
+							(targetId && u.id === targetId) ||
+							(targetEmail &&
+								u.email &&
+								u.email.trim().toLowerCase() === targetEmail) ||
+							u.isFirstLogin,
 					);
 					if (target) {
 						clientStorage.saveUser({
@@ -214,7 +258,10 @@ apiClient.interceptors.response.use(
 			} else if (method === "POST") {
 				// If serverless failed to persist project, persist locally
 				try {
-					const body = typeof config.data === "string" ? JSON.parse(config.data) : config.data;
+					const body =
+						typeof config.data === "string"
+							? JSON.parse(config.data)
+							: config.data;
 					const fallbackProject = {
 						columns: [
 							{ id: "TODO", title: "To Do" },
@@ -241,7 +288,10 @@ apiClient.interceptors.response.use(
 				}
 			} else if (method === "PATCH" && id) {
 				try {
-					const updates = typeof config.data === "string" ? JSON.parse(config.data) : config.data;
+					const updates =
+						typeof config.data === "string"
+							? JSON.parse(config.data)
+							: config.data;
 					const updated = clientStorage.updateProject(id, updates);
 					if (updated) {
 						return Promise.resolve({
@@ -308,7 +358,10 @@ apiClient.interceptors.response.use(
 				}
 			} else if (method === "POST") {
 				try {
-					const body = typeof config.data === "string" ? JSON.parse(config.data) : config.data;
+					const body =
+						typeof config.data === "string"
+							? JSON.parse(config.data)
+							: config.data;
 					const fallbackTask = {
 						...body,
 						id: uuidv4(),
@@ -328,7 +381,10 @@ apiClient.interceptors.response.use(
 				}
 			} else if (method === "PATCH" && id) {
 				try {
-					const updates = typeof config.data === "string" ? JSON.parse(config.data) : config.data;
+					const updates =
+						typeof config.data === "string"
+							? JSON.parse(config.data)
+							: config.data;
 					const updated = clientStorage.updateTask(id, updates);
 					if (updated) {
 						return Promise.resolve({
@@ -367,33 +423,44 @@ apiClient.interceptors.response.use(
 				} as AxiosResponse);
 			} else if (subAction === "assign-projects" && id) {
 				try {
-					const body = typeof config.data === "string" ? JSON.parse(config.data) : config.data;
+					const body =
+						typeof config.data === "string"
+							? JSON.parse(config.data)
+							: config.data;
 					if (method === "POST" && Array.isArray(body?.projectIds)) {
 						body.projectIds.forEach((projId: string) => {
 							const proj = clientStorage.getProjectById(projId);
 							if (proj) {
 								const members = proj.members || [];
 								if (!members.includes(id)) {
-									clientStorage.updateProject(proj.id, { members: [...members, id] });
+									clientStorage.updateProject(proj.id, {
+										members: [...members, id],
+									});
 								}
 							}
 						});
 						const u = clientStorage.getUserById(id);
 						if (u) {
 							const current = (u as any).assignedProjectIds || [];
-							const nextIds = Array.from(new Set([...current, ...body.projectIds]));
+							const nextIds = Array.from(
+								new Set([...current, ...body.projectIds]),
+							);
 							clientStorage.saveUser({ ...u, assignedProjectIds: nextIds });
 						}
 					} else if (method === "DELETE" && body?.projectId) {
 						const proj = clientStorage.getProjectById(body.projectId);
 						if (proj) {
-							const members = (proj.members || []).filter((m: string) => m !== id);
+							const members = (proj.members || []).filter(
+								(m: string) => m !== id,
+							);
 							clientStorage.updateProject(proj.id, { members });
 						}
 						const u = clientStorage.getUserById(id);
 						if (u) {
 							const current = (u as any).assignedProjectIds || [];
-							const nextIds = current.filter((pid: string) => pid !== body.projectId);
+							const nextIds = current.filter(
+								(pid: string) => pid !== body.projectId,
+							);
 							clientStorage.saveUser({ ...u, assignedProjectIds: nextIds });
 						}
 					}

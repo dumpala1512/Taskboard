@@ -67,6 +67,9 @@ export function useDeleteProject() {
 				return old.filter((p: any) => p.id !== deletedId);
 			});
 			queryClient.invalidateQueries({ queryKey: ["projects"] });
+			queryClient.invalidateQueries({ queryKey: ["tasks"] });
+			queryClient.invalidateQueries({ queryKey: ["analytics"] });
+			queryClient.invalidateQueries({ queryKey: ["activities"] });
 		},
 	});
 }

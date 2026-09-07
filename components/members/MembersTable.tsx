@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { UserDetailed } from '../../hooks/useUsers';
-import { MoreHorizontal, Shield, Users } from 'lucide-react';
+import { Shield, Users } from 'lucide-react';
 import MemberProfileDrawer from './MemberProfileDrawer';
 import { EmptyState } from '../ui/EmptyState';
 

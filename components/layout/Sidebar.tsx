@@ -33,7 +33,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
 	];
 
 	const NavItem = ({ item }: { item: (typeof navItems)[0] }) => {
-		const isActive = router.pathname === item.href;
+		const isActive =
+			item.href === "/"
+				? router.pathname === "/" ||
+				  router.pathname === "/dashboard" ||
+				  router.pathname.startsWith("/admin/dashboard")
+				: router.pathname === item.href ||
+				  router.pathname.startsWith(`${item.href}/`);
 		const Icon = item.icon;
 
 		return (

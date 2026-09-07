@@ -9,16 +9,11 @@ import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
 
 const userSchema = z.object({
-	firstName: z
+	fullName: z
 		.string()
-		.min(1, "First name is required")
-		.max(50, "First name must be less than 50 characters")
-		.regex(/^[A-Za-z\s]+$/, "First name can only contain letters and spaces"),
-	lastName: z
-		.string()
-		.min(1, "Last name is required")
-		.max(50, "Last name must be less than 50 characters")
-		.regex(/^[A-Za-z\s]+$/, "Last name can only contain letters and spaces"),
+		.min(1, "Full name is required")
+		.max(50, "Full name must be less than 50 characters")
+		.regex(/^[A-Za-z\s]+$/, "Full name can only contain letters and spaces"),
 	email: z
 		.string()
 		.min(1, "Email is required")
@@ -52,13 +47,25 @@ export function CreateUserModal({
 		register,
 		handleSubmit,
 		reset,
+		watch,
 		formState: { errors },
 	} = useForm<UserFormValues>({
 		resolver: zodResolver(userSchema),
+		mode: "onBlur",
 		defaultValues: {
 			role: "MEMBER",
+			fullName: "",
+			email: "",
 		},
 	});
+
+	const fullName = watch("fullName");
+	const email = watch("email");
+
+	const hasRequiredFields =
+		!!fullName?.trim() && !!email?.trim();
+	const hasErrors = !!(errors.fullName || errors.email);
+	const isSubmitDisabled = !hasRequiredFields || hasErrors || loading;
 
 	if (!isOpen) return null;
 
@@ -81,7 +88,10 @@ export function CreateUserModal({
 	const onSubmit = async (data: UserFormValues) => {
 		setLoading(true);
 		try {
-			const res = await apiClient.post("/admin/users/create", data);
+			const res = await apiClient.post("/admin/users/create", {
+				...data,
+				role: "MEMBER",
+			});
 			setTempPassword(res.data.temporaryPassword);
 			onSuccess();
 			toast.success("User created successfully");
@@ -94,8 +104,8 @@ export function CreateUserModal({
 
 	return (
 		<div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm animate-in fade-in duration-200">
-			<div className="bg-white rounded-2xl shadow-xl max-w-md w-full overflow-hidden border border-gray-100 relative scale-in-center">
-				<div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+			<div className="bg-white rounded-2xl shadow-xl max-w-md w-full min-h-[530px] flex flex-col overflow-hidden border border-gray-100 relative scale-in-center">
+				<div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 shrink-0">
 					<h2 className="text-xl font-bold text-gray-900">
 						{tempPassword ? "User Created" : "Create New User"}
 					</h2>
@@ -107,40 +117,42 @@ export function CreateUserModal({
 					</button>
 				</div>
 
-				<div className="p-6">
+				<div className="p-6 flex-1 flex flex-col justify-between overflow-y-auto">
 					{tempPassword ? (
-						<div className="text-center">
-							<div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center text-green-600 mx-auto mb-4">
-								<Check className="w-8 h-8" />
-							</div>
-							<h3 className="text-lg font-medium text-gray-900 mb-2">
-								Account Provisioned
-							</h3>
-							<p className="text-sm text-gray-500 mb-6">
-								The user account has been created. Please securely share these
-								temporary credentials with the user. They will be required to
-								set a new password on their first login.
-							</p>
-
-							<div className="bg-slate-50 border border-slate-200 rounded-lg p-4 mb-6">
-								<div className="text-xs text-slate-500 uppercase tracking-wider font-semibold mb-2 text-left">
-									Temporary Password
+						<div className="text-center flex-1 flex flex-col justify-between py-2">
+							<div>
+								<div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center text-green-600 mx-auto mb-4">
+									<Check className="w-8 h-8" />
 								</div>
-								<div className="flex items-center justify-between bg-white border border-slate-200 rounded-md p-3">
-									<code className="text-sm font-mono text-slate-900 font-bold">
-										{tempPassword}
-									</code>
-									<button
-										onClick={copyToClipboard}
-										className="text-indigo-600 hover:text-indigo-700 p-1.5 hover:bg-indigo-50 rounded-md transition-colors"
-										title="Copy to clipboard"
-									>
-										{copied ? (
-											<Check className="w-4 h-4 text-green-600" />
-										) : (
-											<Copy className="w-4 h-4" />
-										)}
-									</button>
+								<h3 className="text-lg font-medium text-gray-900 mb-2">
+									Account Provisioned
+								</h3>
+								<p className="text-sm text-gray-500 mb-6">
+									The user account has been created. Please securely share these
+									temporary credentials with the user. They will be required to
+									set a new password on their first login.
+								</p>
+
+								<div className="bg-slate-50 border border-slate-200 rounded-lg p-4 mb-6">
+									<div className="text-xs text-slate-500 uppercase tracking-wider font-semibold mb-2 text-left">
+										Temporary Password
+									</div>
+									<div className="flex items-center justify-between bg-white border border-slate-200 rounded-md p-3">
+										<code className="text-sm font-mono text-slate-900 font-bold">
+											{tempPassword}
+										</code>
+										<button
+											onClick={copyToClipboard}
+											className="text-indigo-600 hover:text-indigo-700 p-1.5 hover:bg-indigo-50 rounded-md transition-colors"
+											title="Copy to clipboard"
+										>
+											{copied ? (
+												<Check className="w-4 h-4 text-green-600" />
+											) : (
+												<Copy className="w-4 h-4" />
+											)}
+										</button>
+									</div>
 								</div>
 							</div>
 
@@ -153,60 +165,48 @@ export function CreateUserModal({
 							</Button>
 						</div>
 					) : (
-						<form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-							<div className="grid grid-cols-2 gap-4">
+						<form onSubmit={handleSubmit(onSubmit)} className="flex-1 flex flex-col justify-between">
+							<div className="space-y-2">
 								<Input
-									label="First Name"
-									error={errors.firstName?.message}
-									{...register("firstName")}
+									label="Full Name *"
+									placeholder="e.g. Jane Doe"
+									error={errors.fullName?.message}
+									reserveErrorSpace
+									{...register("fullName")}
 								/>
+
 								<Input
-									label="Last Name"
-									error={errors.lastName?.message}
-									{...register("lastName")}
+									label="Email Address *"
+									type="email"
+									error={errors.email?.message}
+									reserveErrorSpace
+									{...register("email")}
 								/>
+
+								<div className="grid grid-cols-2 gap-4">
+									<Input
+										label="Department (Optional)"
+										{...register("department")}
+									/>
+									<Input label="Job Title (Optional)" {...register("jobTitle")} />
+								</div>
+
+								<div>
+									<Input
+										label="Joining Date (Optional)"
+										type="date"
+										{...register("joiningDate")}
+									/>
+								</div>
 							</div>
 
-							<Input
-								label="Email Address"
-								type="email"
-								error={errors.email?.message}
-								{...register("email")}
-							/>
-
-							<div>
-								<label className="block text-sm font-medium text-gray-700 mb-1">
-									Role
-								</label>
-								<select
-									{...register("role")}
-									className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+							<div className="pt-4 flex justify-end shrink-0">
+								<Button
+									type="submit"
+									variant="primary"
+									isLoading={loading}
+									disabled={isSubmitDisabled}
 								>
-									<option value="MEMBER">Member</option>
-								</select>
-							</div>
-
-							<div className="grid grid-cols-2 gap-4">
-								<Input
-									label="Department (Optional)"
-									{...register("department")}
-								/>
-								<Input label="Job Title (Optional)" {...register("jobTitle")} />
-							</div>
-
-							<div>
-								<Input
-									label="Joining Date (Optional)"
-									type="date"
-									{...register("joiningDate")}
-								/>
-							</div>
-
-							<div className="pt-4 flex justify-end gap-3">
-								<Button type="button" variant="outline" onClick={handleClose}>
-									Cancel
-								</Button>
-								<Button type="submit" variant="primary" isLoading={loading}>
 									Create User
 								</Button>
 							</div>

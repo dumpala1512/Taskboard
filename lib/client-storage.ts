@@ -96,11 +96,28 @@ export const clientStorage = {
 			setItem(STORAGE_KEYS.DELETED_PROJECTS, deleted);
 		}
 		const projects = this.getProjects();
+		const targetProj = projects.find((p) => p.id === id || p.key?.toLowerCase() === targetId);
+		if (targetProj?.key && !deleted.includes(targetProj.key.toLowerCase())) {
+			deleted.push(targetProj.key.toLowerCase());
+			setItem(STORAGE_KEYS.DELETED_PROJECTS, deleted);
+		}
 		const filtered = projects.filter((p) => p.id !== id && p.key?.toLowerCase() !== targetId);
 		setItem(STORAGE_KEYS.PROJECTS, filtered);
 		// Clean up tasks for this project
-		const tasks = this.getTasks();
-		setItem(STORAGE_KEYS.TASKS, tasks.filter((t) => t.projectId !== id));
+		const allTasks = getItem<Task[]>(STORAGE_KEYS.TASKS, []);
+		const isProjectTask = (t: Task) =>
+			t.projectId === id ||
+			(targetProj && (t.projectId === targetProj.id || (targetProj.key && t.projectId === targetProj.key)));
+		const tasksToDelete = allTasks.filter(isProjectTask);
+		const remainingTasks = allTasks.filter((t) => !isProjectTask(t));
+		setItem(STORAGE_KEYS.TASKS, remainingTasks);
+
+		// Record deleted task IDs so they are not resurrected
+		const deletedTaskIds = this.getDeletedTaskIds();
+		const newDeletedTaskIds = Array.from(
+			new Set([...deletedTaskIds, ...tasksToDelete.map((t) => t.id)]),
+		);
+		setItem(STORAGE_KEYS.DELETED_TASKS, newDeletedTaskIds);
 		return true;
 	},
 
@@ -182,7 +199,20 @@ export const clientStorage = {
 	getTasks(projectId?: string): Task[] {
 		const all = getItem<Task[]>(STORAGE_KEYS.TASKS, []);
 		const deletedIds = new Set(this.getDeletedTaskIds());
-		const active = all.filter((t) => t && t.id && !deletedIds.has(t.id));
+		const activeProjects = this.getProjects();
+		const validProjectIds = new Set<string>();
+		activeProjects.forEach((p) => {
+			if (p.id) validProjectIds.add(p.id.toLowerCase());
+			if (p.key) validProjectIds.add(p.key.toLowerCase());
+		});
+		const active = all.filter(
+			(t) =>
+				t &&
+				t.id &&
+				!deletedIds.has(t.id) &&
+				t.projectId &&
+				validProjectIds.has(t.projectId.toLowerCase()),
+		);
 		if (projectId) {
 			return active.filter((t) => t.projectId === projectId);
 		}
@@ -256,17 +286,33 @@ export const clientStorage = {
 	},
 
 	mergeTasks(serverTasks: Task[], projectId?: string): Task[] {
-		const localTasks = this.getTasks();
+		const activeProjects = this.getProjects();
+		const validProjectIds = new Set<string>();
+		activeProjects.forEach((p) => {
+			if (p.id) validProjectIds.add(p.id.toLowerCase());
+			if (p.key) validProjectIds.add(p.key.toLowerCase());
+		});
 		const deletedIds = new Set(this.getDeletedTaskIds());
+		const rawLocalTasks = getItem<Task[]>(STORAGE_KEYS.TASKS, []);
+		const localTasks = rawLocalTasks.filter(
+			(t) =>
+				t &&
+				t.id &&
+				!deletedIds.has(t.id) &&
+				t.projectId &&
+				validProjectIds.has(t.projectId.toLowerCase()),
+		);
 		const mergedMap = new Map<string, Task>();
 
 		for (const t of serverTasks) {
 			if (!t || !t.id || deletedIds.has(t.id)) continue;
+			if (!t.projectId || !validProjectIds.has(t.projectId.toLowerCase())) continue;
 			mergedMap.set(t.id, t);
 		}
 
 		for (const t of localTasks) {
 			if (!t || !t.id || deletedIds.has(t.id)) continue;
+			if (!t.projectId || !validProjectIds.has(t.projectId.toLowerCase())) continue;
 			if (projectId && t.projectId !== projectId) continue;
 			const existing = mergedMap.get(t.id);
 			if (!existing) {

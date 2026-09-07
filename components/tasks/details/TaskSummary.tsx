@@ -27,12 +27,12 @@ export function TaskSummary({ task }: TaskSummaryProps) {
 	return (
 		<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 			{/* Progress */}
-			<div className="bg-white p-4 rounded-lg border border-gray-100 shadow-sm flex flex-col justify-center">
+			<div className="bg-white p-4 rounded-lg border border-gray-100 shadow-sm flex flex-col justify-center min-w-0">
 				<div className="flex items-center text-sm font-medium text-gray-500 mb-2">
-					<CheckCircle2 className="w-4 h-4 mr-1.5 text-green-500" />
+					<CheckCircle2 className="w-4 h-4 mr-1.5 text-green-500 shrink-0" />
 					Progress
 				</div>
-				<div className="flex items-end justify-between">
+				<div className="flex items-end justify-between gap-2">
 					<span className="text-2xl font-semibold text-gray-900">
 						{task.status === "DONE"
 							? "100%"
@@ -40,7 +40,7 @@ export function TaskSummary({ task }: TaskSummaryProps) {
 								? "50%"
 								: "0%"}
 					</span>
-					<span className="text-sm text-gray-500">Status: {task.status}</span>
+					<span className="text-sm text-gray-500 truncate">Status: {task.status}</span>
 				</div>
 				<div className="w-full bg-gray-200 rounded-full h-2 mt-3">
 					<div
@@ -58,9 +58,9 @@ export function TaskSummary({ task }: TaskSummaryProps) {
 			</div>
 
 			{/* Dates */}
-			<div className="bg-white p-4 rounded-lg border border-gray-100 shadow-sm flex flex-col justify-center">
+			<div className="bg-white p-4 rounded-lg border border-gray-100 shadow-sm flex flex-col justify-center min-w-0">
 				<div className="flex items-center text-sm font-medium text-gray-500 mb-2">
-					<Calendar className="w-4 h-4 mr-1.5 text-orange-500" />
+					<Calendar className="w-4 h-4 mr-1.5 text-orange-500 shrink-0" />
 					Timeline
 				</div>
 				<div className="space-y-1 mt-1">
@@ -80,18 +80,19 @@ export function TaskSummary({ task }: TaskSummaryProps) {
 			</div>
 
 			{/* Tags */}
-			<div className="bg-white p-4 rounded-lg border border-gray-100 shadow-sm flex flex-col justify-center space-y-3">
-				<div>
+			<div className="bg-white p-4 rounded-lg border border-gray-100 shadow-sm flex flex-col justify-center space-y-3 min-w-0 overflow-hidden">
+				<div className="min-w-0">
 					<div className="flex items-center text-sm font-medium text-gray-500 mb-1.5">
-						<Tag className="w-4 h-4 mr-1.5 text-purple-500" />
+						<Tag className="w-4 h-4 mr-1.5 text-purple-500 shrink-0" />
 						Tags
 					</div>
-					<div className="flex flex-wrap gap-1">
+					<div className="flex flex-wrap gap-1.5 overflow-hidden">
 						{task.tags && task.tags.length > 0 ? (
 							task.tags.map((tag: string) => (
 								<span
 									key={tag}
-									className="px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600"
+									className="px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600 break-all max-w-full inline-block"
+									title={tag}
 								>
 									{tag}
 								</span>

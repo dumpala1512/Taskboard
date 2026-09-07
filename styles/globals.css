@@ -143,6 +143,46 @@
   border-color: #222F49 !important;
 }
 
+.dark .bg-\[\#F9FAFB\] {
+  background-color: #0E1526 !important;
+}
+
+.dark .bg-\[\#F0F2F5\] {
+  background-color: #1A233A !important;
+}
+
+.dark .bg-\[\#E3F2FD\] {
+  background-color: rgba(56, 189, 248, 0.15) !important;
+}
+
+.dark .bg-\[\#E8F5E9\] {
+  background-color: rgba(74, 222, 128, 0.15) !important;
+}
+
+.dark .bg-\[\#FFF3E0\] {
+  background-color: rgba(251, 191, 36, 0.15) !important;
+}
+
+.dark .bg-\[\#FFEBEE\] {
+  background-color: rgba(248, 113, 113, 0.15) !important;
+}
+
+.dark .bg-\[\#F0F4FF\] {
+  background-color: rgba(99, 102, 241, 0.15) !important;
+}
+
+.dark .border-\[\#BBDEFB\] {
+  border-color: #1E3A8A !important;
+}
+
+.dark .border-\[\#90CAF9\] {
+  border-color: #0284C7 !important;
+}
+
+.dark .border-white {
+  border-color: #131B2E !important;
+}
+
 .dark .divide-slate-200 > :not([hidden]) ~ :not([hidden]),
 .dark .divide-gray-200 > :not([hidden]) ~ :not([hidden]) {
   border-color: #222F49 !important;

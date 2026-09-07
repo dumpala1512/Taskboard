@@ -12,6 +12,7 @@ interface KanbanColumnProps {
 	users: User[];
 	onTaskClick?: (task: Task) => void;
 	onTaskEdit?: (task: Task) => void;
+	onTaskDelete?: (task: Task) => void;
 	isAdmin?: boolean;
 	onDelete?: (id: string) => void;
 }
@@ -31,30 +32,31 @@ export default function KanbanColumn({
 	users,
 	onTaskClick,
 	onTaskEdit,
+	onTaskDelete,
 	isAdmin,
 	onDelete,
 }: KanbanColumnProps) {
 	const dotColor = STATUS_DOT[id] ?? "#9EAAB7";
 
 	return (
-		<div className="flex flex-col flex-shrink-0 w-[300px] h-full bg-white rounded-md border border-[#E0E3E8] overflow-hidden shadow-[0_1px_3px_rgba(0,0,0,0.05)]">
+		<div className="flex flex-col flex-shrink-0 w-[300px] h-full bg-white dark:bg-[#131B2E] rounded-md border border-[#E0E3E8] dark:border-[#222F49] overflow-hidden shadow-[0_1px_3px_rgba(0,0,0,0.05)]">
 			{/* Column header */}
-			<div className="px-3 py-2.5 border-b border-[#E0E3E8] flex justify-between items-center bg-white shrink-0">
+			<div className="px-3 py-2.5 border-b border-[#E0E3E8] dark:border-[#222F49] flex justify-between items-center bg-white dark:bg-[#131B2E] shrink-0">
 				<div className="flex items-center gap-2">
 					<span
 						className="w-2 h-2 rounded-full flex-shrink-0"
 						style={{ background: dotColor }}
 					/>
-					<h3 className="text-sm font-semibold text-[#33475B]">{title}</h3>
+					<h3 className="text-sm font-semibold text-[#33475B] dark:text-slate-100">{title}</h3>
 				</div>
 				<div className="flex items-center gap-2">
-					<span className="bg-[#F5F6F8] text-[#6E7B8B] text-xs font-medium px-2 py-0.5 rounded-full border border-[#E0E3E8]">
+					<span className="bg-[#F5F6F8] dark:bg-[#1A233A] text-[#6E7B8B] dark:text-slate-300 text-xs font-medium px-2 py-0.5 rounded-full border border-[#E0E3E8] dark:border-[#222F49]">
 						{tasks.length}
 					</span>
 					{isAdmin && onDelete && (
 						<button
 							onClick={() => onDelete(id)}
-							className="text-[#9EAAB7] hover:text-[#E53935] hover:bg-[#FFEBEE] p-1 rounded transition-colors"
+							className="text-[#9EAAB7] dark:text-slate-400 hover:text-[#E53935] hover:bg-[#FFEBEE] dark:hover:bg-red-950/30 p-1 rounded transition-colors"
 							title="Delete Column"
 						>
 							<Trash2 className="w-3.5 h-3.5" />
@@ -69,7 +71,9 @@ export default function KanbanColumn({
 						ref={provided.innerRef}
 						{...provided.droppableProps}
 						className={`flex-1 p-2.5 min-h-[150px] overflow-y-auto transition-colors flex flex-col ${
-							snapshot.isDraggingOver ? "bg-[#E3F2FD]" : "bg-[#F9FAFB]"
+							snapshot.isDraggingOver
+								? "bg-[#E3F2FD] dark:bg-[#1E293B]/70"
+								: "bg-[#F9FAFB] dark:bg-[#0E1526]"
 						}`}
 					>
 						{tasks.map((task, index) => (
@@ -80,6 +84,7 @@ export default function KanbanColumn({
 								users={users}
 								onClick={onTaskClick}
 								onEdit={onTaskEdit}
+								onDelete={onTaskDelete}
 							/>
 						))}
 						{provided.placeholder}
