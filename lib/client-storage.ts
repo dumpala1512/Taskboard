@@ -51,8 +51,13 @@ export const clientStorage = {
 	// ==================== PROJECTS ====================
 	getProjects(): Project[] {
 		const raw = getItem<Project[]>(STORAGE_KEYS.PROJECTS, []);
-		const deletedIds = new Set(this.getDeletedProjectIds());
-		return raw.filter((p) => p && p.id && !deletedIds.has(p.id) && (!p.key || !deletedIds.has(p.key.toLowerCase())));
+		const deletedIds = new Set(this.getDeletedProjectIds().map((x) => x.toLowerCase()));
+		return raw.filter((p) => {
+			if (!p || !p.id) return false;
+			if (deletedIds.has(p.id.toLowerCase())) return false;
+			if (p.key && deletedIds.has(p.key.toLowerCase())) return false;
+			return true;
+		});
 	},
 
 	getProjectById(id: string): Project | undefined {
@@ -62,10 +67,12 @@ export const clientStorage = {
 
 	saveProject(project: Project): Project {
 		const deleted = this.getDeletedProjectIds();
-		if (deleted.includes(project.id) || (project.key && deleted.includes(project.key.toLowerCase()))) {
+		const targetId = project.id.toLowerCase();
+		const targetKey = project.key?.toLowerCase();
+		if (deleted.some((d) => d.toLowerCase() === targetId || (targetKey && d.toLowerCase() === targetKey))) {
 			setItem(
 				STORAGE_KEYS.DELETED_PROJECTS,
-				deleted.filter((id) => id !== project.id && id !== project.key?.toLowerCase()),
+				deleted.filter((id) => id.toLowerCase() !== targetId && id.toLowerCase() !== targetKey),
 			);
 		}
 		const projects = this.getProjects();
@@ -91,23 +98,49 @@ export const clientStorage = {
 	deleteProject(id: string): boolean {
 		const deleted = this.getDeletedProjectIds();
 		const targetId = id.toLowerCase();
-		if (!deleted.includes(targetId)) {
-			deleted.push(targetId);
+		const projects = getItem<Project[]>(STORAGE_KEYS.PROJECTS, []);
+		const targetProj = projects.find(
+			(p) => p && (p.id === id || p.id?.toLowerCase() === targetId || p.key?.toLowerCase() === targetId),
+		);
+
+		const toAdd = new Set<string>([id, targetId]);
+		if (targetProj) {
+			if (targetProj.id) {
+				toAdd.add(targetProj.id);
+				toAdd.add(targetProj.id.toLowerCase());
+			}
+			if (targetProj.key) {
+				toAdd.add(targetProj.key);
+				toAdd.add(targetProj.key.toLowerCase());
+			}
+		}
+
+		let changed = false;
+		for (const item of toAdd) {
+			if (!deleted.includes(item)) {
+				deleted.push(item);
+				changed = true;
+			}
+		}
+		if (changed) {
 			setItem(STORAGE_KEYS.DELETED_PROJECTS, deleted);
 		}
-		const projects = this.getProjects();
-		const targetProj = projects.find((p) => p.id === id || p.key?.toLowerCase() === targetId);
-		if (targetProj?.key && !deleted.includes(targetProj.key.toLowerCase())) {
-			deleted.push(targetProj.key.toLowerCase());
-			setItem(STORAGE_KEYS.DELETED_PROJECTS, deleted);
-		}
-		const filtered = projects.filter((p) => p.id !== id && p.key?.toLowerCase() !== targetId);
+
+		const deletedSet = new Set(deleted.map((d) => d.toLowerCase()));
+		const filtered = projects.filter((p) => {
+			if (!p || !p.id) return false;
+			if (deletedSet.has(p.id.toLowerCase())) return false;
+			if (p.key && deletedSet.has(p.key.toLowerCase())) return false;
+			return true;
+		});
 		setItem(STORAGE_KEYS.PROJECTS, filtered);
+
 		// Clean up tasks for this project
 		const allTasks = getItem<Task[]>(STORAGE_KEYS.TASKS, []);
 		const isProjectTask = (t: Task) =>
 			t.projectId === id ||
-			(targetProj && (t.projectId === targetProj.id || (targetProj.key && t.projectId === targetProj.key)));
+			(t.projectId && t.projectId.toLowerCase() === targetId) ||
+			(targetProj && (t.projectId === targetProj.id || (targetProj.key && t.projectId.toLowerCase() === targetProj.key.toLowerCase())));
 		const tasksToDelete = allTasks.filter(isProjectTask);
 		const remainingTasks = allTasks.filter((t) => !isProjectTask(t));
 		setItem(STORAGE_KEYS.TASKS, remainingTasks);
@@ -157,20 +190,20 @@ export const clientStorage = {
 
 	mergeProjects(serverProjects: Project[]): Project[] {
 		const localProjects = this.getProjects();
-		const deletedIds = new Set(this.getDeletedProjectIds());
+		const deletedIds = new Set(this.getDeletedProjectIds().map((x) => x.toLowerCase()));
 		const mergedMap = new Map<string, Project>();
 
 		// Add server projects first (ignoring deleted)
 		for (const p of serverProjects) {
 			if (!p || !p.id) continue;
-			if (deletedIds.has(p.id) || (p.key && deletedIds.has(p.key.toLowerCase()))) continue;
+			if (deletedIds.has(p.id.toLowerCase()) || (p.key && deletedIds.has(p.key.toLowerCase()))) continue;
 			mergedMap.set(p.id, p);
 		}
 
 		// Overlay local projects
 		for (const p of localProjects) {
 			if (!p || !p.id) continue;
-			if (deletedIds.has(p.id) || (p.key && deletedIds.has(p.key.toLowerCase()))) continue;
+			if (deletedIds.has(p.id.toLowerCase()) || (p.key && deletedIds.has(p.key.toLowerCase()))) continue;
 			const existing = mergedMap.get(p.id);
 			if (!existing) {
 				mergedMap.set(p.id, p);
@@ -336,7 +369,7 @@ export const clientStorage = {
 	// ==================== USERS ====================
 	getUsers(): User[] {
 		const raw = getItem<any[]>(STORAGE_KEYS.USERS, []);
-		const deletedIds = new Set(this.getDeletedUserIds());
+		const deletedIds = new Set(this.getDeletedUserIds().map((x) => x.toLowerCase()));
 		const sanitized: User[] = [];
 		const seenEmails = new Set<string>();
 		const seenIds = new Set<string>();
@@ -350,16 +383,16 @@ export const clientStorage = {
 			const actual: any = item.user ? item.user : item;
 			if (actual && actual.id) {
 				const cleanEmail = actual.email ? actual.email.trim().toLowerCase() : "";
-				if (deletedIds.has(actual.id) || (cleanEmail && deletedIds.has(cleanEmail))) {
+				if (deletedIds.has(actual.id.toLowerCase()) || (cleanEmail && deletedIds.has(cleanEmail))) {
 					needsClean = true;
 					continue;
 				}
 				// Deduplicate by both ID and Email
-				if (seenIds.has(actual.id) || (cleanEmail && seenEmails.has(cleanEmail))) {
+				if (seenIds.has(actual.id.toLowerCase()) || (cleanEmail && seenEmails.has(cleanEmail))) {
 					needsClean = true;
 					continue;
 				}
-				seenIds.add(actual.id);
+				seenIds.add(actual.id.toLowerCase());
 				if (cleanEmail) seenEmails.add(cleanEmail);
 
 				const name = actual.name || `${actual.firstName || ""} ${actual.lastName || ""}`.trim() || actual.email || "Member";
@@ -381,7 +414,8 @@ export const clientStorage = {
 	},
 
 	getUserById(id: string): User | undefined {
-		return this.getUsers().find((u) => u.id === id);
+		const targetId = id.toLowerCase();
+		return this.getUsers().find((u) => u.id?.toLowerCase() === targetId || u.email?.trim().toLowerCase() === targetId);
 	},
 
 	saveUser(user: any): User {
@@ -391,17 +425,12 @@ export const clientStorage = {
 			actual.name = `${actual.firstName || ""} ${actual.lastName || ""}`.trim() || actual.email || "Member";
 		}
 		const deleted = this.getDeletedUserIds();
+		const actualIdLower = actual.id.toLowerCase();
 		const cleanActualEmail = actual.email ? actual.email.trim().toLowerCase() : "";
-		if (deleted.includes(actual.id)) {
+		if (deleted.some((d) => d.toLowerCase() === actualIdLower || (cleanActualEmail && d.toLowerCase() === cleanActualEmail))) {
 			setItem(
 				STORAGE_KEYS.DELETED_USERS,
-				deleted.filter((id) => id !== actual.id && id !== cleanActualEmail),
-			);
-		}
-		if (cleanActualEmail && deleted.includes(cleanActualEmail)) {
-			setItem(
-				STORAGE_KEYS.DELETED_USERS,
-				deleted.filter((id) => id !== actual.id && id !== cleanActualEmail),
+				deleted.filter((id) => id.toLowerCase() !== actualIdLower && id.toLowerCase() !== cleanActualEmail),
 			);
 		}
 
@@ -409,6 +438,7 @@ export const clientStorage = {
 		const index = users.findIndex(
 			(u) =>
 				u.id === actual.id ||
+				u.id?.toLowerCase() === actualIdLower ||
 				(cleanActualEmail && u.email && u.email.trim().toLowerCase() === cleanActualEmail),
 		);
 
@@ -442,34 +472,79 @@ export const clientStorage = {
 
 	deleteUser(id: string): boolean {
 		const deleted = this.getDeletedUserIds();
-		if (!deleted.includes(id)) {
-			deleted.push(id);
+		const targetId = id.toLowerCase();
+		const users = getItem<any[]>(STORAGE_KEYS.USERS, []).map((item) => item?.user || item);
+		const targetUser = users.find(
+			(u) => u && (u.id === id || u.id?.toLowerCase() === targetId || u.email?.trim().toLowerCase() === targetId),
+		);
+
+		const toAdd = new Set<string>([id, targetId]);
+		if (targetUser) {
+			if (targetUser.id) {
+				toAdd.add(targetUser.id);
+				toAdd.add(targetUser.id.toLowerCase());
+			}
+			if (targetUser.email) {
+				const emailClean = targetUser.email.trim();
+				toAdd.add(emailClean);
+				toAdd.add(emailClean.toLowerCase());
+			}
+		}
+
+		let changed = false;
+		for (const item of toAdd) {
+			if (!deleted.includes(item)) {
+				deleted.push(item);
+				changed = true;
+			}
+		}
+		if (changed) {
 			setItem(STORAGE_KEYS.DELETED_USERS, deleted);
 		}
 
-		const users = this.getUsers().filter((u) => u.id !== id && u.email !== id);
-		setItem(STORAGE_KEYS.USERS, users);
+		const deletedSet = new Set(deleted.map((d) => d.toLowerCase()));
+		const remainingUsers = users.filter((u) => {
+			if (!u || !u.id) return false;
+			if (deletedSet.has(u.id.toLowerCase())) return false;
+			if (u.email && deletedSet.has(u.email.trim().toLowerCase())) return false;
+			return true;
+		});
+		setItem(STORAGE_KEYS.USERS, remainingUsers);
 
 		// Also remove deleted user from local projects' member lists
 		const projects = this.getProjects();
 		const updatedProjects = projects.map((p) => {
-			if (p.members && p.members.includes(id)) {
-				return { ...p, members: p.members.filter((m) => m !== id) };
+			if (p.members && p.members.some((m) => deletedSet.has(m.toLowerCase()))) {
+				return { ...p, members: p.members.filter((m) => !deletedSet.has(m.toLowerCase())) };
 			}
 			return p;
 		});
 		setItem(STORAGE_KEYS.PROJECTS, updatedProjects);
+
+		// Also unassign deleted user from local tasks
+		const allTasks = getItem<Task[]>(STORAGE_KEYS.TASKS, []);
+		let tasksChanged = false;
+		const updatedTasks = allTasks.map((t) => {
+			if (t.assigneeId && deletedSet.has(t.assigneeId.toLowerCase())) {
+				tasksChanged = true;
+				return { ...t, assigneeId: undefined, assignee: undefined, updatedAt: new Date().toISOString() };
+			}
+			return t;
+		});
+		if (tasksChanged) {
+			setItem(STORAGE_KEYS.TASKS, updatedTasks);
+		}
 
 		return true;
 	},
 
 	mergeUsers(serverUsers: any[]): User[] {
 		const localUsers = this.getUsers();
-		const deletedIds = new Set(this.getDeletedUserIds());
+		const deletedIds = new Set(this.getDeletedUserIds().map((x) => x.toLowerCase()));
 		const localMap = new Map<string, any>();
 		const localEmailMap = new Map<string, any>();
 		for (const u of localUsers) {
-			if (u && u.id) localMap.set(u.id, u);
+			if (u && u.id) localMap.set(u.id.toLowerCase(), u);
 			if (u && u.email) localEmailMap.set(u.email.trim().toLowerCase(), u);
 		}
 
@@ -478,7 +553,7 @@ export const clientStorage = {
 
 		for (const raw of serverUsers) {
 			const u: any = raw.user ? raw.user : raw;
-			if (!u || !u.id || deletedIds.has(u.id)) continue;
+			if (!u || !u.id || deletedIds.has(u.id.toLowerCase())) continue;
 			const cleanEmail = u.email ? u.email.trim().toLowerCase() : "";
 			if (cleanEmail && deletedIds.has(cleanEmail)) continue;
 
@@ -486,7 +561,7 @@ export const clientStorage = {
 				u.name = `${u.firstName || ""} ${u.lastName || ""}`.trim() || u.email || "Member";
 			}
 			const existing =
-				localMap.get(u.id) ||
+				localMap.get(u.id.toLowerCase()) ||
 				(cleanEmail ? localEmailMap.get(cleanEmail) : undefined);
 			const isFirstLogin = (existing?.isFirstLogin === false || u.isFirstLogin === false)
 				? false
@@ -505,7 +580,7 @@ export const clientStorage = {
 		}
 
 		for (const u of localUsers) {
-			if (!u || !u.id || deletedIds.has(u.id)) continue;
+			if (!u || !u.id || deletedIds.has(u.id.toLowerCase())) continue;
 			const cleanEmail = u.email ? u.email.trim().toLowerCase() : "";
 			if (cleanEmail && deletedIds.has(cleanEmail)) continue;
 

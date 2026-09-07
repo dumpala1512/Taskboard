@@ -20,6 +20,13 @@ function parseEndpoint(url?: string): {
 		.replace(/^\/api\//, "")
 		.replace(/^\//, "")
 		.split("/");
+	if (parts[0] === "admin" && parts[1] === "users") {
+		return {
+			path: "users",
+			id: parts[2],
+			subAction: parts[3],
+		};
+	}
 	return {
 		path: parts[0] || "",
 		id: parts[1],
@@ -120,9 +127,8 @@ apiClient.interceptors.response.use(
 				} catch (_) {}
 			}
 		} else if (
-			path === "admin" &&
-			id === "users" &&
-			response.config.url?.includes("/create")
+			(path === "users" && (id === "create" || response.config.url?.includes("/create"))) ||
+			(path === "admin" && id === "users" && response.config.url?.includes("/create"))
 		) {
 			if (method === "POST" && response.data) {
 				const userToSave = response.data.user || response.data;

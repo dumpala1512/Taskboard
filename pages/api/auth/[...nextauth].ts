@@ -3,7 +3,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { authService } from "../../../server/services/auth.service";
 import { userRepository } from "../../../server/repositories/user.repository";
-import { deletedUserIds } from "../../../server/data";
+import { isUserDeleted, loadDb } from "../../../server/data";
 
 export const authOptions: NextAuthOptions = {
 	providers: [
@@ -21,8 +21,9 @@ export const authOptions: NextAuthOptions = {
 			async authorize(credentials, req) {
 				if (!credentials?.email || !credentials?.password) return null;
 
+				loadDb();
 				const cleanEmail = credentials.email.trim().toLowerCase();
-				if (deletedUserIds.has(cleanEmail)) {
+				if (isUserDeleted(cleanEmail)) {
 					return null;
 				}
 
@@ -39,6 +40,10 @@ export const authOptions: NextAuthOptions = {
 							const matched = localUsers.find(
 								(u: any) => u.email?.trim().toLowerCase() === cleanEmail
 							);
+							// Do not resurrect deleted user from localUsers
+							if (matched && (isUserDeleted(matched.id) || isUserDeleted(cleanEmail))) {
+								return null;
+							}
 							let isMatch = false;
 							if (matched && matched.passwordHash) {
 								try {
@@ -94,7 +99,7 @@ export const authOptions: NextAuthOptions = {
 				}
 
 				if (user) {
-					if (deletedUserIds.has(user.id) || (user.email && deletedUserIds.has(user.email.toLowerCase()))) {
+					if (isUserDeleted(user.id) || isUserDeleted(user.email)) {
 						return null;
 					}
 					const isFirstLogin = (user.isFirstLogin === false || !!user.passwordChangedAt) ? false : !!user.isFirstLogin;
@@ -144,6 +149,9 @@ export const authOptions: NextAuthOptions = {
 		},
 		async session({ session, token }) {
 			if (session.user && token.id) {
+				if (isUserDeleted(token.id as string) || isUserDeleted(session.user.email || undefined)) {
+					return null as any;
+				}
 				(session.user as any).id = token.id;
 				(session.user as any).role = token.role;
 				(session.user as any).status = token.status;

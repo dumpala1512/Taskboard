@@ -1,4 +1,4 @@
-import db, { loadDb, saveDb } from "../data";
+import db, { loadDb, saveDb, markTaskDeleted } from "../data";
 import type { Task } from "../types";
 
 export class TaskRepository {
@@ -58,6 +58,7 @@ export class TaskRepository {
 		loadDb();
 		const index = db.tasks.findIndex((t: any) => t.id === id);
 		if (index === -1) return false;
+		markTaskDeleted(id);
 		db.tasks.splice(index, 1);
 		saveDb();
 		return true;
@@ -67,6 +68,13 @@ export class TaskRepository {
 		loadDb();
 		const initialCount = db.tasks.length;
 		const targetId = projectId.toLowerCase();
+		const toDelete = db.tasks.filter((t: any) => {
+			const pid = (t.projectId || "").toLowerCase();
+			return pid === targetId;
+		});
+		toDelete.forEach((t: any) => {
+			if (t.id) markTaskDeleted(t.id);
+		});
 		db.tasks = db.tasks.filter((t: any) => {
 			const pid = (t.projectId || "").toLowerCase();
 			return pid !== targetId;

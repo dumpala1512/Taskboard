@@ -99,4 +99,7 @@ export interface Database {
   projects: Project[];
   tasks: Task[];
   activities: Activity[];
+  deletedUserIds?: string[];
+  deletedProjectIds?: string[];
+  deletedTaskIds?: string[];
 }

@@ -8,21 +8,78 @@ const isVercel = !!process.env.VERCEL;
 const bundledDbPath = path.join(process.cwd(), "server", "database", "db.json");
 const dbPath = isVercel ? path.join(os.tmpdir(), "db.json") : bundledDbPath;
 
-// Extend the global object to hold our database in development
-// This prevents Next.js hot-reloads from clearing the data
 declare global {
 	var __db2: Database | undefined;
 }
 
 let db: Database;
 
-// Track deleted user IDs to prevent safe merge from resurrecting deleted users from disk
+// Track deleted IDs across all entities
 export const deletedUserIds = new Set<string>();
+export const deletedProjectIds = new Set<string>();
+export const deletedTaskIds = new Set<string>();
 
 export function markUserDeleted(id: string) {
 	if (id) {
 		deletedUserIds.add(id);
+		deletedUserIds.add(id.toLowerCase());
 	}
+}
+
+export function markProjectDeleted(id: string, key?: string) {
+	if (id) {
+		deletedProjectIds.add(id);
+		deletedProjectIds.add(id.toLowerCase());
+	}
+	if (key) {
+		deletedProjectIds.add(key);
+		deletedProjectIds.add(key.toLowerCase());
+	}
+}
+
+export function markTaskDeleted(id: string) {
+	if (id) {
+		deletedTaskIds.add(id);
+		deletedTaskIds.add(id.toLowerCase());
+	}
+}
+
+export function unmarkUserDeleted(id: string, email?: string) {
+	if (id) {
+		deletedUserIds.delete(id);
+		deletedUserIds.delete(id.toLowerCase());
+	}
+	if (email) {
+		deletedUserIds.delete(email);
+		deletedUserIds.delete(email.toLowerCase());
+	}
+}
+
+export function unmarkProjectDeleted(id: string, key?: string) {
+	if (id) {
+		deletedProjectIds.delete(id);
+		deletedProjectIds.delete(id.toLowerCase());
+	}
+	if (key) {
+		deletedProjectIds.delete(key);
+		deletedProjectIds.delete(key.toLowerCase());
+	}
+}
+
+export function isUserDeleted(id?: string): boolean {
+	if (!id) return false;
+	return deletedUserIds.has(id) || deletedUserIds.has(id.toLowerCase());
+}
+
+export function isProjectDeleted(id?: string, key?: string): boolean {
+	if (id && (deletedProjectIds.has(id) || deletedProjectIds.has(id.toLowerCase()))) return true;
+	if (key && (deletedProjectIds.has(key) || deletedProjectIds.has(key.toLowerCase()))) return true;
+	return false;
+}
+
+export function isTaskDeleted(id?: string): boolean {
+	if (!id) return false;
+	return deletedTaskIds.has(id) || deletedTaskIds.has(id.toLowerCase());
 }
 
 // Maximum db.json file size before auto-clearing non-admin data (500 KB)
@@ -30,7 +87,9 @@ const MAX_DB_SIZE_BYTES = 500 * 1024;
 
 export function clearDbExceptAdmin(existingDb?: Database): Database {
 	const source = existingDb || (db ? db : seedDatabase());
-	const adminUsers = (source.users || []).filter((u: any) => u.role === "ADMIN" || u.id === "admin-1");
+	const adminUsers = (source.users || []).filter(
+		(u: any) => u.role === "ADMIN" || u.id === "admin-1",
+	);
 	if (adminUsers.length === 0) {
 		adminUsers.push(...seedDatabase().users);
 	}
@@ -40,13 +99,17 @@ export function clearDbExceptAdmin(existingDb?: Database): Database {
 		projects: [],
 		tasks: [],
 		activities: [],
+		deletedUserIds: Array.from(deletedUserIds),
+		deletedProjectIds: Array.from(deletedProjectIds),
+		deletedTaskIds: Array.from(deletedTaskIds),
 	};
 
 	try {
-		fs.writeFileSync(dbPath, JSON.stringify(cleanDb, null, 2));
+		const data = JSON.stringify(cleanDb, null, 2);
+		fs.writeFileSync(dbPath, data);
 		if (fs.existsSync(bundledDbPath) && bundledDbPath !== dbPath) {
 			try {
-				fs.writeFileSync(bundledDbPath, JSON.stringify(cleanDb, null, 2));
+				fs.writeFileSync(bundledDbPath, data);
 			} catch (_) {}
 		}
 	} catch (e) {
@@ -58,6 +121,9 @@ export function clearDbExceptAdmin(existingDb?: Database): Database {
 		db.projects = cleanDb.projects;
 		db.tasks = cleanDb.tasks;
 		db.activities = cleanDb.activities;
+		db.deletedUserIds = cleanDb.deletedUserIds;
+		db.deletedProjectIds = cleanDb.deletedProjectIds;
+		db.deletedTaskIds = cleanDb.deletedTaskIds;
 	}
 
 	return cleanDb;
@@ -69,14 +135,6 @@ export function loadDb(): Database {
 			if (fs.existsSync(bundledDbPath)) {
 				const initialData = fs.readFileSync(bundledDbPath, "utf-8");
 				fs.writeFileSync(dbPath, initialData);
-				const parsed = JSON.parse(initialData);
-				if (db) {
-					db.users = parsed.users || [];
-					db.projects = parsed.projects || [];
-					db.tasks = parsed.tasks || [];
-					db.activities = parsed.activities || [];
-				}
-				return parsed;
 			}
 		} catch (e) {
 			console.warn("Could not copy bundled db.json to /tmp, falling back to seed", e);
@@ -92,110 +150,118 @@ export function loadDb(): Database {
 			}
 
 			const data = fs.readFileSync(dbPath, "utf-8");
-			const parsed = JSON.parse(data);
-			if (db) {
-				db.users = parsed.users || [];
-				db.projects = parsed.projects || [];
-				db.tasks = parsed.tasks || [];
-				db.activities = parsed.activities || [];
+			const parsed: Database = JSON.parse(data);
+
+			// Populate deleted IDs from disk
+			if (Array.isArray(parsed.deletedUserIds)) {
+				parsed.deletedUserIds.forEach((id: string) => markUserDeleted(id));
 			}
-			return parsed;
+			if (Array.isArray(parsed.deletedProjectIds)) {
+				parsed.deletedProjectIds.forEach((id: string) => markProjectDeleted(id));
+			}
+			if (Array.isArray(parsed.deletedTaskIds)) {
+				parsed.deletedTaskIds.forEach((id: string) => markTaskDeleted(id));
+			}
+
+			// Filter out permanently deleted entities
+			const filteredUsers = (parsed.users || []).filter(
+				(u: any) => u && !isUserDeleted(u.id) && !isUserDeleted(u.email),
+			);
+			const filteredProjects = (parsed.projects || []).filter(
+				(p: any) => p && !isProjectDeleted(p.id, p.key),
+			);
+			const filteredTasks = (parsed.tasks || []).filter(
+				(t: any) => t && !isTaskDeleted(t.id) && !isProjectDeleted(t.projectId),
+			);
+			const filteredActivities = (parsed.activities || []).filter(
+				(a: any) =>
+					a &&
+					!isProjectDeleted(a.projectId) &&
+					!isTaskDeleted(a.taskId) &&
+					!isUserDeleted(a.userId),
+			);
+
+			if (db) {
+				db.users = filteredUsers;
+				db.projects = filteredProjects;
+				db.tasks = filteredTasks;
+				db.activities = filteredActivities;
+				db.deletedUserIds = Array.from(deletedUserIds);
+				db.deletedProjectIds = Array.from(deletedProjectIds);
+				db.deletedTaskIds = Array.from(deletedTaskIds);
+			}
+
+			return {
+				users: filteredUsers,
+				projects: filteredProjects,
+				tasks: filteredTasks,
+				activities: filteredActivities,
+				deletedUserIds: Array.from(deletedUserIds),
+				deletedProjectIds: Array.from(deletedProjectIds),
+				deletedTaskIds: Array.from(deletedTaskIds),
+			};
 		} catch (e) {
 			console.error("Failed to parse db.json, re-seeding", e);
 		}
 	}
 
 	const seeded = seedDatabase();
+	const newDb: Database = {
+		...seeded,
+		deletedUserIds: Array.from(deletedUserIds),
+		deletedProjectIds: Array.from(deletedProjectIds),
+		deletedTaskIds: Array.from(deletedTaskIds),
+	};
+
 	try {
-		fs.writeFileSync(dbPath, JSON.stringify(seeded, null, 2));
+		fs.writeFileSync(dbPath, JSON.stringify(newDb, null, 2));
 	} catch (e) {
 		console.error("Failed to write seed db:", e);
 	}
 
 	if (db) {
-		db.users = seeded.users || [];
-		db.projects = seeded.projects || [];
-		db.tasks = seeded.tasks || [];
-		db.activities = seeded.activities || [];
+		db.users = newDb.users;
+		db.projects = newDb.projects;
+		db.tasks = newDb.tasks;
+		db.activities = newDb.activities;
+		db.deletedUserIds = newDb.deletedUserIds;
+		db.deletedProjectIds = newDb.deletedProjectIds;
+		db.deletedTaskIds = newDb.deletedTaskIds;
 	}
-	return seeded;
+	return newDb;
 }
 
 export function saveDb() {
 	if (!db) return;
 
 	try {
-		// Read current disk content to ensure cross-request writes (e.g. users, projects) are not lost
-		let diskDb: Database | null = null;
-		if (fs.existsSync(dbPath)) {
-			try {
-				const stats = fs.statSync(dbPath);
-				if (stats.size > MAX_DB_SIZE_BYTES) {
-					clearDbExceptAdmin();
-					return;
-				}
-				const raw = fs.readFileSync(dbPath, "utf-8");
-				diskDb = JSON.parse(raw);
-			} catch (_) {
-				diskDb = null;
-			}
-		}
+		// Clean up db contents against tombstone sets before saving
+		db.users = (db.users || []).filter(
+			(u: any) => u && !isUserDeleted(u.id) && !isUserDeleted(u.email),
+		);
+		db.projects = (db.projects || []).filter(
+			(p: any) => p && !isProjectDeleted(p.id, p.key),
+		);
+		db.tasks = (db.tasks || []).filter(
+			(t: any) => t && !isTaskDeleted(t.id) && !isProjectDeleted(t.projectId),
+		);
+		db.activities = (db.activities || []).filter(
+			(a: any) =>
+				a &&
+				!isProjectDeleted(a.projectId) &&
+				!isTaskDeleted(a.taskId) &&
+				!isUserDeleted(a.userId),
+		);
 
-		if (diskDb) {
-			// Safely merge users: never drop users present on disk unless explicitly deleted
-			const userMap = new Map<string, any>();
-			(diskDb.users || []).forEach((u: any) => {
-				if (u && u.id && !deletedUserIds.has(u.id)) {
-					userMap.set(u.id, u);
-				}
-			});
-			(db.users || []).forEach((u: any) => {
-				if (u && u.id && !deletedUserIds.has(u.id)) {
-					const existing = userMap.get(u.id);
-					const isFirstLogin = (existing?.isFirstLogin === false || u.isFirstLogin === false)
-						? false
-						: (typeof u.isFirstLogin !== "undefined" ? u.isFirstLogin : existing?.isFirstLogin);
-					userMap.set(u.id, {
-						...existing,
-						...u,
-						isFirstLogin,
-						passwordHash: u.passwordHash || existing?.passwordHash,
-						tempPassword: isFirstLogin === false ? undefined : (u.tempPassword || existing?.tempPassword),
-					});
-				}
-			});
+		db.deletedUserIds = Array.from(deletedUserIds);
+		db.deletedProjectIds = Array.from(deletedProjectIds);
+		db.deletedTaskIds = Array.from(deletedTaskIds);
 
-			// Safely merge projects
-			const projectMap = new Map<string, any>();
-			(diskDb.projects || []).forEach((p: any) => projectMap.set(p.id, p));
-			(db.projects || []).forEach((p: any) => {
-				const existing = projectMap.get(p.id);
-				projectMap.set(p.id, { ...existing, ...p });
-			});
-
-			// Safely merge tasks
-			const taskMap = new Map<string, any>();
-			(diskDb.tasks || []).forEach((t: any) => taskMap.set(t.id, t));
-			(db.tasks || []).forEach((t: any) => {
-				const existing = taskMap.get(t.id);
-				taskMap.set(t.id, { ...existing, ...t });
-			});
-
-			// Safely merge activities
-			const actMap = new Map<string, any>();
-			(diskDb.activities || []).forEach((a: any) => actMap.set(a.id, a));
-			(db.activities || []).forEach((a: any) => actMap.set(a.id, a));
-
-			db.users = Array.from(userMap.values());
-			db.projects = Array.from(projectMap.values());
-			db.tasks = Array.from(taskMap.values());
-			db.activities = Array.from(actMap.values());
-		}
-
-		fs.writeFileSync(dbPath, JSON.stringify(db, null, 2));
+		const data = JSON.stringify(db, null, 2);
+		fs.writeFileSync(dbPath, data);
 		if (fs.existsSync(bundledDbPath) && bundledDbPath !== dbPath) {
 			try {
-				fs.writeFileSync(bundledDbPath, JSON.stringify(db, null, 2));
+				fs.writeFileSync(bundledDbPath, data);
 			} catch (_) {}
 		}
 	} catch (e) {
@@ -211,4 +277,3 @@ if (process.env.NODE_ENV === "production") {
 }
 
 export default db;
-
