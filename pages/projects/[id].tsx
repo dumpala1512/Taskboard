@@ -318,11 +318,19 @@ export default function ProjectDetailsPage() {
                                 <select 
                                   value={task.status} 
                                   onChange={(e) => {
-                                    fetch(`/api/tasks/${task.id}`, {
-                                      method: 'PATCH',
-                                      headers: { 'Content-Type': 'application/json' },
-                                      body: JSON.stringify({ status: e.target.value })
-                                    }).then(() => window.location.reload());
+                                    const nextStatus = e.target.value;
+                                    updateTask.mutate(
+                                      {
+                                        id: task.id,
+                                        status: nextStatus,
+                                        projectId: project?.id,
+                                      },
+                                      {
+                                        onSuccess: () => toast.success(`Moved to ${nextStatus}`),
+                                        onError: (err: any) =>
+                                          toast.error(err?.response?.data?.message || "Failed to update status"),
+                                      }
+                                    );
                                   }}
                                   className="text-xs font-semibold px-2 py-1 rounded-md bg-slate-100 dark:bg-[#1A233A] text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-[#222F49] focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
                                 >

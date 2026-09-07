@@ -208,18 +208,6 @@ apiClient.interceptors.response.use(
 			return Promise.reject(error);
 		}
 
-		// When the server returns 404, the resource is deleted/not found. Never resurrect from local storage!
-		if (status === 404) {
-			if (path === "projects" && id) {
-				clientStorage.deleteProject(id);
-			} else if (path === "tasks" && id) {
-				clientStorage.deleteTask(id);
-			} else if (path === "users" && id) {
-				clientStorage.deleteUser(id);
-			}
-			return Promise.reject(error);
-		}
-
 		// Fallback for Account Setup (only on 404 or server failure, not on 400 bad request)
 		if (
 			path === "auth" &&
@@ -265,16 +253,19 @@ apiClient.interceptors.response.use(
 
 		// 404 Recovery for Projects
 		if (path === "projects") {
+			const deletedProjectIds = clientStorage.getDeletedProjectIds().map((x) => x.toLowerCase());
 			if (method === "GET" && id && (status === 404 || !status)) {
-				const localProject = clientStorage.getProjectById(id);
-				if (localProject) {
-					return Promise.resolve({
-						data: localProject,
-						status: 200,
-						statusText: "OK (Recovered from Local Storage)",
-						headers: {},
-						config,
-					} as AxiosResponse);
+				if (!deletedProjectIds.includes(id.toLowerCase())) {
+					const localProject = clientStorage.getProjectById(id);
+					if (localProject) {
+						return Promise.resolve({
+							data: localProject,
+							status: 200,
+							statusText: "OK (Recovered from Local Storage)",
+							headers: {},
+							config,
+						} as AxiosResponse);
+					}
 				}
 			} else if (method === "GET" && !id) {
 				const localProjects = clientStorage.getProjects();
@@ -365,17 +356,20 @@ apiClient.interceptors.response.use(
 		if (path === "tasks") {
 			const params = config.params;
 			const projectId = params?.projectId;
+			const deletedTaskIds = clientStorage.getDeletedTaskIds().map((x) => x.toLowerCase());
 
 			if (method === "GET" && id && (status === 404 || !status)) {
-				const localTask = clientStorage.getTaskById(id);
-				if (localTask) {
-					return Promise.resolve({
-						data: localTask,
-						status: 200,
-						statusText: "OK (Recovered from Local Storage)",
-						headers: {},
-						config,
-					} as AxiosResponse);
+				if (!deletedTaskIds.includes(id.toLowerCase())) {
+					const localTask = clientStorage.getTaskById(id);
+					if (localTask) {
+						return Promise.resolve({
+							data: localTask,
+							status: 200,
+							statusText: "OK (Recovered from Local Storage)",
+							headers: {},
+							config,
+						} as AxiosResponse);
+					}
 				}
 			} else if (method === "GET" && !id) {
 				const localTasks = clientStorage.getTasks(projectId);
@@ -505,15 +499,31 @@ apiClient.interceptors.response.use(
 					config,
 				} as AxiosResponse);
 			} else if (method === "GET") {
-				const localUsers = clientStorage.getUsers();
-				if (localUsers.length > 0) {
-					return Promise.resolve({
-						data: localUsers,
-						status: 200,
-						statusText: "OK (Recovered from Local Storage)",
-						headers: {},
-						config,
-					} as AxiosResponse);
+				if (id) {
+					const deletedUserIds = clientStorage.getDeletedUserIds().map((x) => x.toLowerCase());
+					if (!deletedUserIds.includes(id.toLowerCase())) {
+						const localUser = clientStorage.getUserById(id);
+						if (localUser) {
+							return Promise.resolve({
+								data: localUser,
+								status: 200,
+								statusText: "OK (Recovered from Local Storage)",
+								headers: {},
+								config,
+							} as AxiosResponse);
+						}
+					}
+				} else {
+					const localUsers = clientStorage.getUsers();
+					if (localUsers.length > 0) {
+						return Promise.resolve({
+							data: localUsers,
+							status: 200,
+							statusText: "OK (Recovered from Local Storage)",
+							headers: {},
+							config,
+						} as AxiosResponse);
+					}
 				}
 			}
 		}
