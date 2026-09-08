@@ -27,7 +27,13 @@ export const TopNav: React.FC<TopNavProps> = ({ setMobileOpen }) => {
 	const [projectWizardOpen, setProjectWizardOpen] = useState(false);
 	const [taskWizardOpen, setTaskWizardOpen] = useState(false);
 	const [profileOpen, setProfileOpen] = useState(false);
+	const [isLoggingOut, setIsLoggingOut] = useState(false);
 	const profileRef = useRef<HTMLDivElement>(null);
+
+	const handleLogout = async () => {
+		setIsLoggingOut(true);
+		await signOut({ callbackUrl: "/auth/signin" });
+	};
 
 	useEffect(() => {
 		const handleClickOutside = (event: MouseEvent) => {
@@ -265,11 +271,12 @@ export const TopNav: React.FC<TopNavProps> = ({ setMobileOpen }) => {
 									</Link>
 								)}
 								<button
-									onClick={() => signOut({ callbackUrl: "/auth/signin" })}
-									className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs font-medium text-red-600 hover:bg-red-50 transition-colors"
+									disabled={isLoggingOut}
+									onClick={handleLogout}
+									className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs font-medium text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50"
 								>
-									<LogOut className="w-3.5 h-3.5" />
-									<span>Logout</span>
+									<LogOut className={`w-3.5 h-3.5 ${isLoggingOut ? "animate-pulse" : ""}`} />
+									<span>{isLoggingOut ? "Logging out..." : "Logout"}</span>
 								</button>
 							</div>
 						</div>

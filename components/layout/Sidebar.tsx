@@ -10,7 +10,7 @@ import {
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { signOut, useSession } from "next-auth/react";
-import type React from "react";
+import React, { useState } from "react";
 
 interface SidebarProps {
 	isMobileOpen: boolean;
@@ -23,7 +23,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
 }) => {
 	const router = useRouter();
 	const { data: session } = useSession();
+	const [isLoggingOut, setIsLoggingOut] = useState(false);
 	const isAdmin = (session?.user as any)?.role === "ADMIN";
+
+	const handleLogout = async () => {
+		setIsLoggingOut(true);
+		await signOut({ callbackUrl: "/auth/signin" });
+	};
 
 	const navItems = [
 		{ name: "Dashboard", href: "/", icon: LayoutDashboard },
@@ -99,11 +105,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
 				{/* Bottom nav */}
 				<div className="px-2.5 pb-3 pt-2 border-t border-[#E0E3E8] space-y-0.5">
 					<button
-						onClick={() => signOut({ callbackUrl: "/auth/signin" })}
-						className="w-full flex items-center gap-3 px-3 py-2 rounded text-sm font-medium text-[#6E7B8B] hover:bg-[#FFEBEE] hover:text-[#E53935] transition-all duration-150"
+						disabled={isLoggingOut}
+						onClick={handleLogout}
+						className="w-full flex items-center gap-3 px-3 py-2 rounded text-sm font-medium text-[#6E7B8B] hover:bg-[#FFEBEE] hover:text-[#E53935] transition-all duration-150 disabled:opacity-50"
 					>
-						<LogOut className="w-[18px] h-[18px] flex-shrink-0" />
-						<span>Logout</span>
+						<LogOut className={`w-[18px] h-[18px] flex-shrink-0 ${isLoggingOut ? "animate-pulse" : ""}`} />
+						<span>{isLoggingOut ? "Logging out..." : "Logout"}</span>
 					</button>
 				</div>
 			</aside>
