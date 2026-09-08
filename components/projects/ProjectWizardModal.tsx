@@ -105,12 +105,15 @@ export function ProjectWizardModal({
 				}
 			}
 			if (field === "dueDate") {
+				const todayStr = new Date().toISOString().split("T")[0];
 				if (
 					currentData.dueDate &&
 					currentData.startDate &&
 					currentData.dueDate < currentData.startDate
 				) {
 					next.dueDate = "Due date cannot be before start date";
+				} else if (currentData.dueDate && currentData.dueDate < todayStr) {
+					next.dueDate = "Target due date cannot be in the past";
 				} else {
 					delete next.dueDate;
 				}
@@ -216,12 +219,18 @@ export function ProjectWizardModal({
 		formData.description?.trim() &&
 		formData.status
 	);
+	const todayStr = new Date().toISOString().split("T")[0];
+	const minDueDate =
+		formData.startDate && formData.startDate > todayStr
+			? formData.startDate
+			: todayStr;
+
 	const isStep2Valid = !!(
 		formData.ownerId &&
 		formData.startDate &&
 		(!formData.dueDate ||
-			!formData.startDate ||
-			formData.dueDate >= formData.startDate)
+			(formData.dueDate >= todayStr &&
+				(!formData.startDate || formData.dueDate >= formData.startDate)))
 	);
 	const isAllRequiredValid = isStep1Valid && isStep2Valid;
 
@@ -243,13 +252,16 @@ export function ProjectWizardModal({
 				setError("Please select a project start date.");
 				return;
 			}
-			if (
-				formData.dueDate &&
-				formData.startDate &&
-				formData.dueDate < formData.startDate
-			) {
-				setError("Due date cannot be before start date.");
-				return;
+			if (formData.dueDate) {
+				const today = new Date().toISOString().split("T")[0];
+				if (formData.dueDate < today) {
+					setError("Target due date cannot be in the past.");
+					return;
+				}
+				if (formData.startDate && formData.dueDate < formData.startDate) {
+					setError("Due date cannot be before start date.");
+					return;
+				}
 			}
 		}
 
@@ -678,7 +690,7 @@ export function ProjectWizardModal({
 
 									<div className="sm:col-span-1">
 										<Input
-											label="Start Date *"
+											label="Start Date"
 											type="date"
 											required
 											value={formData.startDate || ""}
@@ -701,6 +713,12 @@ export function ProjectWizardModal({
 										<Input
 											label="Target Due Date"
 											type="date"
+											min={
+												formData.startDate &&
+												formData.startDate > new Date().toISOString().split("T")[0]
+													? formData.startDate
+													: new Date().toISOString().split("T")[0]
+											}
 											value={formData.dueDate || ""}
 											onChange={(e) => {
 												const val = e.target.value;

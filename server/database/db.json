@@ -10,10 +10,87 @@
       "createdAt": "2026-08-03T04:26:35.622Z"
     }
   ],
-  "projects": [],
-  "tasks": [],
-  "activities": [],
-  "deletedUserIds": [],
+  "projects": [
+    {
+      "columns": [
+        {
+          "id": "TODO",
+          "title": "To Do"
+        },
+        {
+          "id": "IN_PROGRESS",
+          "title": "In Progress"
+        },
+        {
+          "id": "REVIEW",
+          "title": "Review"
+        },
+        {
+          "id": "DONE",
+          "title": "Done"
+        }
+      ],
+      "name": "cuidsiuclv ",
+      "description": "aigmsguilsbsm clsuigdcds m",
+      "status": "PLANNING",
+      "progress": 0,
+      "ownerId": "admin-1",
+      "members": [],
+      "tags": [],
+      "startDate": "2026-09-08",
+      "dueDate": "2026-10-01",
+      "key": "PRJ-0",
+      "id": "5334f649-6125-4103-b2a9-fc28483282ca",
+      "createdAt": "2026-09-08T12:36:43.636Z",
+      "updatedAt": "2026-09-08T12:36:43.636Z"
+    }
+  ],
+  "tasks": [
+    {
+      "title": "kshdb,, ",
+      "description": "<p>sbvhdsj,mvukbjk</p>",
+      "projectId": "5334f649-6125-4103-b2a9-fc28483282ca",
+      "priority": "MEDIUM",
+      "taskType": "",
+      "assigneeId": "",
+      "status": "BACKLOG",
+      "startDate": "2026-09-08",
+      "dueDate": "2026-09-25",
+      "estimatedTime": null,
+      "tags": [],
+      "attachments": [],
+      "notes": "",
+      "isDraft": false,
+      "id": "06da3d91-6eb8-488b-a0cb-abb6421a160f",
+      "createdAt": "2026-09-08T12:37:06.308Z",
+      "updatedAt": "2026-09-08T12:37:06.308Z"
+    }
+  ],
+  "activities": [
+    {
+      "type": "PROJECT_CREATED",
+      "userId": "admin-1",
+      "projectId": "5334f649-6125-4103-b2a9-fc28483282ca",
+      "details": "cuidsiuclv ",
+      "id": "19b4806f-7f12-425c-b8f6-85f216a27296",
+      "createdAt": "2026-09-08T12:36:43.658Z"
+    },
+    {
+      "type": "TASK_CREATED",
+      "userId": "admin-1",
+      "projectId": "5334f649-6125-4103-b2a9-fc28483282ca",
+      "taskId": "06da3d91-6eb8-488b-a0cb-abb6421a160f",
+      "details": "kshdb,, ",
+      "id": "2f8ccce8-b7d0-4f42-9f22-b54c805888df",
+      "createdAt": "2026-09-08T12:37:06.327Z"
+    }
+  ],
+  "deletedUserIds": [
+    "d1ea19c5-eaa9-42c6-a8ef-d7fcb57e8755",
+    "c855d5fe-5a8f-4934-9f10-59668b5858cf"
+  ],
   "deletedProjectIds": [],
-  "deletedTaskIds": []
+  "deletedTaskIds": [
+    "55fd45b9-374e-4630-a5fe-aa625b0d6f79"
+  ]
 }

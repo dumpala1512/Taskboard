@@ -19,7 +19,7 @@ services:
       # Persist embedded JSON database across container restarts and updates
       - taskboard-data:/app/server/database
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:3000/api/auth/csrf || exit 1"]
+      test: ["CMD-SHELL", "curl -f http://localhost:3000/api/health || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3

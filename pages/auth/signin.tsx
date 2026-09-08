@@ -17,7 +17,6 @@ import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
-import { clientStorage } from "../../lib/client-storage";
 import { type SigninFormValues, signinSchema } from "../../schemas/auth.schema";
 
 export default function SignIn() {
@@ -39,13 +38,10 @@ export default function SignIn() {
 		setLoading(true);
 		setGlobalError(null);
 
-		const localUsers = clientStorage.getUsers();
-
 		const result = await signIn("credentials", {
 			redirect: false,
 			email: data.email.trim().toLowerCase(),
 			password: data.password,
-			localUsers: JSON.stringify(localUsers),
 		});
 
 		setLoading(false);

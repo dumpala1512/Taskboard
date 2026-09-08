@@ -56,10 +56,6 @@ export function TaskWizardModal({
 	const [formData, setFormData] = useState<any>(initialFormData);
 
 	useEffect(() => {
-		try {
-			localStorage.removeItem("taskWizardDraft");
-		} catch (e) {}
-
 		setStep(1);
 		setErrors({});
 
@@ -118,6 +114,18 @@ export function TaskWizardModal({
 				if (start > due) {
 					newErrors.startDate = "Start date cannot be after due date";
 					newErrors.dueDate = "Due date cannot be before start date";
+				}
+			}
+
+			if (formData.projectId && formData.dueDate) {
+				const project = projects.find((p) => p.id === formData.projectId);
+				if (project?.dueDate) {
+					const due = new Date(formData.dueDate);
+					const projectDue = new Date(project.dueDate);
+					if (due > projectDue) {
+						const formattedProjDue = project.dueDate.split("T")[0];
+						newErrors.dueDate = `Task due date must not cross the project target date (${formattedProjDue})`;
+					}
 				}
 			}
 
@@ -209,6 +217,24 @@ export function TaskWizardModal({
 						delete next.dueDate;
 				}
 			}
+
+			if (formData.projectId) {
+				const project = projects.find((p) => p.id === formData.projectId);
+				const effectiveDueDate = field === "dueDate" ? value : formData.dueDate;
+				if (project?.dueDate && effectiveDueDate) {
+					const due = new Date(effectiveDueDate);
+					const projectDue = new Date(project.dueDate);
+					if (due > projectDue) {
+						const formattedProjDue = project.dueDate.split("T")[0];
+						next.dueDate = `Task due date must not cross the project target date (${formattedProjDue})`;
+					} else if (
+						next.dueDate &&
+						next.dueDate.startsWith("Task due date must not cross")
+					) {
+						delete next.dueDate;
+					}
+				}
+			}
 			return next;
 		});
 	};
@@ -247,6 +273,12 @@ export function TaskWizardModal({
 			);
 		})();
 
+	const targetProject = projects.find((p) => p.id === formData.projectId);
+	const isBeforeProjectDueDate =
+		!targetProject?.dueDate ||
+		!formData.dueDate ||
+		new Date(formData.dueDate) <= new Date(targetProject.dueDate);
+
 	const isStep2Valid = !!(
 		formData.status &&
 		formData.startDate &&
@@ -254,6 +286,7 @@ export function TaskWizardModal({
 		(!formData.startDate ||
 			!formData.dueDate ||
 			new Date(formData.startDate) <= new Date(formData.dueDate)) &&
+		isBeforeProjectDueDate &&
 		!errors.status &&
 		!errors.startDate &&
 		!errors.dueDate &&
@@ -270,9 +303,6 @@ export function TaskWizardModal({
 	const prevStep = () => setStep((s) => Math.max(s - 1, 1));
 
 	const handleClose = () => {
-		try {
-			localStorage.removeItem("taskWizardDraft");
-		} catch (e) {}
 		setStep(1);
 		setErrors({});
 		setFormData(initialFormData);
@@ -309,7 +339,15 @@ export function TaskWizardModal({
 				toast.success("Task updated successfully");
 			} else {
 				await createTask.mutateAsync(submitData as any);
-				toast.success("Task created successfully");
+				const isUnassigned =
+					!submitData.assigneeId ||
+					submitData.assigneeId.trim() === "" ||
+					submitData.status === "BACKLOG";
+				if (isUnassigned) {
+					toast.success("Task created in unassigned");
+				} else {
+					toast.success("Task created successfully");
+				}
 				if (router.pathname !== "/projects/[id]") {
 					router.push(`/projects/${formData.projectId}`);
 				}

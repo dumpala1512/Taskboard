@@ -132,11 +132,23 @@ export function Step2Assignment({
 					<label className="text-sm font-medium text-slate-700 ">Due Date <span className="text-red-500">*</span></label>
 					<Input
 						type="date"
+						min={
+							formData.startDate &&
+							formData.startDate > new Date().toISOString().split("T")[0]
+								? formData.startDate
+								: new Date().toISOString().split("T")[0]
+						}
+						max={project?.dueDate ? project.dueDate.split("T")[0] : undefined}
 						value={formData.dueDate || ""}
 						onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
 						onBlur={() => onBlurField?.("dueDate", formData.dueDate)}
 						className={errors.dueDate ? "border-red-500" : ""}
 					/>
+					{project?.dueDate && (
+						<p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+							Project Target Date: {project.dueDate.split("T")[0]}
+						</p>
+					)}
 					{errors.dueDate && <p className="text-xs text-red-500 mt-1">{errors.dueDate}</p>}
 				</div>
 

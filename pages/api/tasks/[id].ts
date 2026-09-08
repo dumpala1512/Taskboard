@@ -1,8 +1,8 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { taskService } from "../../../server/services/task.service";
 import { getServerSession } from "next-auth/next";
-import { authOptions } from "../auth/[...nextauth]";
 import { attachDeletedHeaders } from "../../../server/data";
+import { taskService } from "../../../server/services/task.service";
+import { authOptions } from "../auth/[...nextauth]";
 
 export default async function handler(
 	req: NextApiRequest,
@@ -45,9 +45,13 @@ export default async function handler(
 		return res.status(405).json({ message: "Method not allowed" });
 	} catch (error: any) {
 		console.error("Error managing task:", error);
-		if (error?.message === "Add the member to the project and then assign task") {
+		if (
+			error?.message === "Add the member to the project and then assign task"
+		) {
 			return res.status(400).json({ message: error.message });
 		}
-		return res.status(500).json({ message: error?.message || "Internal server error" });
+		return res
+			.status(500)
+			.json({ message: error?.message || "Internal server error" });
 	}
 }

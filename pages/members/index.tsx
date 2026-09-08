@@ -1,6 +1,8 @@
 import { Filter, Plus, Search } from "lucide-react";
 import Head from "next/head";
-import React, { useState } from "react";
+import { useRouter } from "next/router";
+import { useSession } from "next-auth/react";
+import React, { useEffect, useState } from "react";
 import { AppLayout } from "../../components/layout/AppLayout";
 import MembersStats from "../../components/members/MembersStats";
 import MembersTable from "../../components/members/MembersTable";
@@ -10,9 +12,23 @@ import { Skeleton } from "../../components/ui/Skeleton";
 import { Button } from "../../components/ui/Button";
 
 export default function MembersPage() {
+	const router = useRouter();
+	const { data: session, status } = useSession();
+	const isAdmin = (session?.user as any)?.role === "ADMIN";
+
 	const { data: users, isLoading, error, refetch } = useAdminUsers();
 	const [searchTerm, setSearchTerm] = useState("");
 	const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+
+	useEffect(() => {
+		if (status !== "loading" && !isAdmin) {
+			router.replace("/access-denied");
+		}
+	}, [status, isAdmin, router]);
+
+	if (status === "loading" || !isAdmin) {
+		return null;
+	}
 
 	const safeUsers = users || [];
 

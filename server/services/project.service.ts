@@ -94,6 +94,45 @@ export class ProjectService {
 		if (!project) {
 			throw new Error("Project not found");
 		}
+
+		// If members list is updated, automatically remove removed members from project tasks
+		if (Array.isArray(updates.members)) {
+			const currentMembers = project.members || [];
+			const newMemberSet = new Set(updates.members.map((m) => m.toLowerCase()));
+			const removedMembers = currentMembers.filter(
+				(m) =>
+					!newMemberSet.has(m.toLowerCase()) &&
+					(!project.ownerId || m.toLowerCase() !== project.ownerId.toLowerCase()) &&
+					(!updates.ownerId || m.toLowerCase() !== updates.ownerId.toLowerCase()),
+			);
+
+			if (removedMembers.length > 0) {
+				const removedSet = new Set(removedMembers.map((m) => m.toLowerCase()));
+				const tasks = await taskRepository.findByProjectId(id);
+				for (const task of tasks) {
+					const isAssigneeRemoved =
+						task.assigneeId && removedSet.has(task.assigneeId.toLowerCase());
+					const hasAssigneesRemoved =
+						Array.isArray(task.assignees) &&
+						task.assignees.some((a) => removedSet.has(a.toLowerCase()));
+
+					if (isAssigneeRemoved || hasAssigneesRemoved) {
+						const nextAssignees = (task.assignees || []).filter(
+							(a) => !removedSet.has(a.toLowerCase()),
+						);
+						const nextAssigneeId = isAssigneeRemoved ? "" : task.assigneeId;
+						const nextStatus =
+							!nextAssigneeId && task.status === "TODO" ? "BACKLOG" : task.status;
+						await taskRepository.update(task.id, {
+							assigneeId: nextAssigneeId,
+							assignees: nextAssignees,
+							status: nextStatus,
+						});
+					}
+				}
+			}
+		}
+
 		const updated = await projectRepository.update(id, updates);
 		if (userId) {
 			await activityService.logActivity({

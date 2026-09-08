@@ -89,27 +89,29 @@ export default async function handler(
 				});
 			}
 
-			// Handle tasks if specified
-			if (taskAction === "unassign") {
-				const tasks = await import(
-					"../../../../server/repositories/task.repository"
-				).then((m) => m.taskRepository.findAll());
-				const userTasks = tasks.filter(
-					(t) =>
-						t.projectId === projectId &&
-						(t.assigneeId === userId || t.assignees?.includes(userId)),
-				);
+			// Automatically unassign user from all tasks in this project
+			const tasks = await import(
+				"../../../../server/repositories/task.repository"
+			).then((m) => m.taskRepository.findAll());
+			const userTasks = tasks.filter(
+				(t) =>
+					t.projectId === projectId &&
+					(t.assigneeId === userId || t.assignees?.includes(userId)),
+			);
 
-				for (const task of userTasks) {
-					await import("../../../../server/repositories/task.repository").then(
-						(m) =>
-							m.taskRepository.update(task.id, {
-								assigneeId:
-									task.assigneeId === userId ? undefined : task.assigneeId,
-								assignees: task.assignees?.filter((a) => a !== userId) || [],
-							}),
-					);
-				}
+			for (const task of userTasks) {
+				const isAssignee = task.assigneeId === userId;
+				const nextAssignees = task.assignees?.filter((a) => a !== userId) || [];
+				const nextAssigneeId = isAssignee ? "" : task.assigneeId;
+				const nextStatus = !nextAssigneeId && task.status === "TODO" ? "BACKLOG" : task.status;
+				await import("../../../../server/repositories/task.repository").then(
+					(m) =>
+						m.taskRepository.update(task.id, {
+							assigneeId: nextAssigneeId,
+							assignees: nextAssignees,
+							status: nextStatus,
+						}),
+				);
 			}
 
 			// Update user's assignedProjectIds without altering auth fields

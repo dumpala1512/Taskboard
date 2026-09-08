@@ -19,7 +19,7 @@ export default function RemoveProjectDialog({
 	project,
 	activeTasksCount,
 }: RemoveProjectDialogProps) {
-	const [taskAction, setTaskAction] = useState<"keep" | "unassign">("keep");
+	const [taskAction, setTaskAction] = useState<"keep" | "unassign">("unassign");
 	const unassignProject = useUnassignProject();
 
 	if (!isOpen) return null;

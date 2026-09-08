@@ -30,6 +30,20 @@ export class TaskService {
 		taskData: Omit<Task, "id" | "createdAt" | "updatedAt">,
 		userId?: string
 	): Promise<Task> {
+		if (taskData.projectId && taskData.dueDate) {
+			const project = await projectRepository.findById(taskData.projectId);
+			if (project?.dueDate) {
+				const taskDue = new Date(taskData.dueDate);
+				const projectDue = new Date(project.dueDate);
+				if (taskDue > projectDue) {
+					const formattedProjDue = project.dueDate.split("T")[0];
+					throw new Error(
+						`Task due date must not cross the project target date (${formattedProjDue})`
+					);
+				}
+			}
+		}
+
 		if (taskData.assigneeId && taskData.projectId) {
 			const project = await projectRepository.findById(taskData.projectId);
 			if (project) {
@@ -75,6 +89,22 @@ export class TaskService {
 		userId?: string
 	): Promise<Task | undefined> {
 		const existingTask = await taskRepository.findById(id);
+
+		const targetProjectId = updates.projectId || existingTask?.projectId;
+		const targetDueDate = updates.dueDate || existingTask?.dueDate;
+		if (targetProjectId && targetDueDate) {
+			const project = await projectRepository.findById(targetProjectId);
+			if (project?.dueDate) {
+				const taskDue = new Date(targetDueDate);
+				const projectDue = new Date(project.dueDate);
+				if (taskDue > projectDue) {
+					const formattedProjDue = project.dueDate.split("T")[0];
+					throw new Error(
+						`Task due date must not cross the project target date (${formattedProjDue})`
+					);
+				}
+			}
+		}
 
 		if (
 			updates.assigneeId !== undefined &&

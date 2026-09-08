@@ -30,11 +30,12 @@ services:
       - ./next.config.mjs:/app/next.config.mjs
       - ./tailwind.config.ts:/app/tailwind.config.ts
       - ./tsconfig.json:/app/tsconfig.json
+      - ./middleware.ts:/app/middleware.ts
       # Prevent host OS node_modules & .next from shadowing container's Linux builds
       - /app/node_modules
       - /app/.next
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:3000/api/auth/csrf || exit 1"]
+      test: ["CMD-SHELL", "curl -f http://localhost:3000/api/health || exit 1"]
       interval: 20s
       timeout: 10s
       retries: 3

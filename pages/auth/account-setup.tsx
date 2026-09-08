@@ -17,7 +17,6 @@ import { z } from "zod";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
 import { apiClient } from "../../lib/axios";
-import { clientStorage } from "../../lib/client-storage";
 
 const setupSchema = z
 	.object({
@@ -86,32 +85,6 @@ export default function AccountSetup() {
 				newPassword: data.newPassword,
 				email: userEmail,
 				userId: userId,
-			});
-
-			// Update clientStorage with the new credentials so subsequent logins succeed
-			const effectiveEmail = userEmail || res.data?.user?.email;
-			const effectiveId = res.data?.user?.id || userId;
-			const allUsers = clientStorage.getUsers();
-			const matched = allUsers.find(
-				(u) =>
-					(effectiveEmail && u.email && u.email.trim().toLowerCase() === effectiveEmail.trim().toLowerCase()) ||
-					(effectiveId && u.id === effectiveId),
-			);
-
-			const baseUser = matched || {
-				id: effectiveId,
-				email: effectiveEmail,
-				name: session?.user?.name || effectiveEmail,
-				role: (session?.user as any)?.role || "MEMBER",
-				status: "ACTIVE",
-			};
-
-			clientStorage.saveUser({
-				...baseUser,
-				id: effectiveId || baseUser.id,
-				tempPassword: data.newPassword,
-				passwordHash: res.data?.passwordHash,
-				isFirstLogin: false,
 			});
 
 			await update({ isFirstLogin: false });

@@ -27,6 +27,7 @@ export default function MemberProfileDrawer({
 	user,
 }: MemberProfileDrawerProps) {
 	const { data: session } = useSession();
+	const isAdmin = (session?.user as any)?.role === "ADMIN";
 	const deleteUser = useDeleteUser();
 	const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
 
@@ -177,8 +178,8 @@ export default function MemberProfileDrawer({
 						</div>
 					</div>
 
-					{/* Danger Zone */}
-					{session?.user?.email !== user.email && (
+					{/* Danger Zone - Admin Only */}
+					{isAdmin && session?.user?.email !== user.email && (
 						<div className="pt-6 border-t border-red-100 dark:border-red-950/60">
 							<h4 className="text-xs font-semibold text-red-600 dark:text-red-400 uppercase tracking-wider mb-3">
 								Danger Zone

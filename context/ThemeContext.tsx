@@ -21,12 +21,10 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   useEffect(() => {
     try {
-      const savedTheme = localStorage.getItem("taskboard_theme") as Theme | null;
       const initialTheme =
-        savedTheme ||
-        (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches
+        window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches
           ? "dark"
-          : "light");
+          : "light";
 
       setThemeState(initialTheme);
       applyTheme(initialTheme);
@@ -45,9 +43,6 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const setTheme = (newTheme: Theme) => {
     setThemeState(newTheme);
-    try {
-      localStorage.setItem("taskboard_theme", newTheme);
-    } catch (_) {}
     applyTheme(newTheme);
   };
 

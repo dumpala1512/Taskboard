@@ -7,7 +7,7 @@ export default withAuth(
 		const path = req.nextUrl.pathname;
 
 		// Admin routes
-		if (path.startsWith("/admin")) {
+		if (path.startsWith("/admin") || path === "/members" || path.startsWith("/members/")) {
 			if (token?.role !== "ADMIN") {
 				return NextResponse.rewrite(new URL("/access-denied", req.url));
 			}
