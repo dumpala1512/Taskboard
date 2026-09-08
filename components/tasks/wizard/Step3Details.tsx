@@ -1,7 +1,9 @@
 import React, { useMemo, useState } from "react";
+import { Plus } from "lucide-react";
 import { useUsers } from "../../../hooks/useUsers";
 import { useProjects } from "../../../hooks/useProjects";
 import type { TaskTag } from "../../../server/types";
+import { Button } from "../../ui/Button";
 
 interface Step3Props {
 	formData: any;
@@ -90,18 +92,15 @@ export function Step3Details({ formData, setFormData, errors }: Step3Props) {
 						placeholder="Add custom tag..." 
 						className="flex-1 px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 border-slate-200 dark:border-[#222F49] bg-white dark:bg-[#1A233A] text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500"
 					/>
-					<button
+					<Button
 						type="button"
+						variant="primary"
 						onClick={handleAddCustomTag}
 						disabled={customTag.trim().length < 2}
-						className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-							customTag.trim().length < 2 
-								? 'bg-indigo-300 text-white cursor-not-allowed' 
-								: 'bg-indigo-600 text-white hover:bg-indigo-700'
-						}`}
+						leftIcon={<Plus className="w-4 h-4" />}
 					>
 						Add
-					</button>
+					</Button>
 				</div>
 			</div>
 

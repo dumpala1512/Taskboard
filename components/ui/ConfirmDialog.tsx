@@ -27,7 +27,7 @@ export function ConfirmDialog({
 	confirmText = "Confirm",
 	cancelText = "Cancel",
 	icon = <AlertTriangle className="w-6 h-6" />,
-	iconClassName = "bg-red-100 text-red-600",
+	iconClassName = "bg-red-100 dark:bg-red-950/50 text-red-600 dark:text-red-400",
 	confirmButtonVariant = "primary",
 	confirmButtonClassName = "bg-red-600 hover:bg-red-700 focus:ring-red-500 text-white border-transparent",
 	requireCheckbox = false,
@@ -58,10 +58,10 @@ export function ConfirmDialog({
 	return (
 		<Portal>
 			<div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
-				<div className="bg-white rounded-xl shadow-2xl max-w-[480px] w-full overflow-hidden border border-slate-200 relative">
+				<div className="bg-white dark:bg-[#131B2E] rounded-xl shadow-2xl max-w-[480px] w-full overflow-hidden border border-slate-200 dark:border-[#222F49] relative">
 					<button
 						onClick={handleClose}
-						className="absolute right-4 top-4 text-gray-400 hover:text-gray-600 transition-colors p-1.5 rounded-full hover:bg-gray-100 focus:outline-none"
+						className="absolute right-4 top-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-[#1A233A] focus:outline-none"
 						disabled={isProcessing}
 					>
 						<X className="w-5 h-5" />
@@ -71,9 +71,9 @@ export function ConfirmDialog({
 						<div className={`w-12 h-12 rounded-full flex items-center justify-center mb-3 ${iconClassName}`}>
 							{icon}
 						</div>
-						<h3 className="text-lg font-semibold text-gray-900 mb-4">{title}</h3>
+						<h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-4">{title}</h3>
 						
-						<div className="text-left w-full space-y-3 text-sm text-gray-600">
+						<div className="text-left w-full space-y-3 text-sm text-gray-600 dark:text-slate-300">
 							{typeof description === 'string' ? <p>{description}</p> : description}
 							
 							{requireCheckbox && (
@@ -84,10 +84,10 @@ export function ConfirmDialog({
 												type="checkbox"
 												checked={isConfirmed}
 												onChange={(e) => setIsConfirmed(e.target.checked)}
-												className="w-4 h-4 border-[#E0E3E8] rounded text-[#1E88E5] focus:ring-[#1E88E5]"
+												className="w-4 h-4 border-[#E0E3E8] dark:border-[#222F49] rounded text-[#1E88E5] focus:ring-[#1E88E5] dark:bg-[#1A233A]"
 											/>
 										</div>
-										<span className="text-sm text-gray-700 group-hover:text-gray-900 transition-colors">
+										<span className="text-sm text-gray-700 dark:text-slate-300 group-hover:text-gray-900 dark:group-hover:text-slate-100 transition-colors">
 											{checkboxLabel}
 										</span>
 									</label>
@@ -96,12 +96,12 @@ export function ConfirmDialog({
 						</div>
 					</div>
 
-					<div className="px-6 py-4 bg-slate-50 border-t border-slate-200 flex justify-end gap-3">
+					<div className="px-6 py-4 bg-slate-50 dark:bg-[#0E1526] border-t border-slate-200 dark:border-[#222F49] flex justify-end gap-3">
 						<Button
 							variant="outline"
 							onClick={handleClose}
 							disabled={isProcessing}
-							className="px-4 shadow-sm bg-white hover:bg-slate-100 border-slate-200 text-slate-700"
+							className="px-4 shadow-sm bg-white dark:bg-[#1A233A] hover:bg-slate-100 dark:hover:bg-[#222F49] border-slate-200 dark:border-[#222F49] text-slate-700 dark:text-slate-200"
 						>
 							{cancelText}
 						</Button>

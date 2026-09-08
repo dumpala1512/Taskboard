@@ -5,6 +5,7 @@ import {
 	ChevronRight,
 	FileText,
 	Loader2,
+	Plus,
 	Settings,
 	Users,
 	X,
@@ -755,9 +756,10 @@ export function ProjectWizardModal({
 											/>
 											<Button
 												type="button"
-												variant="secondary"
+												variant="primary"
 												onClick={handleAddTag}
 												disabled={!tagInput.trim()}
+												leftIcon={<Plus className="w-4 h-4" />}
 											>
 												Add
 											</Button>
