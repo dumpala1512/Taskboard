@@ -84,7 +84,7 @@ export default function KanbanColumn({
 								users={users}
 								onClick={onTaskClick}
 								onEdit={onTaskEdit}
-								onDelete={onTaskDelete}
+								onDelete={isAdmin ? onTaskDelete : undefined}
 							/>
 						))}
 						{provided.placeholder}

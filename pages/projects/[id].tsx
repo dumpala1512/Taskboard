@@ -268,13 +268,15 @@ export default function ProjectDetailsPage() {
                                 {task.dueDate ? new Date(task.dueDate).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : "—"}
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-right">
-                                <button
-                                  onClick={() => setTaskToDelete(task)}
-                                  className="text-slate-400 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
-                                  title="Delete Task"
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </button>
+                                {isAdmin && (
+                                  <button
+                                    onClick={() => setTaskToDelete(task)}
+                                    className="text-slate-400 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
+                                    title="Delete Task"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
+                                )}
                               </td>
                             </tr>
                           ))}
@@ -354,13 +356,15 @@ export default function ProjectDetailsPage() {
                                 {task.dueDate ? new Date(task.dueDate).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : "—"}
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-right">
-                                <button
-                                  onClick={() => setTaskToDelete(task)}
-                                  className="text-slate-400 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
-                                  title="Delete Task"
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </button>
+                                {isAdmin && (
+                                   <button
+                                     onClick={() => setTaskToDelete(task)}
+                                     className="text-slate-400 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
+                                     title="Delete Task"
+                                   >
+                                     <Trash2 className="w-4 h-4" />
+                                   </button>
+                                 )}
                               </td>
                             </tr>
                           ))}

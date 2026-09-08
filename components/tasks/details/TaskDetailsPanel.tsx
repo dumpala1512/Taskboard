@@ -190,7 +190,7 @@ export function TaskDetailsPanel({ task, users, isOpen, onClose, project: propPr
             </div>
           </div>
           <div className="flex items-center space-x-2">
-            {(isAdmin || task.assigneeId === (session?.user as any)?.id) && (
+            {isAdmin && (
               <Button
                 variant="ghost"
                 size="sm"

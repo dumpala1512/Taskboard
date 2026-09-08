@@ -27,6 +27,13 @@ export default async function handler(
 		}
 
 		if (req.method === "DELETE") {
+			const session = await getServerSession(req, res, authOptions);
+			const role = session?.user ? (session.user as any).role : undefined;
+			if (role !== "ADMIN") {
+				return res.status(403).json({
+					message: "Members are not permitted to delete tasks. Only administrators can delete tasks.",
+				});
+			}
 			const deleted = await taskService.deleteTask(id);
 			if (!deleted) {
 				return res.status(404).json({ message: "Task not found" });

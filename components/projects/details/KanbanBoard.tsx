@@ -529,8 +529,8 @@ export default function KanbanBoard({
 									setTaskToEdit(task);
 								}}
 								onTaskDelete={(task) => {
-									if (!isAdmin && task.assigneeId !== currentUser?.id) {
-										toast.error("You can only delete tasks assigned to you");
+									if (!isAdmin) {
+										toast.error("Members cannot delete tasks");
 										return;
 									}
 									setTaskToDelete(task);
