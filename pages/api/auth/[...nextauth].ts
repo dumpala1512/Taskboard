@@ -92,6 +92,15 @@ export const authOptions: NextAuthOptions = {
 			}
 			return session;
 		},
+		async redirect({ url, baseUrl }) {
+			if (url.startsWith("/")) {
+				if (process.env.VERCEL_URL) {
+					return `https://${process.env.VERCEL_URL}${url}`;
+				}
+				return `${baseUrl}${url}`;
+			}
+			return baseUrl;
+		},
 	},
 	secret: process.env.NEXTAUTH_SECRET || "fallback-secret-for-development",
 };

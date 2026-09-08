@@ -32,7 +32,10 @@ export const TopNav: React.FC<TopNavProps> = ({ setMobileOpen }) => {
 
 	const handleLogout = async () => {
 		setIsLoggingOut(true);
-		await signOut({ callbackUrl: "/auth/signin" });
+		try {
+			await signOut({ redirect: false });
+		} catch (_) {}
+		window.location.href = "/auth/signin";
 	};
 
 	useEffect(() => {
