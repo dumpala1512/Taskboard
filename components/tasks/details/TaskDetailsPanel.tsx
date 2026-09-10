@@ -76,12 +76,31 @@ export function TaskDetailsPanel({ task, users, isOpen, onClose, project: propPr
   if (!isOpen || !task) return null;
 
   const handleStatusChange = (newStatus: TaskStatus) => {
+    if (newStatus === task.status) return;
+
+    const workflow = availableColumns.map((c) => c.id);
+    const curIdx = workflow.indexOf(task.status);
+    const newIdx = workflow.indexOf(newStatus);
+
+    if (curIdx !== -1 && newIdx !== -1 && Math.abs(newIdx - curIdx) > 1) {
+      const fromTitle = availableColumns.find((c) => c.id === task.status)?.title || task.status;
+      const toTitle = availableColumns.find((c) => c.id === newStatus)?.title || newStatus;
+      toast.error(
+        `Tasks must move step by step through workflow stages. Cannot move directly from "${fromTitle}" to "${toTitle}".`
+      );
+      setEditedStatus(task.status);
+      return;
+    }
+
     setEditedStatus(newStatus);
     updateTask(
       { id: task.id, status: newStatus },
       {
         onSuccess: () => toast.success('Status updated'),
-        onError: () => toast.error('Failed to update status')
+        onError: () => {
+          setEditedStatus(task.status);
+          toast.error('Failed to update status');
+        }
       }
     );
   };
@@ -171,11 +190,20 @@ export function TaskDetailsPanel({ task, users, isOpen, onClose, project: propPr
                 disabled={isPending}
                 className="px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border-none cursor-pointer focus:ring-2 focus:ring-blue-500 hover:bg-blue-200 transition-colors disabled:opacity-50 shrink-0"
               >
-                {availableColumns.map((col) => (
-                  <option key={col.id} value={col.id}>
-                    {col.title}
-                  </option>
-                ))}
+                {availableColumns.map((col) => {
+                  const curIdx = availableColumns.findIndex((c) => c.id === task.status);
+                  const colIdx = availableColumns.findIndex((c) => c.id === col.id);
+                  const isAdjacent = curIdx === -1 || colIdx === -1 || Math.abs(colIdx - curIdx) <= 1;
+                  return (
+                    <option
+                      key={col.id}
+                      value={col.id}
+                      disabled={!isAdjacent && col.id !== task.status}
+                    >
+                      {col.title}{!isAdjacent && col.id !== task.status ? " (step-by-step)" : ""}
+                    </option>
+                  );
+                })}
               </select>
               <select
                 value={editedPriority}

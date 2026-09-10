@@ -117,7 +117,7 @@ export const TopNav: React.FC<TopNavProps> = ({ setMobileOpen }) => {
 	const breadcrumbs = getBreadcrumbs();
 
 	return (
-		<header className="h-14 bg-white border-b border-[#E0E3E8] flex items-center justify-between px-4 sm:px-6 lg:px-8 z-30 relative">
+		<header className="h-14 bg-white dark:bg-[#131B2E] border-b border-[#E0E3E8] dark:border-[#222F49] flex items-center justify-between px-4 sm:px-6 lg:px-8 z-30 relative">
 			<div className="flex items-center flex-1">
 				<button
 					onClick={() => setMobileOpen(true)}
@@ -206,7 +206,7 @@ export const TopNav: React.FC<TopNavProps> = ({ setMobileOpen }) => {
 					<button
 						onClick={() => setProfileOpen((prev) => !prev)}
 						title={session?.user?.email || "User Profile"}
-						className="h-7 w-7 rounded-full bg-[#E3F2FD] flex items-center justify-center text-[#1E88E5] text-xs font-semibold border border-[#90CAF9] hover:ring-2 hover:ring-[#1E88E5]/30 transition-all cursor-pointer select-none"
+						className="h-7 w-7 rounded-full bg-[#E3F2FD] dark:bg-sky-950/70 flex items-center justify-center text-[#1E88E5] dark:text-sky-400 text-xs font-semibold border border-[#90CAF9] dark:border-sky-800/80 hover:ring-2 hover:ring-[#1E88E5]/30 transition-all cursor-pointer select-none"
 					>
 						{session?.user?.name ? (
 							session.user.name.charAt(0).toUpperCase()
@@ -225,17 +225,17 @@ export const TopNav: React.FC<TopNavProps> = ({ setMobileOpen }) => {
 
 					{/* Profile Dropdown Menu */}
 					{profileOpen && (
-						<div className="absolute right-0 top-full mt-2 w-72 bg-white rounded-xl shadow-xl border border-slate-200 py-3 px-4 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+						<div className="absolute right-0 top-full mt-2 w-72 bg-white dark:bg-[#131B2E] rounded-xl shadow-xl border border-slate-200 dark:border-[#222F49] py-3 px-4 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
 							{/* User Info Header */}
-							<div className="flex items-center gap-3 pb-3 border-b border-slate-100">
-								<div className="h-10 w-10 rounded-full bg-[#E3F2FD] text-[#1E88E5] font-bold text-sm flex items-center justify-center border border-[#90CAF9] shrink-0">
+							<div className="flex items-center gap-3 pb-3 border-b border-slate-100 dark:border-[#222F49]">
+								<div className="h-10 w-10 rounded-full bg-[#E3F2FD] dark:bg-sky-950/70 text-[#1E88E5] dark:text-sky-400 font-bold text-sm flex items-center justify-center border border-[#90CAF9] dark:border-sky-800 shrink-0">
 									{session?.user?.name ? session.user.name.charAt(0).toUpperCase() : <User className="w-5 h-5" />}
 								</div>
 								<div className="min-w-0 flex-1">
-									<p className="text-sm font-semibold text-slate-900 truncate" title={session?.user?.name || "User"}>
+									<p className="text-sm font-semibold text-slate-900 dark:text-slate-100 truncate" title={session?.user?.name || "User"}>
 										{session?.user?.name || "User"}
 									</p>
-									<p className="text-xs text-slate-500 truncate" title={session?.user?.email || ""}>
+									<p className="text-xs text-slate-500 dark:text-slate-400 truncate" title={session?.user?.email || ""}>
 										{session?.user?.email}
 									</p>
 								</div>
@@ -243,12 +243,12 @@ export const TopNav: React.FC<TopNavProps> = ({ setMobileOpen }) => {
 
 							{/* Role & Status */}
 							<div className="py-2.5 flex items-center justify-between">
-								<span className="text-xs font-medium text-slate-500">Logged in as</span>
+								<span className="text-xs font-medium text-slate-500 dark:text-slate-400">Logged in as</span>
 								<span
 									className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full ${
 										userRole === "ADMIN"
-											? "bg-indigo-100 text-indigo-700 border border-indigo-200"
-											: "bg-emerald-100 text-emerald-700 border border-emerald-200"
+											? "bg-indigo-100 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800"
+											: "bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800"
 									}`}
 								>
 									{userRole === "ADMIN" ? (
@@ -263,23 +263,24 @@ export const TopNav: React.FC<TopNavProps> = ({ setMobileOpen }) => {
 								</span>
 							</div>
 
-							<div className="pt-2 border-t border-slate-100 space-y-1">
+							<div className="pt-2 border-t border-slate-100 dark:border-[#222F49] space-y-1">
 								{isAdmin && (
 									<Link
 										href="/members"
 										onClick={() => setProfileOpen(false)}
-										className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+										className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#1A233A] transition-colors"
 									>
 										Manage Members
 									</Link>
 								)}
 								<button
+									type="button"
 									disabled={isLoggingOut}
 									onClick={handleLogout}
-									className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs font-medium text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50"
+									className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 hover:text-red-700 dark:hover:text-red-300 transition-colors disabled:opacity-50 cursor-pointer"
 								>
-									<LogOut className={`w-3.5 h-3.5 ${isLoggingOut ? "animate-pulse" : ""}`} />
-									<span>{isLoggingOut ? "Logging out..." : "Logout"}</span>
+									<LogOut className={`w-3.5 h-3.5 flex-shrink-0 text-red-600 dark:text-red-400 ${isLoggingOut ? "animate-pulse" : ""}`} />
+									<span className="text-red-600 dark:text-red-400 font-semibold">{isLoggingOut ? "Logging out..." : "Logout"}</span>
 								</button>
 							</div>
 						</div>

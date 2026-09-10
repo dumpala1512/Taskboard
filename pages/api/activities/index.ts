@@ -1,9 +1,9 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { getServerSession } from "next-auth/next";
-import { authOptions } from "../auth/[...nextauth]";
-import { activityService } from "../../../server/services/activity.service";
-import { userRepository } from "../../../server/repositories/user.repository";
 import { attachDeletedHeaders } from "../../../server/data";
+import { userRepository } from "../../../server/repositories/user.repository";
+import { activityService } from "../../../server/services/activity.service";
+import { authOptions } from "../auth/[...nextauth]";
 
 export default async function handler(
 	req: NextApiRequest,
@@ -23,11 +23,17 @@ export default async function handler(
 		const userId = (session.user as any).id;
 		const userRole = (session.user as any).role;
 
-		const rawActivities = await activityService.getRecentActivities(20, userId, userRole);
-		
+		const rawActivities = await activityService.getRecentActivities(
+			20,
+			userId,
+			userRole,
+		);
+
 		// Enrich with user data for the frontend
 		const users = await userRepository.findAll();
-		const userMap = new Map(users.map(u => [u.id, { name: u.name, avatar: u.avatar }]));
+		const userMap = new Map(
+			users.map((u) => [u.id, { name: u.name, avatar: u.avatar }]),
+		);
 
 		const enrichedActivities = rawActivities.map((act) => ({
 			id: act.id,

@@ -77,6 +77,19 @@ export default function ProjectHeader({
 						<span>{project.members?.length || 0} Members</span>
 					</div>
 				</div>
+
+				{project.tags && project.tags.length > 0 && (
+					<div className="flex items-center gap-1.5 mt-2.5 flex-wrap">
+						{project.tags.map((tag) => (
+							<span
+								key={tag}
+								className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800"
+							>
+								{tag}
+							</span>
+						))}
+					</div>
+				)}
 			</div>
 
 			{isAdmin && onCreateTask && (

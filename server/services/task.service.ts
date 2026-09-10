@@ -139,6 +139,27 @@ export class TaskService {
 			}
 		}
 
+		// Enforce step-by-step workflow transitions (no direct skipping to REVIEW or DONE)
+		if (updates.status && existingTask && updates.status !== existingTask.status) {
+			const project = existingTask.projectId
+				? await projectRepository.findById(existingTask.projectId)
+				: null;
+			const defaultCols = ["TODO", "IN_PROGRESS", "REVIEW", "DONE"];
+			const colIds = project?.columns?.length
+				? project.columns.map((c) => c.id)
+				: defaultCols;
+			const workflow = ["BACKLOG", ...colIds.filter((c) => c !== "BACKLOG")];
+
+			const curIdx = workflow.indexOf(existingTask.status);
+			const newIdx = workflow.indexOf(updates.status);
+
+			if (curIdx !== -1 && newIdx !== -1 && Math.abs(newIdx - curIdx) > 1) {
+				throw new Error(
+					`Tasks must move step by step through workflow stages (cannot skip directly from ${existingTask.status} to ${updates.status})`
+				);
+			}
+		}
+
 		updates.updatedAt = new Date().toISOString();
 		const updated = await taskRepository.update(id, updates);
 		if (userId && updated) {

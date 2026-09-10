@@ -163,7 +163,9 @@
   background-color: rgba(251, 191, 36, 0.15) !important;
 }
 
-.dark .bg-\[\#FFEBEE\] {
+.dark .bg-\[\#FFEBEE\],
+.dark .hover\:bg-\[\#FFEBEE\]:hover,
+.dark .hover\:bg-red-50:hover {
   background-color: rgba(248, 113, 113, 0.15) !important;
 }
 
@@ -281,6 +283,15 @@
 .dark .recharts-default-tooltip {
   background-color: #131B2E !important;
   border-color: #222F49 !important;
+  color: #F8FAFC !important;
+}
+
+.dark .recharts-tooltip-item,
+.dark .recharts-tooltip-item-name,
+.dark .recharts-tooltip-item-value,
+.dark .recharts-tooltip-item-separator,
+.dark .recharts-tooltip-label,
+.dark .recharts-legend-item-text {
   color: #F8FAFC !important;
 }
 

@@ -332,6 +332,25 @@ export function TaskWizardModal({
 				submitData.status = "TODO";
 			}
 			if (taskToEdit) {
+				if (submitData.status && submitData.status !== taskToEdit.status) {
+					const project = projects.find((p) => p.id === formData.projectId);
+					const defaultCols = ["TODO", "IN_PROGRESS", "REVIEW", "DONE"];
+					const colIds = project?.columns?.length
+						? project.columns.map((c) => c.id)
+						: defaultCols;
+					const workflow = ["BACKLOG", ...colIds.filter((c) => c !== "BACKLOG")];
+
+					const curIdx = workflow.indexOf(taskToEdit.status);
+					const newIdx = workflow.indexOf(submitData.status);
+
+					if (curIdx !== -1 && newIdx !== -1 && Math.abs(newIdx - curIdx) > 1) {
+						toast.error(
+							`Tasks must move step by step through workflow stages (cannot skip directly from "${taskToEdit.status}" to "${submitData.status}").`
+						);
+						setIsSubmitting(false);
+						return;
+					}
+				}
 				await updateTask.mutateAsync({
 					id: taskToEdit.id,
 					...submitData,
@@ -437,6 +456,7 @@ export function TaskWizardModal({
 							setFormData={setFormData}
 							errors={errors}
 							onBlurField={handleBlurField}
+							taskToEdit={taskToEdit}
 						/>
 					)}
 					{step === 3 && (

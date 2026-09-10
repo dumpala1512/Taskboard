@@ -21,6 +21,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const effectiveUserId = userId || userEmail;
   const filter = (req.query.filter as string) || (req.body?.filter as string);
+  const projectId = (req.query.projectId as string) || (req.body?.projectId as string);
   const sessionRole = (session?.user as any)?.role || "MEMBER";
   // Non-admin members can ONLY see their own analytics
   const effectiveRole = sessionRole !== "ADMIN" ? "MEMBER" : (filter === "my" ? "MEMBER" : "ADMIN");
@@ -37,7 +38,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         users: Array.isArray(localUsers) ? localUsers : undefined,
         deletedProjectIds: Array.isArray(deletedProjectIds) ? deletedProjectIds : undefined,
         deletedTaskIds: Array.isArray(deletedTaskIds) ? deletedTaskIds : undefined,
-      }
+      },
+      projectId
     );
     return res.status(200).json(data);
   } catch (error) {

@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { Plus } from "lucide-react";
+import { Plus, X } from "lucide-react";
 import { useUsers } from "../../../hooks/useUsers";
 import { useProjects } from "../../../hooks/useProjects";
 import type { TaskTag } from "../../../server/types";
@@ -71,9 +71,10 @@ export function Step3Details({ formData, setFormData, errors }: Step3Props) {
 							key={tag}
 							type="button"
 							onClick={() => toggleTag(tag)}
-							className="px-3 py-1.5 rounded-full text-xs font-medium border transition-colors bg-indigo-100 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800"
+							className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors bg-indigo-100 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800"
 						>
 							{tag}
+							<X className="w-3.5 h-3.5 hover:text-indigo-900 dark:hover:text-indigo-100" />
 						</button>
 					))}
 				</div>

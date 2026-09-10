@@ -189,6 +189,27 @@ export default function KanbanBoard({
 
 		const newStatus = destination.droppableId as TaskStatus;
 
+		if (newStatus !== task.status) {
+			const workflow = ["BACKLOG", ...boardColumns.map((c) => c.id)];
+			const curIdx = workflow.indexOf(task.status);
+			const newIdx = workflow.indexOf(newStatus);
+
+			if (curIdx !== -1 && newIdx !== -1 && Math.abs(newIdx - curIdx) > 1) {
+				const fromTitle =
+					task.status === "BACKLOG"
+						? "Backlog"
+						: boardColumns.find((c) => c.id === task.status)?.title || task.status;
+				const toTitle =
+					newStatus === "BACKLOG"
+						? "Backlog"
+						: boardColumns.find((c) => c.id === newStatus)?.title || newStatus;
+				toast.error(
+					`Tasks must move step by step through workflow stages. Cannot move directly from "${fromTitle}" to "${toTitle}".`
+				);
+				return;
+			}
+		}
+
 		if (newStatus === "TODO" && !task.assigneeId) {
 			toast.error("Assign this task to a member before moving to To Do");
 			return;

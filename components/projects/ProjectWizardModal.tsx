@@ -290,14 +290,35 @@ export function ProjectWizardModal({
 		setStep((prev) => prev + 1);
 	};
 
+	const AVAILABLE_PROJECT_TAGS = [
+		"FRONTEND",
+		"BACKEND",
+		"API",
+		"MOBILE",
+		"WEB",
+		"INFRASTRUCTURE",
+		"Q3",
+		"IMPORTANT",
+	];
+
+	const toggleProjectTag = (tag: string) => {
+		const currentTags = formData.tags || [];
+		if (currentTags.includes(tag)) {
+			setFormData((prev) => ({ ...prev, tags: currentTags.filter((t) => t !== tag) }));
+		} else {
+			if (currentTags.length >= 20) return;
+			setFormData((prev) => ({ ...prev, tags: [...currentTags, tag] }));
+		}
+	};
+
 	const handleAddTag = () => {
 		if (!tagInput.trim()) return;
 		const newTags = tagInput
 			.split(",")
-			.map((t) => t.trim().slice(0, 30))
+			.map((t) => t.trim().slice(0, 30).toUpperCase())
 			.filter((t) => t.length >= 2);
 		const existingTags = formData.tags || [];
-		const combined = Array.from(new Set([...existingTags, ...newTags]));
+		const combined = Array.from(new Set([...existingTags, ...newTags])).slice(0, 20);
 		setFormData((prev) => ({ ...prev, tags: combined }));
 		setTagInput("");
 	};
@@ -754,15 +775,51 @@ export function ProjectWizardModal({
 
 								<div className="space-y-5">
 									<div>
-										<label className="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1.5">
-											Project Tags (comma separated)
+										<label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2">
+											Tags (Max 20)
 										</label>
+
+										{/* Preset & Active Tag Pills */}
+										<div className="flex flex-wrap gap-2 mb-3">
+											{AVAILABLE_PROJECT_TAGS.map((tag) => {
+												const isSelected = (formData.tags || []).includes(tag);
+												return (
+													<button
+														key={tag}
+														type="button"
+														onClick={() => toggleProjectTag(tag)}
+														className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+															isSelected
+																? "bg-indigo-100 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800"
+																: "bg-white dark:bg-[#1A233A] text-slate-600 dark:text-slate-300 border-slate-200 dark:border-[#222F49] hover:bg-slate-50 dark:hover:bg-[#222F49]"
+														}`}
+													>
+														{tag}
+													</button>
+												);
+											})}
+											{(formData.tags || [])
+												.filter((t) => !AVAILABLE_PROJECT_TAGS.includes(t))
+												.map((tag) => (
+													<button
+														key={tag}
+														type="button"
+														onClick={() => toggleProjectTag(tag)}
+														className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors bg-indigo-100 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800"
+													>
+														{tag}
+														<X className="w-3.5 h-3.5 hover:text-indigo-900 dark:hover:text-indigo-100" />
+													</button>
+												))}
+										</div>
+
+										{/* Custom Tag Input */}
 										<div className="flex gap-2">
 											<input
 												type="text"
 												maxLength={30}
-												className="flex-1 px-3 py-2 bg-white dark:bg-[#1A233A] border border-gray-300 dark:border-[#222F49] rounded-lg text-sm text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-500 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors"
-												placeholder="e.g. Frontend, API, Q3, Important"
+												className="flex-1 px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 border-slate-200 dark:border-[#222F49] bg-white dark:bg-[#1A233A] text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500"
+												placeholder="Add custom tag..."
 												value={tagInput}
 												onChange={(e) => setTagInput(e.target.value)}
 												onKeyDown={(e) => {
@@ -785,26 +842,6 @@ export function ProjectWizardModal({
 										<p className="text-xs text-gray-500 dark:text-slate-400 mt-2">
 											These help in searching and filtering projects.
 										</p>
-
-										{formData.tags && formData.tags.length > 0 && (
-											<div className="flex flex-wrap gap-2 mt-3">
-												{formData.tags.map((tag) => (
-													<span
-														key={tag}
-														className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800"
-													>
-														{tag}
-														<button
-															type="button"
-															onClick={() => handleRemoveTag(tag)}
-															className="text-indigo-400 hover:text-indigo-600 dark:hover:text-indigo-200 focus:outline-none"
-														>
-															<X className="w-3.5 h-3.5" />
-														</button>
-													</span>
-												))}
-											</div>
-										)}
 									</div>
 								</div>
 							</div>

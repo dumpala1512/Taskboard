@@ -77,7 +77,26 @@ export function ProjectTable({ projects, onEdit, onDelete }: ProjectTableProps) 
 											<span className="font-medium text-gray-900 dark:text-slate-100 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
 												{project.name}
 											</span>
-											<span className="text-xs text-gray-500 dark:text-slate-400">{project.key || "PRJ"}</span>
+											<div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+												<span className="text-xs text-gray-500 dark:text-slate-400">{project.key || "PRJ"}</span>
+												{project.tags && project.tags.length > 0 && (
+													<div className="flex items-center gap-1 flex-wrap">
+														{project.tags.slice(0, 2).map((tag) => (
+															<span
+																key={tag}
+																className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border border-indigo-100 dark:border-indigo-800/60"
+															>
+																{tag}
+															</span>
+														))}
+														{project.tags.length > 2 && (
+															<span className="text-[10px] text-gray-400 dark:text-slate-500">
+																+{project.tags.length - 2}
+															</span>
+														)}
+													</div>
+												)}
+											</div>
 										</div>
 									</Link>
 								</td>

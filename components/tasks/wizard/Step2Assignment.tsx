@@ -10,6 +10,7 @@ interface Step2Props {
 	setFormData: (data: any) => void;
 	errors: Record<string, string>;
 	onBlurField?: (field: string, value: any) => void;
+	taskToEdit?: any;
 }
 
 export function Step2Assignment({
@@ -17,11 +18,25 @@ export function Step2Assignment({
 	setFormData,
 	errors,
 	onBlurField,
+	taskToEdit,
 }: Step2Props) {
 	const { data: users = [] } = useUsers();
 	const { data: projects = [] } = useProjects();
 
 	const project = projects.find((p) => p.id === formData.projectId);
+
+	const workflow = useMemo(() => {
+		const cols = (project?.columns && project.columns.length > 0
+			? project.columns
+			: [
+					{ id: "TODO", title: "To Do" },
+					{ id: "IN_PROGRESS", title: "In Progress" },
+					{ id: "REVIEW", title: "Review" },
+					{ id: "DONE", title: "Done" },
+			  ]
+		).filter((col) => col.id !== "BACKLOG");
+		return ["BACKLOG", ...cols.map((c) => c.id)];
+	}, [project?.columns]);
 
 	const projectMembers = useMemo(() => {
 		if (!formData.projectId) return [];
@@ -97,7 +112,19 @@ export function Step2Assignment({
 						onBlur={() => onBlurField?.("status", formData.status)}
 						className={`w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-[#1A233A] text-slate-900 dark:text-slate-100 ${errors.status ? "border-red-500" : "border-slate-200 dark:border-[#222F49]"}`}
 					>
-						<option value="BACKLOG" className="dark:bg-[#1A233A]">Backlog</option>
+						{(() => {
+							const curIdx = taskToEdit ? workflow.indexOf(taskToEdit.status) : -1;
+							const isBacklogAdjacent = !taskToEdit || curIdx === -1 || Math.abs(workflow.indexOf("BACKLOG") - curIdx) <= 1;
+							return (
+								<option
+									value="BACKLOG"
+									className="dark:bg-[#1A233A]"
+									disabled={!isBacklogAdjacent && taskToEdit?.status !== "BACKLOG"}
+								>
+									Backlog{!isBacklogAdjacent && taskToEdit?.status !== "BACKLOG" ? " (step-by-step)" : ""}
+								</option>
+							);
+						})()}
 						{(project?.columns && project.columns.length > 0
 							? project.columns
 							: [
@@ -108,11 +135,21 @@ export function Step2Assignment({
 							  ]
 						)
 							.filter((col) => col.id !== "BACKLOG")
-							.map((col) => (
-								<option key={col.id} value={col.id} className="dark:bg-[#1A233A]">
-									{col.title}
-								</option>
-							))}
+							.map((col) => {
+								const curIdx = taskToEdit ? workflow.indexOf(taskToEdit.status) : -1;
+								const colIdx = workflow.indexOf(col.id);
+								const isColAdjacent = !taskToEdit || curIdx === -1 || colIdx === -1 || Math.abs(colIdx - curIdx) <= 1;
+								return (
+									<option
+										key={col.id}
+										value={col.id}
+										className="dark:bg-[#1A233A]"
+										disabled={!isColAdjacent && taskToEdit?.status !== col.id}
+									>
+										{col.title}{!isColAdjacent && taskToEdit?.status !== col.id ? " (step-by-step)" : ""}
+									</option>
+								);
+							})}
 					</select>
 				</div>
 

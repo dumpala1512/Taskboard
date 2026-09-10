@@ -119,9 +119,29 @@ export function ProjectCard({ project, onEdit, onDelete }: ProjectCardProps) {
 				)}
 			</div>
 
-			<p className="text-sm text-[#6E7B8B] dark:text-slate-400 mb-4 line-clamp-2 break-words leading-relaxed">
+			<p className="text-sm text-[#6E7B8B] dark:text-slate-400 mb-3 line-clamp-2 break-words leading-relaxed">
 				{project.description}
 			</p>
+
+			{/* Project Tags */}
+			{project.tags && project.tags.length > 0 && (
+				<div className="flex flex-wrap gap-1.5 mb-3.5">
+					{project.tags.slice(0, 3).map((tag) => (
+						<span
+							key={tag}
+							className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border border-indigo-100 dark:border-indigo-800/60 max-w-[120px] truncate"
+							title={tag}
+						>
+							{tag}
+						</span>
+					))}
+					{project.tags.length > 3 && (
+						<span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-gray-100 dark:bg-[#1A233A] text-gray-500 dark:text-slate-400">
+							+{project.tags.length - 3}
+						</span>
+					)}
+				</div>
+			)}
 
 			{/* Status & Progress */}
 			<div className="space-y-2.5 mb-4">

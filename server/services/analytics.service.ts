@@ -4,6 +4,8 @@ import { userRepository } from "../repositories/user.repository";
 import { Task, Project, User, UserRole } from "../types";
 
 export interface AnalyticsData {
+  projectsList?: { id: string; name: string; key?: string }[];
+  selectedProjectId?: string;
   kpi: {
     totalProjects: number;
     activeProjects: number;
@@ -32,7 +34,8 @@ export class AnalyticsService {
       users?: User[];
       deletedProjectIds?: string[];
       deletedTaskIds?: string[];
-    }
+    },
+    projectId?: string
   ): Promise<AnalyticsData> {
     const isMember = role === "MEMBER";
 
@@ -161,6 +164,27 @@ export class AnalyticsService {
       });
     }
 
+    // Capture available projects for frontend filter selection before any project-specific filter
+    const projectsList = projects.map((p) => ({ id: p.id, name: p.name, key: p.key }));
+
+    const isProjectFiltered = Boolean(projectId && projectId !== "all");
+    const targetProject = isProjectFiltered
+      ? projects.find((p) => p.id === projectId || p.key === projectId)
+      : null;
+
+    if (isProjectFiltered) {
+      if (targetProject) {
+        projects = [targetProject];
+        const targetIds = new Set<string>();
+        if (targetProject.id) targetIds.add(targetProject.id.toLowerCase());
+        if (targetProject.key) targetIds.add(targetProject.key.toLowerCase());
+        tasks = tasks.filter((t) => t.projectId && targetIds.has(t.projectId.toLowerCase()));
+      } else {
+        projects = [];
+        tasks = [];
+      }
+    }
+
     const now = new Date();
 
     const isTaskDone = (status?: string): boolean => {
@@ -179,7 +203,6 @@ export class AnalyticsService {
       (t) => !isTaskDone(t.status) && t.dueDate && new Date(t.dueDate) < now
     );
     const overdueTasks = overdueTasksList.length;
-    const activeMembers = allUsers.filter((u) => u.status === "ACTIVE").length || allUsers.length;
     const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
     // Task Status Distribution
@@ -228,7 +251,7 @@ export class AnalyticsService {
     const projectHealth = [];
 
     for (const project of projects) {
-      const pTasks = tasks.filter((t) => t.projectId === project.id);
+      const pTasks = tasks.filter((t) => t.projectId === project.id || (project.key && t.projectId === project.key));
       const pTotal = pTasks.length;
       const pCompleted = pTasks.filter((t) => isTaskDone(t.status)).length;
       const progress = pTotal > 0 ? Math.round((pCompleted / pTotal) * 100) : (project.progress || 0);
@@ -283,6 +306,17 @@ export class AnalyticsService {
       const completed = uTasks.filter((t) => isTaskDone(t.status)).length;
       const overdue = uTasks.filter((t) => !isTaskDone(t.status) && t.dueDate && new Date(t.dueDate) < now).length;
 
+      // When viewing project-wise analytics, skip members who have no assigned tasks and aren't project members
+      if (
+        isProjectFiltered &&
+        assigned === 0 &&
+        (!targetProject?.members ||
+          (!targetProject.members.includes(user.id) &&
+            !(uEmail && targetProject.members.includes(uEmail))))
+      ) {
+        continue;
+      }
+
       workloadDistribution.push({
         memberId: user.id,
         memberName: user.name || `${user.firstName || ""} ${user.lastName || ""}`.trim() || user.email,
@@ -291,6 +325,10 @@ export class AnalyticsService {
         overdue,
       });
     }
+
+    const activeMembers = isProjectFiltered
+      ? (workloadDistribution.length || targetProject?.members?.length || (tasks.length > 0 ? 1 : 0))
+      : (allUsers.filter((u) => u.status === "ACTIVE").length || allUsers.length);
 
     // Task Completion Trend (Last 7 Days)
     const taskCompletionTrend = [];
@@ -319,6 +357,8 @@ export class AnalyticsService {
     }
 
     return {
+      projectsList,
+      selectedProjectId: projectId || "all",
       kpi: {
         totalProjects,
         activeProjects,

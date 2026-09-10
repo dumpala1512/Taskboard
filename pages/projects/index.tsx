@@ -42,10 +42,12 @@ export default function ProjectsPage() {
 	const userProjects = allProjects;
 
 	const projects = userProjects.filter((p) => {
+		const q = searchQuery.toLowerCase();
 		const matchesSearch =
 			!searchQuery ||
-			p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-			(p.key && p.key.toLowerCase().includes(searchQuery.toLowerCase()));
+			p.name.toLowerCase().includes(q) ||
+			(p.key && p.key.toLowerCase().includes(q)) ||
+			(p.tags && p.tags.some((t) => t.toLowerCase().includes(q)));
 		const matchesStatus = !statusFilter || p.status === statusFilter;
 		return matchesSearch && matchesStatus;
 	});

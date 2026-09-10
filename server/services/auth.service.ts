@@ -1,7 +1,7 @@
 import * as bcrypt from "bcryptjs";
 import crypto from "crypto";
-import { userRepository } from "../repositories/user.repository";
 import { deletedUserIds } from "../data";
+import { userRepository } from "../repositories/user.repository";
 import type { User } from "../types";
 
 export class AuthService {
@@ -19,7 +19,10 @@ export class AuthService {
 			return null;
 		}
 
-		if (deletedUserIds.has(user.id) || (user.email && deletedUserIds.has(user.email.toLowerCase()))) {
+		if (
+			deletedUserIds.has(user.id) ||
+			(user.email && deletedUserIds.has(user.email.toLowerCase()))
+		) {
 			return null;
 		}
 
@@ -44,7 +47,7 @@ export class AuthService {
 			console.log("user inactive:", cleanEmail);
 			throw new Error("Account is inactive");
 		}
-		
+
 		if (user.passwordChangedAt || user.isFirstLogin === false) {
 			user.isFirstLogin = false;
 		}
@@ -53,7 +56,12 @@ export class AuthService {
 		return user;
 	}
 
-	async setupAccount(userId: string, currentTempPasswordPlain: string, newPasswordPlain: string, userEmail?: string): Promise<User> {
+	async setupAccount(
+		userId: string,
+		currentTempPasswordPlain: string,
+		newPasswordPlain: string,
+		userEmail?: string,
+	): Promise<User> {
 		const cleanEmail = userEmail?.trim().toLowerCase();
 		let user = await userRepository.findById(userId);
 		if (!user && cleanEmail) {
@@ -63,7 +71,7 @@ export class AuthService {
 			// If running in a stateless serverless container that didn't have the user, create record
 			const hashedPassword = bcrypt.hashSync(newPasswordPlain, 10);
 			return userRepository.create({
-				id: (userId && userId !== cleanEmail) ? userId : undefined,
+				id: userId && userId !== cleanEmail ? userId : undefined,
 				name: cleanEmail || "Member",
 				email: cleanEmail || "",
 				role: "MEMBER",
@@ -73,11 +81,14 @@ export class AuthService {
 				passwordChangedAt: new Date().toISOString(),
 			});
 		}
-		
+
 		let isValid = false;
 		if (user.passwordHash) {
 			try {
-				isValid = bcrypt.compareSync(currentTempPasswordPlain, user.passwordHash);
+				isValid = bcrypt.compareSync(
+					currentTempPasswordPlain,
+					user.passwordHash,
+				);
 			} catch (_) {}
 		}
 		if (!isValid && (user as any).tempPassword) {
@@ -89,7 +100,7 @@ export class AuthService {
 		}
 
 		const hashedPassword = bcrypt.hashSync(newPasswordPlain, 10);
-		
+
 		const updatedUser = await userRepository.update(user.id, {
 			passwordHash: hashedPassword,
 			isFirstLogin: false,
@@ -127,14 +138,14 @@ export class AuthService {
 		console.log(`To: ${user.email}`);
 		console.log(`Subject: Reset Your Password`);
 		const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
-		console.log(
-			`Link: ${baseUrl}/auth/reset-password?token=${resetToken}`,
-		);
+		console.log(`Link: ${baseUrl}/auth/reset-password?token=${resetToken}`);
 		console.log(`=================================================\n`);
 	}
 
-
-	async resetPassword(token: string, newPasswordPlain: string): Promise<{ email: string; passwordHash: string }> {
+	async resetPassword(
+		token: string,
+		newPasswordPlain: string,
+	): Promise<{ email: string; passwordHash: string }> {
 		const user = await userRepository.findByResetToken(token);
 		if (!user) {
 			throw new Error("Invalid or expired token");
