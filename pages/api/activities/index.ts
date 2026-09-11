@@ -23,11 +23,11 @@ export default async function handler(
 		const userId = (session.user as any).id;
 		const userRole = (session.user as any).role;
 
-		const rawActivities = await activityService.getRecentActivities(
-			20,
-			userId,
-			userRole,
-		);
+		const projectId = req.query.projectId as string | undefined;
+
+		const rawActivities = projectId
+			? await activityService.getActivitiesByProjectId(projectId, 100)
+			: await activityService.getRecentActivities(20, userId, userRole);
 
 		// Enrich with user data for the frontend
 		const users = await userRepository.findAll();
@@ -40,7 +40,14 @@ export default async function handler(
 			type: act.type,
 			user: userMap.get(act.userId) || { name: "Unknown User" },
 			target: act.details,
+			details: act.details,
+			fromStatus: act.fromStatus,
+			toStatus: act.toStatus,
+			taskTitle: act.taskTitle,
 			timestamp: act.createdAt,
+			createdAt: act.createdAt,
+			projectId: act.projectId,
+			taskId: act.taskId,
 		}));
 
 		return res.status(200).json(enrichedActivities);

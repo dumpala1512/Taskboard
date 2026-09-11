@@ -34,7 +34,8 @@ export default async function handler(
 					message: "Members are not permitted to delete tasks. Only administrators can delete tasks.",
 				});
 			}
-			const deleted = await taskService.deleteTask(id);
+			const userId = session?.user ? (session.user as any).id : undefined;
+			const deleted = await taskService.deleteTask(id, userId);
 			if (!deleted) {
 				return res.status(404).json({ message: "Task not found" });
 			}
@@ -42,7 +43,9 @@ export default async function handler(
 		}
 
 		if (req.method === "POST" && req.query.action === "duplicate") {
-			const duplicatedTask = await taskService.duplicateTask(id);
+			const session = await getServerSession(req, res, authOptions);
+			const userId = session?.user ? (session.user as any).id : undefined;
+			const duplicatedTask = await taskService.duplicateTask(id, userId);
 			if (!duplicatedTask) {
 				return res.status(404).json({ message: "Task not found" });
 			}

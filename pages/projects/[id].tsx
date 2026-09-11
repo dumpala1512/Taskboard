@@ -14,7 +14,7 @@ import { useUsers } from '../../hooks/useUsers';
 import { useSession } from 'next-auth/react';
 import { ErrorPageLayout } from '../../components/layout/ErrorPageLayout';
 import { EmptyState } from '../../components/ui/EmptyState';
-import { Users, ListTodo, FolderX, Trash2 } from 'lucide-react';
+import { ListTodo, FolderX, Trash2 } from 'lucide-react';
 import { Skeleton } from '../../components/ui/Skeleton';
 import { Button } from '../../components/ui/Button';
 import { TaskWizardModal } from '../../components/tasks/TaskWizardModal';
@@ -23,7 +23,7 @@ import { toast } from 'react-hot-toast';
 export default function ProjectDetailsPage() {
   const router = useRouter();
   const { id } = router.query;
-  const [activeTab, setActiveTab] = useState<'overview' | 'kanban' | 'members' | 'activity' | 'unassigned' | 'backlog'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'kanban' | 'members' | 'activities' | 'activity' | 'backlog'>('overview');
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [taskToDelete, setTaskToDelete] = useState<any | null>(null);
 
@@ -121,7 +121,7 @@ export default function ProjectDetailsPage() {
 
       <div className="flex flex-col h-full bg-slate-50 dark:bg-[#0B0F19]">
         {/* Breadcrumb Area */}
-        <div className="px-6 py-4 border-b border-slate-200 dark:border-[#222F49]">
+        <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-slate-200 dark:border-[#222F49]">
           <div className="text-sm text-slate-500 dark:text-slate-400 flex items-center">
             Projects <span className="mx-2">&gt;</span> <span className="font-medium text-slate-900 dark:text-slate-100 truncate max-w-xs">{project.name}</span>
           </div>
@@ -148,14 +148,12 @@ export default function ProjectDetailsPage() {
             <OverviewCards project={project} tasks={safeTasks} />
 
             {/* Tabs */}
-            <div className="flex space-x-6 border-b border-slate-200 dark:border-[#222F49]">
-              {['overview', 'kanban', 'members', 'unassigned', 'backlog']
-                .filter((tab) => isAdmin || tab !== 'unassigned')
-                .map((tab) => (
+            <div className="flex space-x-4 sm:space-x-6 border-b border-slate-200 dark:border-[#222F49] overflow-x-auto no-scrollbar scrollbar-none whitespace-nowrap px-1">
+              {['overview', 'kanban', 'members', 'activities', 'backlog'].map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab as any)}
-                  className={`pb-3 text-sm font-medium capitalize transition-colors border-b-2 ${
+                  className={`pb-3 text-sm font-medium capitalize transition-colors border-b-2 shrink-0 ${
                     activeTab === tab 
                       ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400' 
                       : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
@@ -182,109 +180,8 @@ export default function ProjectDetailsPage() {
                   tasks={safeTasks} 
                 />
               )}
-              {activeTab === 'unassigned' && (
-                <div className="bg-white dark:bg-[#131B2E] border border-slate-200 dark:border-[#222F49] rounded-xl overflow-hidden shadow-sm flex flex-col h-full">
-                  <div className="p-5 border-b border-slate-200 dark:border-[#222F49] bg-white dark:bg-[#131B2E]">
-                    <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Unassigned Tasks</h3>
-                  </div>
-                  <div className="flex-1 overflow-auto">
-                    {safeTasks.filter((t: any) => !t.assigneeId).length === 0 ? (
-                      <div className="flex-1 mt-12">
-                        <EmptyState 
-                          icon={Users}
-                          title="Task Pool Empty"
-                          description="All project tasks have been successfully allocated to your team members."
-                        />
-                      </div>
-                    ) : (
-                      <table className="w-full text-left border-collapse">
-                        <thead className="bg-slate-50 dark:bg-[#1A233A] sticky top-0 border-b border-slate-200 dark:border-[#222F49] z-10">
-                          <tr className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                            <th className="px-6 py-4">Task</th>
-                            <th className="px-6 py-4">Assign To</th>
-                            <th className="px-6 py-4 hidden sm:table-cell">Priority</th>
-                            <th className="px-6 py-4 hidden sm:table-cell">Due Date</th>
-                            <th className="px-6 py-4 text-right">Actions</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-200 dark:divide-[#222F49] bg-white dark:bg-[#131B2E]">
-                          {safeTasks.filter((t: any) => !t.assigneeId).map((task: any) => (
-                            <tr key={task.id} className="hover:bg-slate-50 dark:hover:bg-[#1A233A] transition-colors">
-                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900 dark:text-slate-100">{task.title}</td>
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                <select 
-                                  value={task.assigneeId || ""} 
-                                  onChange={(e) => {
-                                    const newAssigneeId = e.target.value;
-                                    if (!newAssigneeId) return;
-                                    const isMember = projectMembers.some((m: any) => m.id === newAssigneeId);
-                                    if (!isMember) {
-                                      toast.error("Add the member to the project and then assign task");
-                                      return;
-                                    }
-                                    const targetStatus = projectColumns.some((c: any) => c.id === "TODO")
-                                      ? "TODO"
-                                      : (projectColumns[0]?.id || "TODO");
-                                    updateTask.mutate(
-                                      {
-                                        id: task.id,
-                                        assigneeId: newAssigneeId,
-                                        status: targetStatus,
-                                        projectId: project?.id,
-                                      },
-                                      {
-                                        onSuccess: () =>
-                                          toast.success(
-                                            `Task assigned and moved to ${
-                                              targetStatus === "TODO" ? "To Do" : targetStatus
-                                            }`
-                                          ),
-                                        onError: (err: any) =>
-                                          toast.error(
-                                            err?.response?.data?.message ||
-                                              err?.message ||
-                                              "Failed to assign task"
-                                          ),
-                                      }
-                                    );
-                                  }}
-                                  disabled={updateTask.isPending}
-                                  className="text-xs font-medium px-2.5 py-1.5 rounded-lg bg-white dark:bg-[#1A233A] text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-[#222F49] focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 shadow-sm cursor-pointer hover:border-slate-300 dark:hover:border-slate-600"
-                                >
-                                  <option value="" className="dark:bg-[#1A233A]">Assign to member...</option>
-                                  {projectMembers.map((member: any) => (
-                                    <option key={member.id} value={member.id} className="dark:bg-[#1A233A]">
-                                      {member.name || member.email}
-                                    </option>
-                                  ))}
-                                </select>
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap hidden sm:table-cell">
-                                <span className="text-xs font-semibold px-2 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
-                                  {task.priority}
-                                </span>
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap hidden sm:table-cell text-sm text-slate-500 dark:text-slate-400">
-                                {task.dueDate ? new Date(task.dueDate).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : "—"}
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-right">
-                                {isAdmin && (
-                                  <button
-                                    onClick={() => setTaskToDelete(task)}
-                                    className="text-slate-400 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
-                                    title="Delete Task"
-                                  >
-                                    <Trash2 className="w-4 h-4" />
-                                  </button>
-                                )}
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    )}
-                  </div>
-                </div>
+              {(activeTab === 'activities' || activeTab === 'activity') && (
+                <ActivityTab projectId={project.id} users={safeUsers as any} />
               )}
               {activeTab === 'backlog' && (
                 <div className="bg-white dark:bg-[#131B2E] border border-slate-200 dark:border-[#222F49] rounded-xl overflow-hidden shadow-sm flex flex-col h-full">

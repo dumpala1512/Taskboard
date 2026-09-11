@@ -150,14 +150,14 @@ export default function AnalyticsDashboard() {
               {selectedProjectId !== "all" && currentProjectName && ` • Filtered by ${currentProjectName}`}
             </p>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
             {/* Project Filter Dropdown */}
             <select
               id="analytics-project-filter"
               aria-label="Filter by project"
               value={selectedProjectId}
               onChange={(e) => setSelectedProjectId(e.target.value)}
-              className="w-48 sm:w-52 px-3 py-2 bg-white dark:bg-[#131B2E] border border-gray-300 dark:border-[#222F49] rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-[#1B2640] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 truncate"
+              className="w-full sm:w-52 px-3 py-2 bg-white dark:bg-[#131B2E] border border-gray-300 dark:border-[#222F49] rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-[#1B2640] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 truncate"
             >
               <option value="all">All Projects</option>
               {availableProjects.map((p) => (
@@ -171,13 +171,13 @@ export default function AnalyticsDashboard() {
               <select
                 value={filter}
                 onChange={(e) => setFilter(e.target.value as 'all' | 'my')}
-                className="w-48 sm:w-52 px-3 py-2 bg-white dark:bg-[#131B2E] border border-gray-300 dark:border-[#222F49] rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-[#1B2640] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 truncate"
+                className="w-full sm:w-52 px-3 py-2 bg-white dark:bg-[#131B2E] border border-gray-300 dark:border-[#222F49] rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-[#1B2640] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 truncate"
               >
                 <option value="all">Workspace Analytics</option>
                 <option value="my">My Analytics</option>
               </select>
             ) : (
-              <span className="w-48 sm:w-52 text-center px-3 py-2 bg-blue-50 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 rounded-md text-xs font-semibold border border-blue-200 dark:border-blue-800">
+              <span className="w-full sm:w-52 text-center px-3 py-2 bg-blue-50 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 rounded-md text-xs font-semibold border border-blue-200 dark:border-blue-800">
                 Personal Analytics
               </span>
             )}
@@ -193,13 +193,13 @@ export default function AnalyticsDashboard() {
 
         {loading && !data ? (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
               {[...Array(6)].map((_, i) => (
-                <div key={`kpi-skeleton-${i}`} className="bg-white dark:bg-[#131B2E] p-6 rounded-lg border border-gray-200 dark:border-[#222F49] shadow-sm flex items-center space-x-4">
-                  <Skeleton className="w-12 h-12 rounded-full" />
-                  <div>
-                    <Skeleton className="h-4 w-24 mb-2" />
-                    <Skeleton className="h-6 w-16" />
+                <div key={`kpi-skeleton-${i}`} className="bg-white dark:bg-[#131B2E] p-3 sm:p-5 rounded-lg border border-gray-200 dark:border-[#222F49] shadow-sm flex items-center space-x-3">
+                  <Skeleton className="w-8 h-8 sm:w-12 sm:h-12 rounded-full shrink-0" />
+                  <div className="min-w-0 flex-1">
+                    <Skeleton className="h-3 w-16 mb-2" />
+                    <Skeleton className="h-5 w-10" />
                   </div>
                 </div>
               ))}
@@ -219,7 +219,7 @@ export default function AnalyticsDashboard() {
         ) : data ? (
           <>
             {/* KPI Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
               <KpiCard title="Total Projects" value={data.kpi.totalProjects} icon={<Folder />} />
               <KpiCard title="Active Projects" value={data.kpi.activeProjects} icon={<Activity />} />
               <KpiCard title="Completed Tasks" value={data.kpi.completedTasks} icon={<CheckCircle />} />
@@ -327,25 +327,37 @@ export default function AnalyticsDashboard() {
               </div>
 
               {/* Task Completion Trend */}
-              <div className="bg-white dark:bg-[#131B2E] p-6 rounded-lg border border-gray-200 dark:border-[#222F49] shadow-sm lg:col-span-2">
-                <h3 className="text-lg font-medium text-gray-900 dark:text-slate-100 mb-4">Task Completion Trend (Last 7 Days)</h3>
-                <div className="h-72">
+              <div className="bg-white dark:bg-[#131B2E] p-4 sm:p-6 rounded-lg border border-gray-200 dark:border-[#222F49] shadow-sm lg:col-span-2">
+                <h3 className="text-base sm:text-lg font-medium text-gray-900 dark:text-slate-100 mb-4">Task Completion Trend (Last 7 Days)</h3>
+                <div className="h-64 sm:h-72">
                   <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={data.taskCompletionTrend}>
+                    <LineChart data={data.taskCompletionTrend} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDark ? "#222F49" : "#e2e8f0"} />
-                      <XAxis dataKey="date" stroke={isDark ? "#94A3B8" : "#64748b"} tick={{ fill: isDark ? "#94A3B8" : "#64748b" }} />
-                      <YAxis allowDecimals={false} stroke={isDark ? "#94A3B8" : "#64748b"} tick={{ fill: isDark ? "#94A3B8" : "#64748b" }} />
+                      <XAxis 
+                        dataKey="date" 
+                        stroke={isDark ? "#94A3B8" : "#64748b"} 
+                        tick={{ fontSize: 11, fill: isDark ? "#94A3B8" : "#64748b" }}
+                        tickFormatter={(date) => {
+                          try {
+                            const d = new Date(date);
+                            return `${d.getMonth() + 1}/${d.getDate()}`;
+                          } catch {
+                            return date;
+                          }
+                        }}
+                      />
+                      <YAxis allowDecimals={false} stroke={isDark ? "#94A3B8" : "#64748b"} tick={{ fontSize: 11, fill: isDark ? "#94A3B8" : "#64748b" }} />
                       <Tooltip contentStyle={tooltipContentStyle} itemStyle={tooltipItemStyle} />
-                      <Line type="monotone" dataKey="completed" stroke="#3b82f6" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+                      <Line type="monotone" dataKey="completed" stroke="#3b82f6" strokeWidth={2} dot={{ r: 3 }} activeDot={{ r: 5 }} />
                     </LineChart>
                   </ResponsiveContainer>
                 </div>
               </div>
 
               {/* Workload Distribution */}
-              <div className="bg-white dark:bg-[#131B2E] p-6 rounded-lg border border-gray-200 dark:border-[#222F49] shadow-sm lg:col-span-2">
-                <h3 className="text-lg font-medium text-gray-900 dark:text-slate-100 mb-4">Workload Distribution</h3>
-                <div className="h-96">
+              <div className="bg-white dark:bg-[#131B2E] p-4 sm:p-6 rounded-lg border border-gray-200 dark:border-[#222F49] shadow-sm lg:col-span-2">
+                <h3 className="text-base sm:text-lg font-medium text-gray-900 dark:text-slate-100 mb-4">Workload Distribution</h3>
+                <div className="h-80 sm:h-96">
                   {data.workloadDistribution?.length === 0 ? (
                     <div className="h-full flex items-center justify-center">
                       <EmptyState 
@@ -358,20 +370,20 @@ export default function AnalyticsDashboard() {
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart
                         data={data.workloadDistribution}
-                        margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
-                        barSize={50}
+                        margin={{ top: 10, right: 10, left: -25, bottom: 20 }}
+                        maxBarSize={45}
                       >
                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDark ? "#222F49" : "#e2e8f0"} />
-                        <XAxis dataKey="memberName" stroke={isDark ? "#94A3B8" : "#64748b"} tick={{ fontSize: 12, fill: isDark ? "#94A3B8" : "#64748b" }} />
-                        <YAxis allowDecimals={false} stroke={isDark ? "#94A3B8" : "#64748b"} tick={{ fill: isDark ? "#94A3B8" : "#64748b" }} label={{ value: 'Count', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fill: isDark ? "#94A3B8" : "#64748b" } }} />
+                        <XAxis dataKey="memberName" stroke={isDark ? "#94A3B8" : "#64748b"} tick={{ fontSize: 11, fill: isDark ? "#94A3B8" : "#64748b" }} />
+                        <YAxis allowDecimals={false} stroke={isDark ? "#94A3B8" : "#64748b"} tick={{ fontSize: 11, fill: isDark ? "#94A3B8" : "#64748b" }} />
                         <Tooltip 
                           contentStyle={tooltipContentStyle} 
                           itemStyle={tooltipItemStyle} 
                           cursor={{ fill: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)' }} 
                         />
                         <Legend 
-                          wrapperStyle={{ paddingTop: '20px' }} 
-                          formatter={(value) => <span className="text-slate-600 dark:text-slate-200 font-medium">{value}</span>}
+                          wrapperStyle={{ paddingTop: '10px' }} 
+                          formatter={(value) => <span className="text-slate-600 dark:text-slate-200 font-medium text-xs sm:text-sm">{value}</span>}
                         />
                         <Bar dataKey="assigned" name="Assigned" fill="#3b82f6" radius={[4, 4, 0, 0]} />
                         <Bar dataKey="completed" name="Completed" fill="#10b981" radius={[4, 4, 0, 0]} />
@@ -387,17 +399,17 @@ export default function AnalyticsDashboard() {
             <div className="mt-6">
               {/* Member Performance */}
               <div className="bg-white dark:bg-[#131B2E] rounded-lg border border-gray-200 dark:border-[#222F49] shadow-sm overflow-hidden">
-                <div className="p-6 border-b border-gray-200 dark:border-[#222F49]">
-                  <h3 className="text-lg font-medium text-gray-900 dark:text-slate-100">Member Performance</h3>
+                <div className="p-4 sm:p-6 border-b border-gray-200 dark:border-[#222F49]">
+                  <h3 className="text-base sm:text-lg font-medium text-gray-900 dark:text-slate-100">Member Performance</h3>
                 </div>
                 <div className="overflow-x-auto">
                   <table className="min-w-full divide-y divide-gray-200 dark:divide-[#222F49]">
                     <thead className="bg-gray-50 dark:bg-[#0B1120]">
                       <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Member</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Assigned</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Completed</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Overdue</th>
+                        <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Member</th>
+                        <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Assigned</th>
+                        <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Completed</th>
+                        <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Overdue</th>
                       </tr>
                     </thead>
                     <tbody className="bg-white dark:bg-[#131B2E] divide-y divide-gray-200 dark:divide-[#222F49]">
@@ -414,10 +426,10 @@ export default function AnalyticsDashboard() {
                       ) : (
                         data.workloadDistribution?.map((member: any) => (
                           <tr key={member.memberId}>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-slate-100">{member.memberName}</td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-slate-400">{member.assigned}</td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-emerald-600 dark:text-emerald-400 font-medium">{member.completed}</td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-red-500 dark:text-red-400 font-medium">{member.overdue > 0 ? member.overdue : '-'}</td>
+                            <td className="px-4 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-medium text-gray-900 dark:text-slate-100">{member.memberName}</td>
+                            <td className="px-4 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500 dark:text-slate-400">{member.assigned}</td>
+                            <td className="px-4 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-emerald-600 dark:text-emerald-400 font-medium">{member.completed}</td>
+                            <td className="px-4 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-red-500 dark:text-red-400 font-medium">{member.overdue > 0 ? member.overdue : '-'}</td>
                           </tr>
                         ))
                       )}
@@ -435,13 +447,13 @@ export default function AnalyticsDashboard() {
 
 function KpiCard({ title, value, icon, textClass = "text-gray-900 dark:text-slate-100" }: { title: string, value: string | number, icon: React.ReactNode, textClass?: string }) {
   return (
-    <div className="bg-white dark:bg-[#131B2E] p-6 rounded-lg border border-gray-200 dark:border-[#222F49] shadow-sm flex items-center space-x-4">
-      <div className="p-3 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400">
-        {React.cloneElement(icon as React.ReactElement, { className: "w-6 h-6" })}
+    <div className="bg-white dark:bg-[#131B2E] p-3 sm:p-5 rounded-lg border border-gray-200 dark:border-[#222F49] shadow-sm flex items-center space-x-2.5 sm:space-x-4">
+      <div className="p-2 sm:p-3 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 shrink-0">
+        {React.cloneElement(icon as React.ReactElement, { className: "w-4 h-4 sm:w-6 sm:h-6" })}
       </div>
-      <div>
-        <p className="text-sm font-medium text-gray-500 dark:text-slate-400">{title}</p>
-        <p className={`text-2xl font-bold ${textClass}`}>{value}</p>
+      <div className="min-w-0 flex-1">
+        <p className="text-[11px] sm:text-sm font-medium text-gray-500 dark:text-slate-400 truncate">{title}</p>
+        <p className={`text-base sm:text-2xl font-bold truncate ${textClass}`}>{value}</p>
       </div>
     </div>
   );

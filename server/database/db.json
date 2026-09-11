@@ -8,6 +8,24 @@
       "status": "ACTIVE",
       "passwordHash": "$2b$10$555eSyv6a7.TWzSTEACcu.d/5Ilv.WEF4sP32PIevcBTXrPBNROeO",
       "createdAt": "2026-08-03T04:26:35.622Z"
+    },
+    {
+      "name": "fhfhhhghgh",
+      "firstName": "fhfhhhghgh",
+      "lastName": "",
+      "email": "admhjhjin@teamhub.com",
+      "role": "MEMBER",
+      "status": "ACTIVE",
+      "department": "",
+      "jobTitle": "",
+      "joiningDate": "",
+      "passwordHash": "$2b$10$unK.m0anLd0Gu1WvOP3uoO.YL8YKTzDy0N16E/Z0s69JKrOfGBI6m",
+      "isFirstLogin": false,
+      "createdBy": "admin-1",
+      "id": "dcde7d42-46e2-4060-8026-74e9e502690d",
+      "createdAt": "2026-09-11T04:12:19.329Z",
+      "tempPassword": null,
+      "passwordChangedAt": "2026-09-11T04:15:20.779Z"
     }
   ],
   "projects": [
@@ -90,7 +108,7 @@
       "projectId": "5334f649-6125-4103-b2a9-fc28483282ca",
       "priority": "MEDIUM",
       "taskType": "",
-      "assigneeId": "admin-1",
+      "assigneeId": "",
       "status": "TODO",
       "startDate": "2026-09-08",
       "dueDate": "2026-09-25",
@@ -101,7 +119,7 @@
       "isDraft": false,
       "id": "06da3d91-6eb8-488b-a0cb-abb6421a160f",
       "createdAt": "2026-09-08T12:37:06.308Z",
-      "updatedAt": "2026-09-09T09:18:05.166Z",
+      "updatedAt": "2026-09-10T12:37:13.885Z",
       "completedAt": "2026-09-09T09:10:28.337Z"
     }
   ],
@@ -309,6 +327,178 @@
       "details": "cuidsiuclv ",
       "id": "48509b1b-0791-4313-af65-1b5672347a65",
       "createdAt": "2026-09-09T10:39:30.588Z"
+    },
+    {
+      "type": "TASK_UPDATED",
+      "userId": "admin-1",
+      "projectId": "5334f649-6125-4103-b2a9-fc28483282ca",
+      "taskId": "06da3d91-6eb8-488b-a0cb-abb6421a160f",
+      "details": "kshdb,, ",
+      "id": "0f299c1a-0c87-4171-bd7f-6b1eb9d4157e",
+      "createdAt": "2026-09-10T11:23:43.799Z"
+    },
+    {
+      "type": "TASK_UPDATED",
+      "userId": "admin-1",
+      "projectId": "5334f649-6125-4103-b2a9-fc28483282ca",
+      "taskId": "06da3d91-6eb8-488b-a0cb-abb6421a160f",
+      "details": "kshdb,, ",
+      "id": "42f6969f-cf9e-4e4e-a8ee-848e10834408",
+      "createdAt": "2026-09-10T11:23:55.601Z"
+    },
+    {
+      "type": "TASK_COMPLETED",
+      "userId": "admin-1",
+      "projectId": "5334f649-6125-4103-b2a9-fc28483282ca",
+      "taskId": "06da3d91-6eb8-488b-a0cb-abb6421a160f",
+      "details": "kshdb,, ",
+      "id": "7324ce8d-7c18-4f90-8b5b-480ed0283ce7",
+      "createdAt": "2026-09-10T11:24:02.009Z"
+    },
+    {
+      "type": "TASK_UPDATED",
+      "userId": "admin-1",
+      "projectId": "5334f649-6125-4103-b2a9-fc28483282ca",
+      "taskId": "06da3d91-6eb8-488b-a0cb-abb6421a160f",
+      "details": "kshdb,, ",
+      "id": "f0efd56a-b97b-4b1a-b6c3-039860514296",
+      "createdAt": "2026-09-10T11:24:16.215Z"
+    },
+    {
+      "type": "TASK_UPDATED",
+      "userId": "admin-1",
+      "projectId": "5334f649-6125-4103-b2a9-fc28483282ca",
+      "taskId": "06da3d91-6eb8-488b-a0cb-abb6421a160f",
+      "details": "kshdb,, ",
+      "id": "018aa4df-0904-4f93-9a7a-ed059c800c15",
+      "createdAt": "2026-09-10T11:24:25.245Z"
+    },
+    {
+      "type": "TASK_UPDATED",
+      "userId": "admin-1",
+      "projectId": "5334f649-6125-4103-b2a9-fc28483282ca",
+      "taskId": "06da3d91-6eb8-488b-a0cb-abb6421a160f",
+      "details": "kshdb,, ",
+      "id": "43203bd2-3f68-41fb-b41e-bf20155eb669",
+      "createdAt": "2026-09-10T11:24:35.991Z"
+    },
+    {
+      "type": "TASK_UPDATED",
+      "userId": "admin-1",
+      "projectId": "5334f649-6125-4103-b2a9-fc28483282ca",
+      "taskId": "06da3d91-6eb8-488b-a0cb-abb6421a160f",
+      "details": "kshdb,, ",
+      "id": "bdf6dd08-fde2-41f9-a761-ea290fd8f9a1",
+      "createdAt": "2026-09-10T11:24:38.867Z"
+    },
+    {
+      "type": "TASK_UPDATED",
+      "userId": "admin-1",
+      "projectId": "5334f649-6125-4103-b2a9-fc28483282ca",
+      "taskId": "06da3d91-6eb8-488b-a0cb-abb6421a160f",
+      "details": "kshdb,, ",
+      "id": "4e64b3b3-af2c-4201-8598-07aaf791692e",
+      "createdAt": "2026-09-10T11:24:39.754Z"
+    },
+    {
+      "type": "TASK_UPDATED",
+      "userId": "admin-1",
+      "projectId": "5334f649-6125-4103-b2a9-fc28483282ca",
+      "taskId": "06da3d91-6eb8-488b-a0cb-abb6421a160f",
+      "details": "kshdb,, ",
+      "id": "21ed22a2-0f49-461f-85fe-4563078bcd5b",
+      "createdAt": "2026-09-10T11:24:44.340Z"
+    },
+    {
+      "type": "TASK_UPDATED",
+      "userId": "admin-1",
+      "projectId": "5334f649-6125-4103-b2a9-fc28483282ca",
+      "taskId": "06da3d91-6eb8-488b-a0cb-abb6421a160f",
+      "details": "kshdb,, ",
+      "id": "44b43a33-d932-4636-b05c-e6edc59b1b28",
+      "createdAt": "2026-09-10T11:24:45.925Z"
+    },
+    {
+      "type": "TASK_STATUS_CHANGED",
+      "userId": "admin-1",
+      "projectId": "5334f649-6125-4103-b2a9-fc28483282ca",
+      "taskId": "06da3d91-6eb8-488b-a0cb-abb6421a160f",
+      "details": "Moved \"kshdb,, \" from TODO to IN_PROGRESS",
+      "fromStatus": "TODO",
+      "toStatus": "IN_PROGRESS",
+      "taskTitle": "kshdb,, ",
+      "id": "0dd11853-c191-497a-8fe8-9874a46c3558",
+      "createdAt": "2026-09-10T11:33:58.184Z"
+    },
+    {
+      "type": "TASK_STATUS_CHANGED",
+      "userId": "admin-1",
+      "projectId": "5334f649-6125-4103-b2a9-fc28483282ca",
+      "taskId": "06da3d91-6eb8-488b-a0cb-abb6421a160f",
+      "details": "Moved \"kshdb,, \" from IN_PROGRESS to REVIEW",
+      "fromStatus": "IN_PROGRESS",
+      "toStatus": "REVIEW",
+      "taskTitle": "kshdb,, ",
+      "id": "f60886fc-a88c-4a78-bf0f-9efd005ba502",
+      "createdAt": "2026-09-10T11:34:05.116Z"
+    },
+    {
+      "type": "TASK_STATUS_CHANGED",
+      "userId": "admin-1",
+      "projectId": "5334f649-6125-4103-b2a9-fc28483282ca",
+      "taskId": "06da3d91-6eb8-488b-a0cb-abb6421a160f",
+      "details": "Moved \"kshdb,, \" from REVIEW to IN_PROGRESS",
+      "fromStatus": "REVIEW",
+      "toStatus": "IN_PROGRESS",
+      "taskTitle": "kshdb,, ",
+      "id": "ab606758-96f8-4d94-803f-76261c9d3c77",
+      "createdAt": "2026-09-10T11:36:13.786Z"
+    },
+    {
+      "type": "TASK_STATUS_CHANGED",
+      "userId": "admin-1",
+      "projectId": "5334f649-6125-4103-b2a9-fc28483282ca",
+      "taskId": "06da3d91-6eb8-488b-a0cb-abb6421a160f",
+      "details": "Moved \"kshdb,, \" from IN_PROGRESS to REVIEW",
+      "fromStatus": "IN_PROGRESS",
+      "toStatus": "REVIEW",
+      "taskTitle": "kshdb,, ",
+      "id": "08dd27a1-92d9-4a90-9ae8-41f9f843f4b8",
+      "createdAt": "2026-09-10T11:40:16.406Z"
+    },
+    {
+      "type": "TASK_STATUS_CHANGED",
+      "userId": "admin-1",
+      "projectId": "5334f649-6125-4103-b2a9-fc28483282ca",
+      "taskId": "06da3d91-6eb8-488b-a0cb-abb6421a160f",
+      "details": "Moved \"kshdb,, \" from REVIEW to IN_PROGRESS",
+      "fromStatus": "REVIEW",
+      "toStatus": "IN_PROGRESS",
+      "taskTitle": "kshdb,, ",
+      "id": "61ed45cd-b6e5-470d-ba6d-4f4b2ea6837e",
+      "createdAt": "2026-09-10T11:59:00.473Z"
+    },
+    {
+      "type": "TASK_STATUS_CHANGED",
+      "userId": "admin-1",
+      "projectId": "5334f649-6125-4103-b2a9-fc28483282ca",
+      "taskId": "06da3d91-6eb8-488b-a0cb-abb6421a160f",
+      "details": "Moved \"kshdb,, \" from IN_PROGRESS to TODO",
+      "fromStatus": "IN_PROGRESS",
+      "toStatus": "TODO",
+      "taskTitle": "kshdb,, ",
+      "id": "b563ea70-e4c6-4018-be0e-cb78c7ff9893",
+      "createdAt": "2026-09-10T11:59:02.050Z"
+    },
+    {
+      "type": "TASK_UPDATED",
+      "userId": "admin-1",
+      "projectId": "5334f649-6125-4103-b2a9-fc28483282ca",
+      "taskId": "06da3d91-6eb8-488b-a0cb-abb6421a160f",
+      "details": "Updated \"kshdb,, \": unassigned",
+      "taskTitle": "kshdb,, ",
+      "id": "e45c12bd-bf94-423a-a656-b16f9d21ed0e",
+      "createdAt": "2026-09-10T12:37:13.904Z"
     }
   ],
   "deletedUserIds": [

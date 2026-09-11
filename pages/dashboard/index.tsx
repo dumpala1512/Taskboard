@@ -64,67 +64,67 @@ export default function Overview() {
 			</Head>
 
 			<div className="flex flex-col h-full bg-[#FAFBFC] dark:bg-slate-950">
-				<div className="flex-1 overflow-auto p-8">
-					<div className="max-w-[1200px] mx-auto space-y-8">
+				<div className="flex-1 overflow-auto p-4 sm:p-6 lg:p-8">
+					<div className="max-w-[1200px] mx-auto space-y-6 sm:space-y-8">
 						
 						{/* Header */}
-						<div className="flex justify-between items-center">
-							<h1 className="text-5xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
+						<div className="flex justify-between items-center pt-1 sm:pt-0">
+							<h1 className="text-2xl sm:text-4xl lg:text-5xl font-bold text-gray-900 dark:text-white tracking-tight">Dashboard</h1>
 						</div>
 
 						{/* Metric Cards */}
-						<div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-							<div className="bg-white dark:bg-slate-900 rounded-lg border border-gray-200 dark:border-slate-800 p-6 shadow-sm">
-								<h3 className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-2">Tasks Assigned</h3>
-								<div className="text-4xl font-bold text-slate-900 dark:text-white leading-none">
-									{tasksLoading ? <Skeleton className="h-10 w-16 inline-block" /> : formatNumber(filteredTasks.length)}
+						<div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
+							<div className="bg-white dark:bg-slate-900 rounded-lg border border-gray-200 dark:border-slate-800 p-4 sm:p-6 shadow-sm">
+								<h3 className="text-xs sm:text-sm font-medium text-slate-500 dark:text-slate-400 mb-1 sm:mb-2">Tasks Assigned</h3>
+								<div className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white leading-none">
+									{tasksLoading ? <Skeleton className="h-8 sm:h-10 w-16 inline-block" /> : formatNumber(filteredTasks.length)}
 								</div>
 							</div>
 							
-							<div className="bg-white dark:bg-slate-900 rounded-lg border border-gray-200 dark:border-slate-800 p-6 shadow-sm">
-								<h3 className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-2">In Progress</h3>
-								<div className="text-4xl font-bold text-slate-900 dark:text-white leading-none">
-									{tasksLoading ? <Skeleton className="h-10 w-16 inline-block" /> : formatNumber(inProgressTasks.length)}
+							<div className="bg-white dark:bg-slate-900 rounded-lg border border-gray-200 dark:border-slate-800 p-4 sm:p-6 shadow-sm">
+								<h3 className="text-xs sm:text-sm font-medium text-slate-500 dark:text-slate-400 mb-1 sm:mb-2">In Progress</h3>
+								<div className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white leading-none">
+									{tasksLoading ? <Skeleton className="h-8 sm:h-10 w-16 inline-block" /> : formatNumber(inProgressTasks.length)}
 								</div>
 							</div>
 
-							<div className="bg-white dark:bg-slate-900 rounded-lg border border-gray-200 dark:border-slate-800 p-6 shadow-sm">
-								<h3 className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-2">Tasks Completed</h3>
-								<div className="text-4xl font-bold text-slate-900 dark:text-white leading-none">
-									{tasksLoading ? <Skeleton className="h-10 w-16 inline-block" /> : formatNumber(completedTasks.length)}
+							<div className="bg-white dark:bg-slate-900 rounded-lg border border-gray-200 dark:border-slate-800 p-4 sm:p-6 shadow-sm">
+								<h3 className="text-xs sm:text-sm font-medium text-slate-500 dark:text-slate-400 mb-1 sm:mb-2">Tasks Completed</h3>
+								<div className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white leading-none">
+									{tasksLoading ? <Skeleton className="h-8 sm:h-10 w-16 inline-block" /> : formatNumber(completedTasks.length)}
 								</div>
 							</div>
 						</div>
 
 						{/* Assigned Tasks Table */}
 						<div className="bg-white dark:bg-slate-900 rounded-lg border border-gray-200 dark:border-slate-800 overflow-hidden shadow-sm">
-							<div className="px-6 py-4 border-b border-gray-200 dark:border-slate-800 flex justify-between items-center">
-								<h2 className="text-lg font-bold text-slate-800 dark:text-white">
+							<div className="px-4 py-3 sm:px-6 sm:py-4 border-b border-gray-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+								<h2 className="text-base sm:text-lg font-bold text-slate-800 dark:text-white whitespace-nowrap">
 									{view === "assigned" ? (isAdmin ? "Assigned Tasks" : "My Tasks") : "All Tasks"}
 								</h2>
-								<div className="relative">
+								<div className="relative self-start sm:self-auto">
 									<select 
 										value={view}
 										onChange={(e) => setView(e.target.value as "assigned" | "all")}
-										className="appearance-none bg-[#F5F5F5] dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-gray-700 dark:text-slate-200 py-1 pl-3 pr-8 rounded-md text-xs font-medium focus:outline-none focus:ring-1 focus:ring-gray-400 dark:focus:ring-slate-600"
+										className="appearance-none bg-[#F5F5F5] dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-gray-700 dark:text-slate-200 py-1.5 pl-3 pr-8 rounded-md text-xs font-medium focus:outline-none focus:ring-1 focus:ring-gray-400 dark:focus:ring-slate-600"
 									>
 										<option value="assigned" className="dark:bg-slate-800 dark:text-slate-200">{isAdmin ? "Assigned Tasks" : "My Tasks"}</option>
 										<option value="all" className="dark:bg-slate-800 dark:text-slate-200">All Tasks</option>
 									</select>
-									<ChevronDown className="w-3.5 h-3.5 text-gray-400 dark:text-slate-300 absolute right-2.5 top-1.5 pointer-events-none" />
+									<ChevronDown className="w-3.5 h-3.5 text-gray-400 dark:text-slate-300 absolute right-2.5 top-2 pointer-events-none" />
 								</div>
 							</div>
 							
 							<div className="overflow-x-auto">
-								<table className="w-full text-left border-collapse">
+								<table className="min-w-[640px] w-full text-left border-collapse">
 									<thead>
-										<tr className="bg-slate-100 dark:bg-slate-800/80 border-b border-gray-200 dark:border-slate-700 text-sm font-semibold text-slate-800 dark:text-slate-100">
-											<th className="px-6 py-3 whitespace-nowrap text-slate-800 dark:text-slate-100">ID</th>
-											<th className="px-6 py-3 whitespace-nowrap text-slate-800 dark:text-slate-100">Task Name</th>
-											<th className="px-6 py-3 whitespace-nowrap text-slate-800 dark:text-slate-100">Start Date</th>
-											<th className="px-6 py-3 whitespace-nowrap text-slate-800 dark:text-slate-100">Priority</th>
-											<th className="px-6 py-3 whitespace-nowrap text-slate-800 dark:text-slate-100">Status</th>
-											<th className="px-6 py-3 whitespace-nowrap text-slate-800 dark:text-slate-100">Assigned To</th>
+										<tr className="bg-slate-100 dark:bg-slate-800/80 border-b border-gray-200 dark:border-slate-700 text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-100">
+											<th className="px-4 py-3 sm:px-6 whitespace-nowrap text-slate-800 dark:text-slate-100">ID</th>
+											<th className="px-4 py-3 sm:px-6 whitespace-nowrap text-slate-800 dark:text-slate-100">Task Name</th>
+											<th className="px-4 py-3 sm:px-6 whitespace-nowrap text-slate-800 dark:text-slate-100">Start Date</th>
+											<th className="px-4 py-3 sm:px-6 whitespace-nowrap text-slate-800 dark:text-slate-100">Priority</th>
+											<th className="px-4 py-3 sm:px-6 whitespace-nowrap text-slate-800 dark:text-slate-100">Status</th>
+											<th className="px-4 py-3 sm:px-6 whitespace-nowrap text-slate-800 dark:text-slate-100">Assigned To</th>
 										</tr>
 									</thead>
 									<tbody className="divide-y divide-gray-100 dark:divide-slate-800">

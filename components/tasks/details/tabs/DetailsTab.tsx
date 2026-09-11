@@ -1,16 +1,9 @@
 import React, { useState } from 'react';
-import { User, AlignLeft, CheckSquare, Plus, Trash2, GripVertical } from 'lucide-react';
-import { Button } from '@/components/ui/Button';
+import { User, AlignLeft } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { toast } from 'react-hot-toast';
 
 import type { Task, User as UserType } from '../../../../server/types';
-
-interface ChecklistItem {
-  id: string;
-  text: string;
-  completed: boolean;
-}
 
 interface DetailsTabProps {
   task?: Task | null;
@@ -23,99 +16,20 @@ export function DetailsTab({ task, users = [], project, onAssign }: DetailsTabPr
   const { data: session } = useSession();
   const isAdmin = (session?.user as any)?.role === 'ADMIN';
 
-  const [checklist, setChecklist] = useState<ChecklistItem[]>([]);
-  const [newItemText, setNewItemText] = useState('');
   const [isAssigning, setIsAssigning] = useState(false);
-
-  const handleAddItem = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newItemText.trim()) return;
-    setChecklist([
-      ...checklist,
-      { id: Date.now().toString(), text: newItemText.trim(), completed: false }
-    ]);
-    setNewItemText('');
-  };
-
-  const toggleItem = (id: string) => {
-    setChecklist(checklist.map(item => 
-      item.id === id ? { ...item, completed: !item.completed } : item
-    ));
-  };
-
-  const deleteItem = (id: string) => {
-    setChecklist(checklist.filter(item => item.id !== id));
-  };
 
   return (
     <div className="space-y-8">
       {/* Description Section */}
       <section>
-        <div className="flex items-center space-x-2 mb-3 text-lg font-semibold text-gray-900">
-          <AlignLeft className="w-5 h-5 text-gray-500" />
+        <div className="flex items-center space-x-2 mb-3 text-lg font-semibold text-gray-900 dark:text-slate-100">
+          <AlignLeft className="w-5 h-5 text-gray-500 dark:text-slate-400" />
           <h3>Description</h3>
         </div>
         <div 
-          className="bg-gray-50 rounded-lg p-4 text-gray-700 text-sm prose prose-sm max-w-none break-words"
+          className="bg-gray-50 dark:bg-[#1A233A] rounded-lg p-4 text-gray-700 dark:text-slate-200 text-sm prose prose-sm max-w-none break-words"
           dangerouslySetInnerHTML={{ __html: task?.description || '<p className="text-gray-500 italic">No description provided.</p>' }}
         />
-      </section>
-
-      {/* Checklist Section */}
-      <section>
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center space-x-2 text-lg font-semibold text-gray-900">
-            <CheckSquare className="w-5 h-5 text-gray-500" />
-            <h3>Checklist</h3>
-          </div>
-          <span className="text-sm text-gray-500">
-            {checklist.filter(i => i.completed).length} / {checklist.length} completed
-          </span>
-        </div>
-        
-        <div className="bg-white border rounded-lg shadow-sm">
-          <div className="p-1">
-            {checklist.map((item) => (
-              <div 
-                key={item.id} 
-                className="flex items-center group p-2 hover:bg-gray-50 rounded-md transition-colors"
-              >
-                <GripVertical className="w-4 h-4 text-gray-300 mr-2 cursor-grab opacity-0 group-hover:opacity-100" />
-                <input
-                  type="checkbox"
-                  checked={item.completed}
-                  onChange={() => toggleItem(item.id)}
-                  className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 cursor-pointer"
-                />
-                <span className={`ml-3 flex-1 text-sm ${item.completed ? 'text-gray-400 line-through' : 'text-gray-700'}`}>
-                  {item.text}
-                </span>
-                <button
-                  onClick={() => deleteItem(item.id)}
-                  className="opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-red-500 rounded transition-all"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
-            ))}
-          </div>
-          <div className="p-3 border-t bg-gray-50 rounded-b-lg">
-            <form onSubmit={handleAddItem} className="flex space-x-2">
-              <input
-                type="text"
-                value={newItemText}
-                onChange={(e) => setNewItemText(e.target.value)}
-                placeholder="Add an item..."
-                maxLength={100}
-                className="flex-1 text-sm border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              />
-              <Button type="submit" size="sm" variant="outline" disabled={!newItemText.trim()}>
-                <Plus className="w-4 h-4 mr-1" />
-                Add
-              </Button>
-            </form>
-          </div>
-        </div>
       </section>
 
       {/* Assignment Info Grid */}

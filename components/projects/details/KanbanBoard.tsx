@@ -1,5 +1,5 @@
 import { DragDropContext, type DropResult } from "@hello-pangea/dnd";
-import { Filter, Search, SlidersHorizontal } from "lucide-react";
+import { ChevronDown, Filter, Search, SlidersHorizontal } from "lucide-react";
 import { useSession } from "next-auth/react";
 import React, { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
@@ -210,11 +210,6 @@ export default function KanbanBoard({
 			}
 		}
 
-		if (newStatus === "TODO" && !task.assigneeId) {
-			toast.error("Assign this task to a member before moving to To Do");
-			return;
-		}
-
 		// Create a new array and update status
 		const newTasks = [...tasks];
 		newTasks[taskIndex] = { ...task, status: newStatus };
@@ -224,7 +219,15 @@ export default function KanbanBoard({
 		updateTask(
 			{ id: task.id, status: newStatus },
 			{
-				onSuccess: () => toast.success("Task status updated"),
+				onSuccess: () => {
+					toast.success("Task status updated");
+					queryClient.invalidateQueries({ queryKey: ["activities"] });
+					if (project?.id) {
+						queryClient.invalidateQueries({
+							queryKey: ["activities", { projectId: project.id }],
+						});
+					}
+				},
 				onError: () => toast.error("Failed to update task status"),
 			},
 		);
@@ -234,6 +237,14 @@ export default function KanbanBoard({
 	const [filterPriority, setFilterPriority] = useState("");
 	const [filterAssignee, setFilterAssignee] = useState("");
 	const [filterOnlyMe, setFilterOnlyMe] = useState(false);
+	const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+
+	const activeFiltersCount = [
+		Boolean(filterStatus),
+		Boolean(filterPriority),
+		Boolean(filterAssignee),
+		filterOnlyMe,
+	].filter(Boolean).length;
 
 	const filteredTasks = tasks.filter((t) => {
 		const matchesSearch =
@@ -245,9 +256,12 @@ export default function KanbanBoard({
 		const matchesPriority = filterPriority
 			? t.priority === filterPriority
 			: true;
-		const matchesAssignee = filterAssignee
-			? t.assigneeId === filterAssignee
-			: true;
+		const matchesAssignee =
+			filterAssignee === "UNASSIGNED"
+				? !t.assigneeId || t.assigneeId.trim() === ""
+				: filterAssignee
+				? t.assigneeId === filterAssignee
+				: true;
 		const matchesOnlyMe = filterOnlyMe
 			? t.assigneeId === currentUser?.id
 			: true;
@@ -266,8 +280,9 @@ export default function KanbanBoard({
 	return (
 		<div className="flex flex-col h-full bg-white dark:bg-[#131B2E] rounded-lg border border-[#E0E3E8] dark:border-[#222F49] overflow-hidden shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
 			{/* Board Toolbar */}
-			<div className="px-4 py-3 border-b border-[#E0E3E8] dark:border-[#222F49] flex flex-col xl:flex-row justify-between items-start xl:items-center gap-3 bg-white dark:bg-[#131B2E]">
-				<div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full xl:w-auto">
+			<div className="px-3 sm:px-4 py-3 border-b border-[#E0E3E8] dark:border-[#222F49] flex flex-col xl:flex-row justify-between items-stretch xl:items-center gap-3 bg-white dark:bg-[#131B2E]">
+				<div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 w-full xl:w-auto">
+					{/* Search Input */}
 					<div className="relative w-full sm:w-64 shrink-0">
 						<Input
 							placeholder="Search tasks..."
@@ -278,17 +293,49 @@ export default function KanbanBoard({
 						<Search className="w-3.5 h-3.5 text-[#9EAAB7] dark:text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
 					</div>
 
-					<div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400 font-medium shrink-0">
-						<Filter className="w-4 h-4 text-indigo-500" /> Filters:
+					{/* Mobile Filter Toggle & Add Column Row */}
+					<div className="flex sm:hidden items-center justify-between gap-2">
+						<button
+							onClick={() => setMobileFiltersOpen(!mobileFiltersOpen)}
+							className="flex items-center gap-1.5 h-9 px-3 rounded-md text-xs font-medium bg-[#F5F6F8] dark:bg-[#1A233A] border border-slate-200 dark:border-[#222F49] text-slate-700 dark:text-slate-200"
+						>
+							<Filter className="w-3.5 h-3.5 text-indigo-500" />
+							<span>Filters</span>
+							{activeFiltersCount > 0 && (
+								<span className="w-4 h-4 rounded-full bg-indigo-500 text-white text-[10px] flex items-center justify-center font-bold">
+									{activeFiltersCount}
+								</span>
+							)}
+							<ChevronDown className={`w-3.5 h-3.5 ml-1 transition-transform ${mobileFiltersOpen ? "rotate-180" : ""}`} />
+						</button>
+
+						{isAdmin && (
+							<Button
+								variant="outline"
+								size="sm"
+								className="h-9 text-xs"
+								onClick={() => {
+									setNewColumnName("");
+									setIsAddingColumn(true);
+								}}
+							>
+								+ Add Column
+							</Button>
+						)}
 					</div>
 
-					<div className="flex flex-wrap items-center gap-2">
+					{/* Filters Section (Collapsible on mobile, always visible on sm+) */}
+					<div className={`${mobileFiltersOpen ? "grid grid-cols-2 gap-2" : "hidden"} sm:flex sm:flex-wrap sm:items-center sm:gap-2 w-full sm:w-auto`}>
+						<div className="hidden sm:flex items-center gap-1.5 text-sm text-slate-500 dark:text-slate-400 font-medium shrink-0 mr-1">
+							<Filter className="w-3.5 h-3.5 text-indigo-500" /> Filters:
+						</div>
+
 						<select
-							className="h-9 px-3 text-sm bg-white dark:bg-[#1A233A] text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-[#222F49] rounded-full focus:outline-none focus:ring-1 focus:ring-indigo-500 max-w-[170px] truncate"
+							className="h-9 px-2.5 sm:px-3 text-xs sm:text-sm bg-white dark:bg-[#1A233A] text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-[#222F49] rounded-md sm:rounded-full focus:outline-none focus:ring-1 focus:ring-indigo-500 w-full sm:w-auto sm:max-w-[170px] truncate"
 							value={filterStatus}
 							onChange={(e) => setFilterStatus(e.target.value)}
 						>
-							<option value="">Status: All Statuses</option>
+							<option value="">Status: All</option>
 							{boardColumns.map((c) => (
 								<option key={c.id} value={c.id} className="dark:bg-[#1A233A]">
 									{c.title}
@@ -297,22 +344,31 @@ export default function KanbanBoard({
 						</select>
 
 						<select
-							className="h-9 px-3 text-sm bg-white dark:bg-[#1A233A] text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-[#222F49] rounded-full focus:outline-none focus:ring-1 focus:ring-indigo-500 max-w-[170px] truncate"
+							className="h-9 px-2.5 sm:px-3 text-xs sm:text-sm bg-white dark:bg-[#1A233A] text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-[#222F49] rounded-md sm:rounded-full focus:outline-none focus:ring-1 focus:ring-indigo-500 w-full sm:w-auto sm:max-w-[170px] truncate"
 							value={filterPriority}
 							onChange={(e) => setFilterPriority(e.target.value)}
 						>
-							<option value="">Priority: All Priorities</option>
+							<option value="">Priority: All</option>
 							<option value="LOW" className="dark:bg-[#1A233A]">Low</option>
 							<option value="MEDIUM" className="dark:bg-[#1A233A]">Medium</option>
 							<option value="HIGH" className="dark:bg-[#1A233A]">High</option>
 						</select>
 
 						<select
-							className="h-9 px-3 text-sm bg-white dark:bg-[#1A233A] text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-[#222F49] rounded-full focus:outline-none focus:ring-1 focus:ring-indigo-500 max-w-[190px] truncate"
+							className="col-span-2 sm:col-span-1 h-9 px-2.5 sm:px-3 text-xs sm:text-sm bg-white dark:bg-[#1A233A] text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-[#222F49] rounded-md sm:rounded-full focus:outline-none focus:ring-1 focus:ring-indigo-500 w-full sm:w-auto sm:max-w-[190px] truncate"
 							value={filterAssignee}
-							onChange={(e) => setFilterAssignee(e.target.value)}
+							onChange={(e) => {
+								const val = e.target.value;
+								setFilterAssignee(val);
+								if (val === "UNASSIGNED") {
+									setFilterOnlyMe(false);
+								}
+							}}
 						>
-							<option value="">Assignee: All Assignees</option>
+							<option value="">Assignee: All</option>
+							<option value="UNASSIGNED" className="dark:bg-[#1A233A]">
+								Unassigned
+							</option>
 							{users.map((u) => (
 								<option key={u.id} value={u.id} className="dark:bg-[#1A233A]">
 									{u.name && u.name.length > 25 ? `${u.name.slice(0, 22)}...` : (u.name || u.email)}
@@ -320,8 +376,8 @@ export default function KanbanBoard({
 							))}
 						</select>
 
-						<label className="flex items-center gap-2 h-9 px-4 bg-white dark:bg-[#1A233A] border border-slate-200 dark:border-[#222F49] rounded-full cursor-pointer hover:bg-slate-50 dark:hover:bg-[#222F49] transition-colors">
-							<span className="text-sm text-slate-700 dark:text-slate-200">Only Me</span>
+						<label className="col-span-2 sm:col-span-1 flex items-center justify-between sm:justify-start gap-2 h-9 px-3 sm:px-4 bg-white dark:bg-[#1A233A] border border-slate-200 dark:border-[#222F49] rounded-md sm:rounded-full cursor-pointer hover:bg-slate-50 dark:hover:bg-[#222F49] transition-colors">
+							<span className="text-xs sm:text-sm text-slate-700 dark:text-slate-200">Only Me</span>
 							<div
 								className={`w-8 h-4 rounded-full transition-colors relative ${filterOnlyMe ? "bg-indigo-500" : "bg-slate-200 dark:bg-slate-700"}`}
 							>
@@ -333,13 +389,19 @@ export default function KanbanBoard({
 								type="checkbox"
 								className="sr-only"
 								checked={filterOnlyMe}
-								onChange={(e) => setFilterOnlyMe(e.target.checked)}
+								onChange={(e) => {
+									const checked = e.target.checked;
+									setFilterOnlyMe(checked);
+									if (checked && filterAssignee === "UNASSIGNED") {
+										setFilterAssignee("");
+									}
+								}}
 							/>
 						</label>
 					</div>
 				</div>
 
-				<div className="flex items-center gap-2 shrink-0">
+				<div className="hidden sm:flex items-center gap-2 shrink-0">
 					{isAdmin && (
 						<Button
 							variant="outline"
@@ -534,12 +596,7 @@ export default function KanbanBoard({
 								key={col.id}
 								id={col.id}
 								title={col.title}
-								tasks={filteredTasks.filter((t) => {
-									if (col.id === "TODO") {
-										return t.status === "TODO" && Boolean(t.assigneeId);
-									}
-									return t.status === col.id;
-								})}
+								tasks={filteredTasks.filter((t) => t.status === col.id)}
 								users={users}
 								onTaskClick={setSelectedTask}
 								onTaskEdit={(task) => {

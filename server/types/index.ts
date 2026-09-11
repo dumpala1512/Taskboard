@@ -81,7 +81,15 @@ export interface Task {
   updatedAt: string;
 }
 
-export type ActivityType = "TASK_CREATED" | "TASK_UPDATED" | "TASK_COMPLETED" | "PROJECT_CREATED" | "PROJECT_UPDATED" | "MEMBER_ASSIGNED";
+export type ActivityType =
+  | "TASK_CREATED"
+  | "TASK_UPDATED"
+  | "TASK_STATUS_CHANGED"
+  | "TASK_COMPLETED"
+  | "TASK_DELETED"
+  | "PROJECT_CREATED"
+  | "PROJECT_UPDATED"
+  | "MEMBER_ASSIGNED";
 
 export interface Activity {
   id: string;
@@ -90,6 +98,9 @@ export interface Activity {
   projectId?: string;
   taskId?: string;
   details: string;
+  fromStatus?: string;
+  toStatus?: string;
+  taskTitle?: string;
   createdAt: string;
 }
 

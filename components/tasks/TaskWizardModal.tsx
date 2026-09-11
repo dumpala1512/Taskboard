@@ -326,11 +326,6 @@ export function TaskWizardModal({
 		setIsSubmitting(true);
 		try {
 			const submitData = { ...formData, isDraft: false };
-			if (!submitData.assigneeId && submitData.status === "TODO") {
-				submitData.status = "BACKLOG";
-			} else if (submitData.assigneeId && (!submitData.status || submitData.status === "BACKLOG")) {
-				submitData.status = "TODO";
-			}
 			if (taskToEdit) {
 				if (submitData.status && submitData.status !== taskToEdit.status) {
 					const project = projects.find((p) => p.id === formData.projectId);
@@ -358,15 +353,7 @@ export function TaskWizardModal({
 				toast.success("Task updated successfully");
 			} else {
 				await createTask.mutateAsync(submitData as any);
-				const isUnassigned =
-					!submitData.assigneeId ||
-					submitData.assigneeId.trim() === "" ||
-					submitData.status === "BACKLOG";
-				if (isUnassigned) {
-					toast.success("Task created in unassigned");
-				} else {
-					toast.success("Task created successfully");
-				}
+				toast.success("Task created successfully");
 				if (router.pathname !== "/projects/[id]") {
 					router.push(`/projects/${formData.projectId}`);
 				}

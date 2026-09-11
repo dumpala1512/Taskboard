@@ -25,9 +25,13 @@ export function useCreateTask() {
 		},
 		onSuccess: (_, variables) => {
 			queryClient.invalidateQueries({ queryKey: ["tasks"] });
+			queryClient.invalidateQueries({ queryKey: ["activities"] });
 			if (variables.projectId) {
 				queryClient.invalidateQueries({
 					queryKey: ["tasks", { projectId: variables.projectId }],
+				});
+				queryClient.invalidateQueries({
+					queryKey: ["activities", { projectId: variables.projectId }],
 				});
 			}
 		},
@@ -43,9 +47,13 @@ export function useUpdateTask() {
 		},
 		onSuccess: (_, variables) => {
 			queryClient.invalidateQueries({ queryKey: ["tasks"] });
+			queryClient.invalidateQueries({ queryKey: ["activities"] });
 			if (variables.projectId) {
 				queryClient.invalidateQueries({
 					queryKey: ["tasks", { projectId: variables.projectId }],
+				});
+				queryClient.invalidateQueries({
+					queryKey: ["activities", { projectId: variables.projectId }],
 				});
 			}
 		},
@@ -61,6 +69,7 @@ export function useDeleteTask() {
 		},
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ["tasks"] });
+			queryClient.invalidateQueries({ queryKey: ["activities"] });
 		},
 	});
 }
@@ -74,6 +83,7 @@ export function useDuplicateTask() {
 		},
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ["tasks"] });
+			queryClient.invalidateQueries({ queryKey: ["activities"] });
 		},
 	});
 }

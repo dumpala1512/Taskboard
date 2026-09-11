@@ -1,5 +1,6 @@
 import { taskRepository } from "../repositories/task.repository";
 import { projectRepository } from "../repositories/project.repository";
+import { userRepository } from "../repositories/user.repository";
 import { v4 as uuidv4 } from "uuid";
 import type { Task } from "../types";
 import { activityService } from "./activity.service";
@@ -58,14 +59,12 @@ export class TaskService {
 		}
 
 		const data = { ...taskData };
-		if (!data.assigneeId && data.status === "TODO") {
-			data.status = "BACKLOG";
-		} else if (data.assigneeId && (!data.status || data.status === "BACKLOG")) {
+		if (!data.status) {
 			data.status = "TODO";
 		}
 
 		const newTask: Task = {
-			...taskData,
+			...data,
 			id: uuidv4(),
 			createdAt: new Date().toISOString(),
 			updatedAt: new Date().toISOString(),
@@ -77,6 +76,7 @@ export class TaskService {
 				userId,
 				projectId: created.projectId,
 				taskId: created.id,
+				taskTitle: created.title,
 				details: created.title,
 			});
 		}
@@ -130,13 +130,8 @@ export class TaskService {
 				updates.status = "TODO";
 			}
 		} else if (updates.assigneeId !== undefined) {
-			// Explicitly moved to unassigned: ensure assignee is cleared and not in TODO
+			// Explicitly moved to unassigned: ensure assignee is cleared
 			updates.assigneeId = "" as any;
-			if (!updates.status && existingTask?.status === "TODO") {
-				updates.status = "BACKLOG";
-			} else if (updates.status === "TODO") {
-				updates.status = "BACKLOG";
-			}
 		}
 
 		// Enforce step-by-step workflow transitions (no direct skipping to REVIEW or DONE)
@@ -160,35 +155,141 @@ export class TaskService {
 			}
 		}
 
+		// Track all minor and major modifications
+		const changes: string[] = [];
+		const isStatusTransition = Boolean(
+			updates.status && existingTask && updates.status !== existingTask.status
+		);
+		const fromStatus = existingTask?.status;
+		const toStatus = updates.status;
+
+		if (isStatusTransition) {
+			changes.push(`status to ${toStatus}`);
+		}
+
+		if (updates.priority && existingTask && updates.priority !== existingTask.priority) {
+			changes.push(`priority from ${existingTask.priority} to ${updates.priority}`);
+		}
+
+		if (updates.title && existingTask && updates.title.trim() !== existingTask.title.trim()) {
+			changes.push(`renamed to "${updates.title.trim()}"`);
+		}
+
+		if (updates.assigneeId !== undefined && existingTask && updates.assigneeId !== existingTask.assigneeId) {
+			if (updates.assigneeId) {
+				const assignee = await userRepository.findById(updates.assigneeId);
+				changes.push(`assigned to ${assignee?.name || "team member"}`);
+			} else {
+				changes.push("unassigned");
+			}
+		}
+
+		if (updates.dueDate !== undefined && existingTask && updates.dueDate !== existingTask.dueDate) {
+			if (updates.dueDate) {
+				const due = new Date(updates.dueDate).toLocaleDateString("en-US", {
+					month: "short",
+					day: "numeric",
+					year: "numeric",
+				});
+				changes.push(`due date to ${due}`);
+			} else {
+				changes.push("due date removed");
+			}
+		}
+
+		if (updates.startDate !== undefined && existingTask && updates.startDate !== existingTask.startDate) {
+			if (updates.startDate) {
+				const start = new Date(updates.startDate).toLocaleDateString("en-US", {
+					month: "short",
+					day: "numeric",
+					year: "numeric",
+				});
+				changes.push(`start date to ${start}`);
+			} else {
+				changes.push("start date removed");
+			}
+		}
+
+		if (updates.estimatedTime !== undefined && existingTask && updates.estimatedTime !== existingTask.estimatedTime) {
+			changes.push(`estimate to ${updates.estimatedTime}h`);
+		}
+
+		if (updates.taskType && existingTask && updates.taskType !== existingTask.taskType) {
+			changes.push(`type to ${updates.taskType}`);
+		}
+
+		if (updates.description !== undefined && existingTask && updates.description !== existingTask.description) {
+			changes.push("updated description");
+		}
+
+		if (updates.tags && existingTask && JSON.stringify(updates.tags) !== JSON.stringify(existingTask.tags)) {
+			changes.push("updated tags");
+		}
+
 		updates.updatedAt = new Date().toISOString();
 		const updated = await taskRepository.update(id, updates);
-		if (userId && updated) {
-			await activityService.logActivity({
-				type: updates.status === "DONE" ? "TASK_COMPLETED" : "TASK_UPDATED",
-				userId,
-				projectId: updated.projectId,
-				taskId: updated.id,
-				details: updated.title,
-			});
+		if (userId && updated && changes.length > 0) {
+			if (isStatusTransition) {
+				const extraChanges = changes.filter((c) => !c.startsWith("status to"));
+				const details =
+					extraChanges.length > 0
+						? `Moved "${updated.title}" from ${fromStatus} to ${toStatus} (${extraChanges.join(", ")})`
+						: `Moved "${updated.title}" from ${fromStatus} to ${toStatus}`;
+
+				await activityService.logActivity({
+					type: toStatus === "DONE" ? "TASK_COMPLETED" : "TASK_STATUS_CHANGED",
+					userId,
+					projectId: updated.projectId,
+					taskId: updated.id,
+					fromStatus,
+					toStatus,
+					taskTitle: updated.title,
+					details,
+				});
+			} else {
+				await activityService.logActivity({
+					type: "TASK_UPDATED",
+					userId,
+					projectId: updated.projectId,
+					taskId: updated.id,
+					taskTitle: updated.title,
+					details: `Updated "${updated.title}": ${changes.join(", ")}`,
+				});
+			}
 		}
 		return updated;
 	}
 
-	async deleteTask(id: string): Promise<boolean> {
-		return taskRepository.delete(id);
+	async deleteTask(id: string, userId?: string): Promise<boolean> {
+		const existingTask = await taskRepository.findById(id);
+		const deleted = await taskRepository.delete(id);
+		if (deleted && existingTask && userId) {
+			await activityService.logActivity({
+				type: "TASK_DELETED",
+				userId,
+				projectId: existingTask.projectId,
+				taskId: existingTask.id,
+				taskTitle: existingTask.title,
+				details: `Deleted task "${existingTask.title}"`,
+			});
+		}
+		return deleted;
 	}
 
-	async duplicateTask(id: string): Promise<Task | undefined> {
+	async duplicateTask(id: string, userId?: string): Promise<Task | undefined> {
 		const existingTask = await taskRepository.findById(id);
 		if (!existingTask) return undefined;
 
 		const { id: _, createdAt, updatedAt, status, ...rest } = existingTask;
 
-		return this.createTask({
-			...rest,
-			title: `${rest.title} (Copy)`,
-			status: "TODO", // reset status for duplicated tasks
-		});
+		return this.createTask(
+			{
+				...rest,
+				title: `${rest.title} (Copy)`,
+				status: "TODO", // reset status for duplicated tasks
+			},
+			userId
+		);
 	}
 }
 

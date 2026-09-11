@@ -10,6 +10,9 @@ export class ActivityService {
 		projectId?: string;
 		taskId?: string;
 		details: string;
+		fromStatus?: string;
+		toStatus?: string;
+		taskTitle?: string;
 	}) {
 		try {
 			await activityRepository.create({
@@ -18,12 +21,26 @@ export class ActivityService {
 				projectId: data.projectId,
 				taskId: data.taskId,
 				details: data.details,
+				fromStatus: data.fromStatus,
+				toStatus: data.toStatus,
+				taskTitle: data.taskTitle,
 			});
 		} catch (error) {
 			console.error("Failed to log activity:", error);
 		}
 	}
-	
+
+	async getActivitiesByProjectId(projectId: string, limit: number = 50) {
+		const activities = await activityRepository.findAll();
+		const sortedActivities = activities.sort(
+			(a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+		);
+		const filtered = sortedActivities.filter(
+			(act) => act.projectId && act.projectId.toLowerCase() === projectId.toLowerCase()
+		);
+		return filtered.slice(0, limit);
+	}
+
 	async getRecentActivities(limit: number = 20, userId?: string, role?: string) {
 		const activities = await activityRepository.findAll();
 		const sortedActivities = activities.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());

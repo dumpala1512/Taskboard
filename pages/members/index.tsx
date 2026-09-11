@@ -42,16 +42,16 @@ export default function MembersPage() {
 				<div className="flex-1 overflow-auto">
 					<div className="w-full space-y-4">
 						{/* Header and Search */}
-						<div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 pt-2 pb-4">
-							<h1 className="text-2xl font-bold text-slate-900">Team Members</h1>
+						<div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3 sm:gap-4 pt-1 sm:pt-2 pb-3 sm:pb-4">
+							<h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-slate-100">Team Members</h1>
 							
-							<div className="flex items-center gap-3">
-								<div className="relative w-full sm:w-64">
+							<div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
+								<div className="relative flex-1 sm:w-64">
 									<Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
 									<input
 										type="text"
-										placeholder="Search"
-										className="w-full pl-9 pr-4 py-1.5 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#1E88E5]/30 focus:border-[#1E88E5]"
+										placeholder="Search members..."
+										className="w-full pl-9 pr-3 py-1.5 border border-slate-300 dark:border-[#222F49] bg-white dark:bg-[#131B2E] text-slate-900 dark:text-slate-100 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#1E88E5]/30 focus:border-[#1E88E5]"
 										value={searchTerm}
 										onChange={(e) => setSearchTerm(e.target.value)}
 									/>
@@ -61,6 +61,7 @@ export default function MembersPage() {
 									variant="primary"
 									leftIcon={<Plus className="w-4 h-4" />}
 									onClick={() => setIsCreateModalOpen(true)}
+									className="shrink-0 whitespace-nowrap text-xs sm:text-sm px-3 sm:px-4 py-1.5"
 								>
 									Add Member
 								</Button>

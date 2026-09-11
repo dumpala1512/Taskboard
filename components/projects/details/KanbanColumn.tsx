@@ -39,7 +39,7 @@ export default function KanbanColumn({
 	const dotColor = STATUS_DOT[id] ?? "#9EAAB7";
 
 	return (
-		<div className="flex flex-col flex-shrink-0 w-[300px] h-full bg-white dark:bg-[#131B2E] rounded-md border border-[#E0E3E8] dark:border-[#222F49] overflow-hidden shadow-[0_1px_3px_rgba(0,0,0,0.05)]">
+		<div className="flex flex-col flex-shrink-0 w-[82vw] sm:w-[300px] max-w-[320px] h-full bg-white dark:bg-[#131B2E] rounded-md border border-[#E0E3E8] dark:border-[#222F49] overflow-hidden shadow-[0_1px_3px_rgba(0,0,0,0.05)]">
 			{/* Column header */}
 			<div className="px-3 py-2.5 border-b border-[#E0E3E8] dark:border-[#222F49] flex justify-between items-center bg-white dark:bg-[#131B2E] shrink-0">
 				<div className="flex items-center gap-2">

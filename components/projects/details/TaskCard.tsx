@@ -86,19 +86,43 @@ export default function TaskCard({ task, index, users, onClick, onEdit, onDelete
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>
               )}
-              <div className="flex -space-x-1.5 ml-1">
-                {task.assignees?.map(assigneeId => {
-                  const u = users.find(user => user.id === assigneeId);
-                  return u ? (
-                    <img
-                      key={u.id}
-                      src={u.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.name)}&size=32&background=E3F2FD&color=1E88E5`}
-                      alt={u.name}
-                      className="w-6 h-6 rounded-full border-2 border-white dark:border-[#131B2E] object-cover"
-                      title={u.name}
-                    />
-                  ) : null;
-                })}
+              <div className="flex -space-x-1.5 ml-1 items-center">
+                {(() => {
+                  const effectiveAssignees = task.assigneeId
+                    ? [task.assigneeId]
+                    : task.assignees && task.assignees.length > 0
+                    ? task.assignees
+                    : [];
+
+                  if (effectiveAssignees.length === 0) {
+                    return (
+                      <span
+                        className="inline-flex items-center text-[10px] font-medium text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800/80 px-1.5 py-0.5 rounded border border-dashed border-slate-300 dark:border-slate-700 select-none"
+                        title="Unassigned"
+                      >
+                        Unassigned
+                      </span>
+                    );
+                  }
+
+                  return effectiveAssignees.map((assigneeId) => {
+                    const u = users.find((user) => user.id === assigneeId);
+                    return u ? (
+                      <img
+                        key={u.id}
+                        src={
+                          u.avatar ||
+                          `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                            u.name || u.email
+                          )}&size=32&background=E3F2FD&color=1E88E5`
+                        }
+                        alt={u.name || "User"}
+                        className="w-6 h-6 rounded-full border-2 border-white dark:border-[#131B2E] object-cover"
+                        title={u.name || u.email}
+                      />
+                    ) : null;
+                  });
+                })()}
               </div>
             </div>
           </div>

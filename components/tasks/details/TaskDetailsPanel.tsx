@@ -120,21 +120,11 @@ export function TaskDetailsPanel({ task, users, isOpen, onClose, project: propPr
       assigneeId: userId || "",
       projectId: task.projectId,
     };
-    if (!userId && task.status === "TODO") {
-      updates.status = "BACKLOG";
-    } else if (userId && (!task.status || task.status === "BACKLOG")) {
-      updates.status = "TODO";
-    }
-
     updateTask(
       updates,
       {
         onSuccess: () =>
-          toast.success(
-            userId
-              ? "Task assigned and moved to To Do"
-              : "Task moved to unassigned"
-          ),
+          toast.success(userId ? "Task assigned" : "Task unassigned"),
         onError: (err: any) => {
           const msg =
             err?.response?.data?.message ||
