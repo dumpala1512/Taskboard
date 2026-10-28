@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block title %}Welcome to Taskboard{% endblock %}
+{% block header_subtitle %}Team Workspace Invitation{% endblock %}
+
+{% block content %}
+<h2>Welcome to the team, {{ name }}!</h2>
+<p>
+  You've been invited to join your team's Taskboard workspace as a <strong>{{ role }}</strong>.
+</p>
+<p>
+  To get started, please click the button below to set up your password and access your dashboard.
+</p>
+
+<div class="btn-container">
+  <a href="{{ activation_url }}" class="btn">
+    Activate Your Account
+  </a>
+</div>
+
+<p class="fallback-link">
+  Or copy and paste this link into your browser:<br>
+  <a href="{{ activation_url }}">{{ activation_url }}</a>
+</p>
+{% endblock %}
+
+{% block footer %}
+This invitation link is valid for {{ expire_hours }} hours. If you did not expect this invitation, you can safely ignore this email.
+{% endblock %}

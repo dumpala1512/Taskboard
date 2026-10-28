@@ -22,17 +22,6 @@ export default withAuth(
 			}
 		}
 
-		// Account Setup Enforcement
-		if (token?.isFirstLogin && path !== "/auth/account-setup") {
-			return NextResponse.redirect(new URL("/auth/account-setup", req.url));
-		}
-		
-		if (!token?.isFirstLogin && path === "/auth/account-setup") {
-			if (token?.role === "ADMIN") {
-				return NextResponse.redirect(new URL("/admin/dashboard", req.url));
-			}
-			return NextResponse.redirect(new URL("/dashboard", req.url));
-		}
 
 		return NextResponse.next();
 	},
@@ -56,7 +45,6 @@ export const config = {
 		"/analytics/:path*",
 		"/profile/:path*",
 		"/settings/:path*",
-		"/auth/account-setup",
 	],
 };
 

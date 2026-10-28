@@ -15,6 +15,7 @@ import { useEffect, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
+import { apiClient } from "../../lib/axios";
 import {
 	type ResetPasswordValues,
 	resetPasswordSchema,
@@ -59,7 +60,7 @@ export default function ResetPassword() {
 
 		const verifyToken = async () => {
 			try {
-				await axios.get(`/api/auth/verify-reset-token?token=${token}`);
+				await apiClient.get(`/auth/verify-reset-token?token=${token}`);
 				setTokenValid(true);
 			} catch (error) {
 				setTokenValid(false);
@@ -78,14 +79,15 @@ export default function ResetPassword() {
 		setGlobalError(null);
 
 		try {
-			await axios.post("/api/auth/reset-password", {
+			await apiClient.post("/auth/reset-password", {
 				token,
 				password: data.password,
 			});
 			setSuccess(true);
 		} catch (error: any) {
 			setGlobalError(
-				error.response?.data?.message ||
+				error.response?.data?.detail ||
+					error.response?.data?.message ||
 					"Failed to reset password. Please try again.",
 			);
 		} finally {

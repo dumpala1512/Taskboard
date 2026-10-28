@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { getServerSession } from "next-auth/next";
 import { adminService } from "../../../../server/services/admin.service";
+import { mailService } from "../../../../server/services/mail.service";
 import { authOptions } from "../../auth/[...nextauth]";
 
 export default async function handler(
@@ -45,6 +46,18 @@ export default async function handler(
 
 		// Remove password hash from response
 		const { passwordHash, ...safeUser } = user;
+
+		// Dispatch welcome email with credentials to the newly created member
+		const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
+		const loginUrl = `${baseUrl}/auth/signin`;
+
+		await mailService.sendMemberWelcomeEmail({
+			to: user.email,
+			name: displayName,
+			temporaryPassword: temporaryPasswordPlain,
+			loginUrl,
+			role: user.role,
+		});
 
 		return res.status(201).json({
 			user: safeUser,

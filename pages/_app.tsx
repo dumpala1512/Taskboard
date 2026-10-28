@@ -18,7 +18,11 @@ export default function App({
 	useEffect(() => {
 		if (typeof window !== "undefined") {
 			try {
+				const savedToken = localStorage.getItem("taskboard_access_token");
 				localStorage.clear();
+				if (savedToken) {
+					localStorage.setItem("taskboard_access_token", savedToken);
+				}
 			} catch (_) {}
 
 			// Keep-alive heartbeat: ping /api/health every 4 minutes to prevent Render free-tier from sleeping

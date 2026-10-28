@@ -1,46 +1,56 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { taskService } from "../../../server/services/task.service";
+import axios from "axios";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "../auth/[...nextauth]";
-import { attachDeletedHeaders } from "../../../server/data";
+
+const BACKEND_URL =
+	process.env.INTERNAL_API_URL ||
+	process.env.BACKEND_API_URL ||
+	process.env.NEXT_PUBLIC_API_URL ||
+	"http://localhost:8000/taskboard/api/v1";
 
 export default async function handler(
 	req: NextApiRequest,
 	res: NextApiResponse,
 ) {
-	attachDeletedHeaders(res);
 	if (req.method !== "GET" && req.method !== "POST") {
 		return res.status(405).json({ message: "Method not allowed" });
 	}
 
 	try {
-		const projectId = req.query.projectId as string | undefined;
+		const session = await getServerSession(req, res, authOptions);
+		const token = (session as any)?.accessToken;
 
-		if (req.method === "POST") {
-			const session = await getServerSession(req, res, authOptions);
-			const userId = session?.user ? (session.user as any).id : undefined;
-			const task = await taskService.createTask(req.body, userId);
-			return res.status(201).json(task);
+		const headers: Record<string, string> = {
+			"Content-Type": "application/json",
+		};
+		if (token) {
+			headers.Authorization = `Bearer ${token}`;
+		} else if (req.headers.authorization) {
+			headers.Authorization = req.headers.authorization;
 		}
 
 		if (req.method === "GET") {
-			const session = await getServerSession(req, res, authOptions);
-			const userId = session?.user ? (session.user as any).id : undefined;
-			const role = session?.user ? (session.user as any).role : undefined;
+			const response = await axios.get(`${BACKEND_URL}/tasks`, {
+				params: req.query,
+				headers,
+			});
+			return res.status(response.status).json(response.data);
+		}
 
-			if (projectId) {
-				const tasks = await taskService.getTasksByProjectId(projectId);
-				return res.status(200).json(tasks);
-			}
-
-			const allTasks = await taskService.getAllTasks(userId, role);
-			return res.status(200).json(allTasks);
+		if (req.method === "POST") {
+			const response = await axios.post(`${BACKEND_URL}/tasks`, req.body, {
+				headers,
+			});
+			return res.status(response.status).json(response.data);
 		}
 	} catch (error: any) {
-		console.error("Error fetching/creating tasks:", error);
-		if (error?.message === "Add the member to the project and then assign task") {
-			return res.status(400).json({ message: error.message });
-		}
-		return res.status(500).json({ message: error?.message || "Internal server error" });
+		console.error("Error proxying /tasks to backend:", error?.message);
+		const status = error.response?.status || 500;
+		const data =
+			error.response?.data || {
+				message: error?.message || "Internal server error",
+			};
+		return res.status(status).json(data);
 	}
 }

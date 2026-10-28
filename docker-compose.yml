@@ -11,10 +11,14 @@ services:
     env_file:
       - path: .env.local
         required: false
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     environment:
       - NODE_ENV=development
       - PORT=3000
       - NEXT_TELEMETRY_DISABLED=1
+      - INTERNAL_API_URL=http://host.docker.internal:8000/taskboard/api/v1
+      - NEXT_PUBLIC_API_URL=http://localhost:8000/taskboard/api/v1
       # Enables file-polling so Windows filesystem changes trigger Next.js HMR reliably
       - WATCHPACK_POLLING=true
     volumes:

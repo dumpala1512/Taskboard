@@ -1,13 +1,13 @@
 import { DragDropContext, type DropResult } from "@hello-pangea/dnd";
+import { useQueryClient } from "@tanstack/react-query";
 import { ChevronDown, Filter, Search, SlidersHorizontal } from "lucide-react";
 import { useSession } from "next-auth/react";
 import React, { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
-import { useQueryClient } from "@tanstack/react-query";
 import { useUpdateProject } from "../../../hooks/useProjects";
-import { useUpdateTask, useDeleteTask } from "../../../hooks/useTasks";
-import type { Project, Task, TaskStatus, User } from "../../../server/types";
+import { useDeleteTask, useUpdateTask } from "../../../hooks/useTasks";
 import { apiClient } from "../../../lib/axios";
+import type { Project, Task, TaskStatus, User } from "../../../server/types";
 import { TaskDetailsPanel } from "../../tasks/details/TaskDetailsPanel";
 import { TaskWizardModal } from "../../tasks/TaskWizardModal";
 import { Button } from "../../ui/Button";
@@ -53,9 +53,9 @@ export default function KanbanBoard({
 	const [deleteConfirmationChecked, setDeleteConfirmationChecked] =
 		useState(false);
 
-	const boardColumns = (project?.columns?.length ? project.columns : COLUMNS).filter(
-		(c) => c.id !== "BACKLOG"
-	);
+	const boardColumns = (
+		project?.columns?.length ? project.columns : COLUMNS
+	).filter((c) => c.id !== "BACKLOG");
 
 	// Sync state if initial tasks update from backend
 	useEffect(() => {
@@ -64,7 +64,8 @@ export default function KanbanBoard({
 
 	const handleAddColumn = () => {
 		const trimmed = newColumnName.trim();
-		if (!trimmed || trimmed.length < 2 || trimmed.length > 30 || !project) return;
+		if (!trimmed || trimmed.length < 2 || trimmed.length > 30 || !project)
+			return;
 		if (trimmed.toUpperCase() === "BACKLOG") {
 			toast.error("Backlog is managed in the dedicated Backlog tab");
 			return;
@@ -73,7 +74,8 @@ export default function KanbanBoard({
 			boardColumns.some(
 				(c) =>
 					c.title.toLowerCase() === trimmed.toLowerCase() ||
-					c.id.toLowerCase() === trimmed.toUpperCase().replace(/\s+/g, "_").toLowerCase()
+					c.id.toLowerCase() ===
+						trimmed.toUpperCase().replace(/\s+/g, "_").toLowerCase(),
 			)
 		) {
 			toast.error("Column with this name already exists");
@@ -97,16 +99,28 @@ export default function KanbanBoard({
 	const executeDeleteColumn = async () => {
 		if (!project || !columnToDelete) return;
 		const colId = columnToDelete;
+		const currentCols = project.columns?.length ? project.columns : COLUMNS;
+		const remainingCols = currentCols.filter(
+			(c: any) => c.id.toLowerCase() !== colId.toLowerCase(),
+		);
 		try {
-			await apiClient.delete(`/projects/${project.id}/columns/${colId}`);
+			try {
+				await apiClient.patch(`/projects/${project.id}`, {
+					columns: remainingCols,
+				});
+			} catch (_) {
+				await apiClient
+					.delete(`/projects/${project.id}/columns/${colId}`)
+					.catch(() => {});
+			}
 
 			// Optimistically move affected tasks to BACKLOG in local state
 			setTasks((prev) =>
 				prev.map((t) =>
 					t.status?.toLowerCase() === colId.toLowerCase()
 						? { ...t, status: "BACKLOG" }
-						: t
-				)
+						: t,
+				),
 			);
 
 			// Optimistically update project in query cache
@@ -116,7 +130,7 @@ export default function KanbanBoard({
 				return {
 					...old,
 					columns: currentCols.filter(
-						(c: any) => c.id.toLowerCase() !== colId.toLowerCase()
+						(c: any) => c.id.toLowerCase() !== colId.toLowerCase(),
 					),
 				};
 			});
@@ -128,9 +142,13 @@ export default function KanbanBoard({
 				queryClient.invalidateQueries({ queryKey: ["projects", project.key] });
 			}
 			queryClient.invalidateQueries({ queryKey: ["tasks"] });
-			queryClient.invalidateQueries({ queryKey: ["tasks", { projectId: project.id }] });
+			queryClient.invalidateQueries({
+				queryKey: ["tasks", { projectId: project.id }],
+			});
 			if (project.key) {
-				queryClient.invalidateQueries({ queryKey: ["tasks", { projectId: project.key }] });
+				queryClient.invalidateQueries({
+					queryKey: ["tasks", { projectId: project.key }],
+				});
 			}
 
 			setColumnToDelete(null);
@@ -138,7 +156,9 @@ export default function KanbanBoard({
 			toast.success("Column deleted and tasks moved to Backlog");
 		} catch (error: any) {
 			toast.error(
-				error.response?.data?.message || error.message || "Failed to delete column"
+				error.response?.data?.message ||
+					error.message ||
+					"Failed to delete column",
 			);
 		}
 	};
@@ -155,7 +175,9 @@ export default function KanbanBoard({
 			toast.success("Task deleted successfully");
 		} catch (error: any) {
 			toast.error(
-				error.response?.data?.message || error.message || "Failed to delete task"
+				error.response?.data?.message ||
+					error.message ||
+					"Failed to delete task",
 			);
 		}
 	};
@@ -198,13 +220,14 @@ export default function KanbanBoard({
 				const fromTitle =
 					task.status === "BACKLOG"
 						? "Backlog"
-						: boardColumns.find((c) => c.id === task.status)?.title || task.status;
+						: boardColumns.find((c) => c.id === task.status)?.title ||
+							task.status;
 				const toTitle =
 					newStatus === "BACKLOG"
 						? "Backlog"
 						: boardColumns.find((c) => c.id === newStatus)?.title || newStatus;
 				toast.error(
-					`Tasks must move step by step through workflow stages. Cannot move directly from "${fromTitle}" to "${toTitle}".`
+					`Tasks must move step by step through workflow stages. Cannot move directly from "${fromTitle}" to "${toTitle}".`,
 				);
 				return;
 			}
@@ -260,8 +283,8 @@ export default function KanbanBoard({
 			filterAssignee === "UNASSIGNED"
 				? !t.assigneeId || t.assigneeId.trim() === ""
 				: filterAssignee
-				? t.assigneeId === filterAssignee
-				: true;
+					? t.assigneeId === filterAssignee
+					: true;
 		const matchesOnlyMe = filterOnlyMe
 			? t.assigneeId === currentUser?.id
 			: true;
@@ -306,7 +329,9 @@ export default function KanbanBoard({
 									{activeFiltersCount}
 								</span>
 							)}
-							<ChevronDown className={`w-3.5 h-3.5 ml-1 transition-transform ${mobileFiltersOpen ? "rotate-180" : ""}`} />
+							<ChevronDown
+								className={`w-3.5 h-3.5 ml-1 transition-transform ${mobileFiltersOpen ? "rotate-180" : ""}`}
+							/>
 						</button>
 
 						{isAdmin && (
@@ -325,7 +350,9 @@ export default function KanbanBoard({
 					</div>
 
 					{/* Filters Section (Collapsible on mobile, always visible on sm+) */}
-					<div className={`${mobileFiltersOpen ? "grid grid-cols-2 gap-2" : "hidden"} sm:flex sm:flex-wrap sm:items-center sm:gap-2 w-full sm:w-auto`}>
+					<div
+						className={`${mobileFiltersOpen ? "grid grid-cols-2 gap-2" : "hidden"} sm:flex sm:flex-wrap sm:items-center sm:gap-2 w-full sm:w-auto`}
+					>
 						<div className="hidden sm:flex items-center gap-1.5 text-sm text-slate-500 dark:text-slate-400 font-medium shrink-0 mr-1">
 							<Filter className="w-3.5 h-3.5 text-indigo-500" /> Filters:
 						</div>
@@ -349,9 +376,15 @@ export default function KanbanBoard({
 							onChange={(e) => setFilterPriority(e.target.value)}
 						>
 							<option value="">Priority: All</option>
-							<option value="LOW" className="dark:bg-[#1A233A]">Low</option>
-							<option value="MEDIUM" className="dark:bg-[#1A233A]">Medium</option>
-							<option value="HIGH" className="dark:bg-[#1A233A]">High</option>
+							<option value="LOW" className="dark:bg-[#1A233A]">
+								Low
+							</option>
+							<option value="MEDIUM" className="dark:bg-[#1A233A]">
+								Medium
+							</option>
+							<option value="HIGH" className="dark:bg-[#1A233A]">
+								High
+							</option>
 						</select>
 
 						<select
@@ -371,13 +404,17 @@ export default function KanbanBoard({
 							</option>
 							{users.map((u) => (
 								<option key={u.id} value={u.id} className="dark:bg-[#1A233A]">
-									{u.name && u.name.length > 25 ? `${u.name.slice(0, 22)}...` : (u.name || u.email)}
+									{u.name && u.name.length > 25
+										? `${u.name.slice(0, 22)}...`
+										: u.name || u.email}
 								</option>
 							))}
 						</select>
 
 						<label className="col-span-2 sm:col-span-1 flex items-center justify-between sm:justify-start gap-2 h-9 px-3 sm:px-4 bg-white dark:bg-[#1A233A] border border-slate-200 dark:border-[#222F49] rounded-md sm:rounded-full cursor-pointer hover:bg-slate-50 dark:hover:bg-[#222F49] transition-colors">
-							<span className="text-xs sm:text-sm text-slate-700 dark:text-slate-200">Only Me</span>
+							<span className="text-xs sm:text-sm text-slate-700 dark:text-slate-200">
+								Only Me
+							</span>
 							<div
 								className={`w-8 h-4 rounded-full transition-colors relative ${filterOnlyMe ? "bg-indigo-500" : "bg-slate-200 dark:bg-slate-700"}`}
 							>
@@ -419,92 +456,100 @@ export default function KanbanBoard({
 			</div>
 
 			{/* Add Column Modal */}
-			{isAddingColumn && isAdmin && (() => {
-				const trimmedColName = newColumnName.trim();
-				const isColumnNameEmpty = trimmedColName.length === 0;
-				const isColumnNameTooShort = trimmedColName.length > 0 && trimmedColName.length < 2;
-				const isColumnNameTooLong = newColumnName.length > 30;
-				const isColumnNameBacklog = trimmedColName.toUpperCase() === "BACKLOG";
-				const isColumnNameDuplicate = Boolean(
-					trimmedColName &&
-						(isColumnNameBacklog ||
-							boardColumns.some(
-								(c) =>
-									c.title.toLowerCase() === trimmedColName.toLowerCase() ||
-									c.id.toLowerCase() ===
-										trimmedColName.toUpperCase().replace(/\s+/g, "_").toLowerCase()
-							))
-				);
+			{isAddingColumn &&
+				isAdmin &&
+				(() => {
+					const trimmedColName = newColumnName.trim();
+					const isColumnNameEmpty = trimmedColName.length === 0;
+					const isColumnNameTooShort =
+						trimmedColName.length > 0 && trimmedColName.length < 2;
+					const isColumnNameTooLong = newColumnName.length > 30;
+					const isColumnNameBacklog =
+						trimmedColName.toUpperCase() === "BACKLOG";
+					const isColumnNameDuplicate = Boolean(
+						trimmedColName &&
+							(isColumnNameBacklog ||
+								boardColumns.some(
+									(c) =>
+										c.title.toLowerCase() === trimmedColName.toLowerCase() ||
+										c.id.toLowerCase() ===
+											trimmedColName
+												.toUpperCase()
+												.replace(/\s+/g, "_")
+												.toLowerCase(),
+								)),
+					);
 
-				let columnNameError: string | undefined = undefined;
-				if (isColumnNameBacklog) {
-					columnNameError = "Backlog is managed in the dedicated Backlog tab";
-				} else if (isColumnNameTooShort) {
-					columnNameError = "Column name must be at least 2 characters";
-				} else if (isColumnNameTooLong) {
-					columnNameError = "Column name cannot exceed 30 characters";
-				} else if (isColumnNameDuplicate) {
-					columnNameError = "A column with this name already exists";
-				}
+					let columnNameError: string | undefined;
+					if (isColumnNameBacklog) {
+						columnNameError = "Backlog is managed in the dedicated Backlog tab";
+					} else if (isColumnNameTooShort) {
+						columnNameError = "Column name must be at least 2 characters";
+					} else if (isColumnNameTooLong) {
+						columnNameError = "Column name cannot exceed 30 characters";
+					} else if (isColumnNameDuplicate) {
+						columnNameError = "A column with this name already exists";
+					}
 
-				const isSaveDisabled =
-					isColumnNameEmpty ||
-					isColumnNameTooShort ||
-					isColumnNameTooLong ||
-					isColumnNameDuplicate ||
-					isColumnNameBacklog;
+					const isSaveDisabled =
+						isColumnNameEmpty ||
+						isColumnNameTooShort ||
+						isColumnNameTooLong ||
+						isColumnNameDuplicate ||
+						isColumnNameBacklog;
 
-				return (
-					<Portal>
-						<div className="fixed inset-0 bg-[#33475B]/20 z-50 flex items-center justify-center">
-							<div className="bg-white rounded-lg shadow-lg w-[400px] p-6">
-								<h3 className="text-lg font-semibold text-[#33475B] mb-4">
-									Add New Column
-								</h3>
-								<Input
-									value={newColumnName}
-									onChange={(e) => setNewColumnName(e.target.value)}
-									placeholder="E.g., In Review, QA, Blocked"
-									autoFocus
-									minLength={2}
-									maxLength={30}
-									error={columnNameError}
-									className="mb-1"
-									onKeyDown={(e) => {
-										if (e.key === "Enter" && !isSaveDisabled) handleAddColumn();
-										if (e.key === "Escape") {
-											setIsAddingColumn(false);
-											setNewColumnName("");
-										}
-									}}
-								/>
-								<div className="flex justify-between items-center mb-4 mt-1 text-xs text-slate-400">
-									<span>Min 2, max 30 characters</span>
-									<span>{newColumnName.length}/30</span>
-								</div>
-								<div className="flex justify-end gap-2">
-									<Button
-										variant="outline"
-										onClick={() => {
-											setIsAddingColumn(false);
-											setNewColumnName("");
+					return (
+						<Portal>
+							<div className="fixed inset-0 bg-[#33475B]/20 z-50 flex items-center justify-center">
+								<div className="bg-white rounded-lg shadow-lg w-[400px] p-6">
+									<h3 className="text-lg font-semibold text-[#33475B] mb-4">
+										Add New Column
+									</h3>
+									<Input
+										value={newColumnName}
+										onChange={(e) => setNewColumnName(e.target.value)}
+										placeholder="E.g., In Review, QA, Blocked"
+										autoFocus
+										minLength={2}
+										maxLength={30}
+										error={columnNameError}
+										className="mb-1"
+										onKeyDown={(e) => {
+											if (e.key === "Enter" && !isSaveDisabled)
+												handleAddColumn();
+											if (e.key === "Escape") {
+												setIsAddingColumn(false);
+												setNewColumnName("");
+											}
 										}}
-									>
-										Cancel
-									</Button>
-									<Button
-										onClick={handleAddColumn}
-										disabled={isSaveDisabled}
-										className="bg-[#1E88E5] text-white disabled:opacity-50 disabled:cursor-not-allowed"
-									>
-										Save Column
-									</Button>
+									/>
+									<div className="flex justify-between items-center mb-4 mt-1 text-xs text-slate-400">
+										<span>Min 2, max 30 characters</span>
+										<span>{newColumnName.length}/30</span>
+									</div>
+									<div className="flex justify-end gap-2">
+										<Button
+											variant="outline"
+											onClick={() => {
+												setIsAddingColumn(false);
+												setNewColumnName("");
+											}}
+										>
+											Cancel
+										</Button>
+										<Button
+											onClick={handleAddColumn}
+											disabled={isSaveDisabled}
+											className="bg-[#1E88E5] text-white disabled:opacity-50 disabled:cursor-not-allowed"
+										>
+											Save Column
+										</Button>
+									</div>
 								</div>
 							</div>
-						</div>
-					</Portal>
-				);
-			})()}
+						</Portal>
+					);
+				})()}
 
 			{/* Delete Column Modal */}
 			{columnToDelete && isAdmin && (
@@ -565,13 +610,14 @@ export default function KanbanBoard({
 								Delete Task
 							</h3>
 							<p className="text-sm text-[#6E7B8B] mb-6 leading-relaxed">
-								Are you sure you want to delete <span className="font-semibold text-slate-900">"{taskToDelete.title}"</span>? This action is permanent and cannot be undone.
+								Are you sure you want to delete{" "}
+								<span className="font-semibold text-slate-900">
+									"{taskToDelete.title}"
+								</span>
+								? This action is permanent and cannot be undone.
 							</p>
 							<div className="flex justify-end gap-2">
-								<Button
-									variant="outline"
-									onClick={() => setTaskToDelete(null)}
-								>
+								<Button variant="outline" onClick={() => setTaskToDelete(null)}>
 									Cancel
 								</Button>
 								<Button

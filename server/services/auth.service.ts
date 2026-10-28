@@ -3,6 +3,7 @@ import crypto from "crypto";
 import { deletedUserIds } from "../data";
 import { userRepository } from "../repositories/user.repository";
 import type { User } from "../types";
+import { mailService } from "./mail.service";
 
 export class AuthService {
 	async login(email: string, passwordPlain: string): Promise<User | null> {
@@ -132,14 +133,15 @@ export class AuthService {
 			resetTokenExpiry,
 		});
 
-		// Simulate sending email
-		console.log(`\n=================================================`);
-		console.log(`[SIMULATED EMAIL DELIVERY]`);
-		console.log(`To: ${user.email}`);
-		console.log(`Subject: Reset Your Password`);
 		const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
-		console.log(`Link: ${baseUrl}/auth/reset-password?token=${resetToken}`);
-		console.log(`=================================================\n`);
+		const resetUrl = `${baseUrl}/auth/reset-password?token=${resetToken}`;
+
+		// Send reset email via mail service (with HTML template and dev fallback)
+		await mailService.sendPasswordResetEmail({
+			to: user.email,
+			name: user.name || user.firstName || "Member",
+			resetUrl,
+		});
 	}
 
 	async resetPassword(

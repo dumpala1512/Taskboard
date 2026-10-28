@@ -11,6 +11,7 @@ import {
 	Star,
 	Users,
 } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/router";
 import { signIn } from "next-auth/react";
 import React, { useState } from "react";
@@ -49,6 +50,25 @@ export default function SignIn() {
 		if (result?.error) {
 			setGlobalError("Invalid email or password");
 		} else {
+			try {
+				const backendUrl =
+					process.env.NEXT_PUBLIC_API_URL ||
+					"http://localhost:8000/taskboard/api/v1";
+				const directRes = await fetch(`${backendUrl}/auth/login`, {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({
+						email: data.email.trim().toLowerCase(),
+						password: data.password,
+					}),
+				});
+				if (directRes.ok) {
+					const tokenData = await directRes.json();
+					if (tokenData.access_token) {
+						localStorage.setItem("taskboard_access_token", tokenData.access_token);
+					}
+				}
+			} catch (_) {}
 			window.location.href = "/";
 		}
 	};
@@ -269,6 +289,15 @@ export default function SignIn() {
 									<EyeOff className="h-4 w-4" />
 								)}
 							</button>
+						</div>
+
+						<div className="flex items-center justify-end -mt-2">
+							<Link
+								href="/auth/forgot-password"
+								className="text-xs font-semibold text-[#1E88E5] hover:text-[#1565C0] hover:underline transition-colors"
+							>
+								Forgot password?
+							</Link>
 						</div>
 
 						<Button

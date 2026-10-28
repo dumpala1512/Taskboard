@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Check, Copy, Loader2, X } from "lucide-react";
+import { CheckCircle2, Clock, MailCheck, Send, X } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
@@ -20,10 +20,6 @@ const userSchema = z.object({
 		.email("Invalid email address")
 		.max(100, "Email must be less than 100 characters"),
 	role: z.enum(["ADMIN", "MEMBER"]),
-	department: z.string().optional(),
-	jobTitle: z.string().optional(),
-	phone: z.string().optional(),
-	joiningDate: z.string().optional(),
 });
 
 type UserFormValues = z.infer<typeof userSchema>;
@@ -40,14 +36,18 @@ export function CreateUserModal({
 	onSuccess,
 }: CreateUserModalProps) {
 	const [loading, setLoading] = useState(false);
-	const [tempPassword, setTempPassword] = useState<string | null>(null);
-	const [copied, setCopied] = useState(false);
+	const [invitedUser, setInvitedUser] = useState<{
+		name: string;
+		email: string;
+		role: string;
+	} | null>(null);
 
 	const {
 		register,
 		handleSubmit,
 		reset,
 		watch,
+		setValue,
 		formState: { errors },
 	} = useForm<UserFormValues>({
 		resolver: zodResolver(userSchema),
@@ -62,8 +62,7 @@ export function CreateUserModal({
 	const fullName = watch("fullName");
 	const email = watch("email");
 
-	const hasRequiredFields =
-		!!fullName?.trim() && !!email?.trim();
+	const hasRequiredFields = !!fullName?.trim() && !!email?.trim();
 	const hasErrors = !!(errors.fullName || errors.email);
 	const isSubmitDisabled = !hasRequiredFields || hasErrors || loading;
 
@@ -71,32 +70,41 @@ export function CreateUserModal({
 
 	const handleClose = () => {
 		reset();
-		setTempPassword(null);
-		setCopied(false);
+		setInvitedUser(null);
 		onClose();
 	};
 
-	const copyToClipboard = () => {
-		if (tempPassword) {
-			navigator.clipboard.writeText(tempPassword);
-			setCopied(true);
-			setTimeout(() => setCopied(false), 2000);
-			toast.success("Password copied to clipboard");
-		}
+	const handleInviteAnother = () => {
+		reset();
+		setInvitedUser(null);
 	};
 
 	const onSubmit = async (data: UserFormValues) => {
 		setLoading(true);
 		try {
-			const res = await apiClient.post("/admin/users/create", {
-				...data,
-				role: "MEMBER",
+			await apiClient.post("/admin/users", {
+				full_name: data.fullName.trim(),
+				email: data.email.trim().toLowerCase(),
+				role: data.role || "MEMBER",
 			});
-			setTempPassword(res.data.temporaryPassword);
+
+			setInvitedUser({
+				name: data.fullName.trim(),
+				email: data.email.trim().toLowerCase(),
+				role: data.role || "MEMBER",
+			});
+
 			onSuccess();
-			toast.success("User created successfully");
-		} catch (error: any) {
-			toast.error(error.response?.data?.message || "Failed to create user");
+			toast.success("Invitation email dispatched successfully!");
+		} catch (err: unknown) {
+			const error = err as {
+				response?: { data?: { detail?: string; message?: string } };
+			};
+			const errorMsg =
+				error.response?.data?.detail ||
+				error.response?.data?.message ||
+				"Failed to send invitation. Please try again.";
+			toast.error(errorMsg);
 		} finally {
 			setLoading(false);
 		}
@@ -104,110 +112,172 @@ export function CreateUserModal({
 
 	return (
 		<div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm animate-in fade-in duration-200">
-			<div className="bg-white rounded-2xl shadow-xl max-w-md w-full min-h-[530px] flex flex-col overflow-hidden border border-gray-100 relative scale-in-center">
+			<div className="bg-white rounded-2xl shadow-xl max-w-lg w-full flex flex-col overflow-hidden border border-gray-100 relative scale-in-center">
+				{/* Modal Header */}
 				<div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 shrink-0">
-					<h2 className="text-xl font-bold text-gray-900">
-						{tempPassword ? "User Created" : "Create New User"}
-					</h2>
+					<div>
+						<h2 className="text-lg font-bold text-gray-900">
+							{invitedUser ? "Invitation Sent" : "Invite Team Member"}
+						</h2>
+						<p className="text-xs text-gray-500 mt-0.5">
+							{invitedUser
+								? "The invitation email is on its way"
+								: "Enter Full Name and Email to send an activation invite"}
+						</p>
+					</div>
 					<button
+						type="button"
 						onClick={handleClose}
 						className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
+						aria-label="Close modal"
 					>
 						<X className="w-5 h-5" />
 					</button>
 				</div>
 
-				<div className="p-6 flex-1 flex flex-col justify-between overflow-y-auto">
-					{tempPassword ? (
-						<div className="text-center flex-1 flex flex-col justify-between py-2">
-							<div>
-								<div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center text-green-600 mx-auto mb-4">
-									<Check className="w-8 h-8" />
-								</div>
-								<h3 className="text-lg font-medium text-gray-900 mb-2">
-									Account Provisioned
-								</h3>
-								<p className="text-sm text-gray-500 mb-6">
-									The user account has been created. Please securely share these
-									temporary credentials with the user. They will be required to
-									set a new password on their first login.
-								</p>
+				<div className="p-6 overflow-y-auto max-h-[80vh]">
+					{invitedUser ? (
+						/* Invitation Sent Confirmation Screen */
+						<div className="text-center py-2 space-y-6">
+							<div className="w-16 h-16 bg-emerald-50 border border-emerald-100 rounded-full flex items-center justify-center text-emerald-600 mx-auto shadow-sm">
+								<MailCheck className="w-8 h-8" />
+							</div>
 
-								<div className="bg-slate-50 border border-slate-200 rounded-lg p-4 mb-6">
-									<div className="text-xs text-slate-500 uppercase tracking-wider font-semibold mb-2 text-left">
-										Temporary Password
-									</div>
-									<div className="flex items-center justify-between bg-white border border-slate-200 rounded-md p-3">
-										<code className="text-sm font-mono text-slate-900 font-bold">
-											{tempPassword}
-										</code>
-										<button
-											onClick={copyToClipboard}
-											className="text-indigo-600 hover:text-indigo-700 p-1.5 hover:bg-indigo-50 rounded-md transition-colors"
-											title="Copy to clipboard"
-										>
-											{copied ? (
-												<Check className="w-4 h-4 text-green-600" />
-											) : (
-												<Copy className="w-4 h-4" />
-											)}
-										</button>
-									</div>
+							<div>
+								<h3 className="text-xl font-bold text-gray-900 mb-1">
+									Invitation Email Dispatched!
+								</h3>
+								<p className="text-sm text-gray-600 max-w-md mx-auto leading-relaxed">
+									An invitation email has been sent to{" "}
+									<span className="font-semibold text-gray-900">
+										{invitedUser.email}
+									</span>
+									. They will receive a link to set up their password and
+									activate their account.
+								</p>
+							</div>
+
+							{/* Member Details Card */}
+							<div className="bg-slate-50 border border-slate-200/80 rounded-xl p-4 text-left space-y-2">
+								<div className="flex items-center justify-between">
+									<span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+										Member Name
+									</span>
+									<span className="text-sm font-medium text-slate-900">
+										{invitedUser.name}
+									</span>
+								</div>
+								<div className="flex items-center justify-between">
+									<span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+										Role
+									</span>
+									<span
+										className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${
+											invitedUser.role === "ADMIN"
+												? "bg-purple-100 text-purple-700"
+												: "bg-blue-100 text-blue-700"
+										}`}
+									>
+										{invitedUser.role}
+									</span>
+								</div>
+								<div className="flex items-center justify-between pt-1 border-t border-slate-200/60">
+									<span className="text-xs text-slate-500 flex items-center gap-1">
+										<Clock className="w-3.5 h-3.5 text-slate-400" /> Link
+										Validity
+									</span>
+									<span className="text-xs font-medium text-slate-700">
+										Expires in 24 hours
+									</span>
 								</div>
 							</div>
 
-							<Button
-								variant="primary"
-								onClick={handleClose}
-								className="w-full"
-							>
-								Done
-							</Button>
+							{/* Callout Notice */}
+							<div className="p-3 bg-blue-50/70 border border-blue-100 rounded-lg text-left flex items-start gap-2.5">
+								<CheckCircle2 className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
+								<p className="text-xs text-blue-800 leading-relaxed">
+									No temporary password is required. The member simply clicks
+									the secure link in their email to choose their permanent
+									password and access the workspace.
+								</p>
+							</div>
+
+							{/* Action Buttons */}
+							<div className="flex items-center gap-3 pt-2">
+								<Button
+									type="button"
+									variant="secondary"
+									onClick={handleInviteAnother}
+									className="flex-1"
+								>
+									Invite Another
+								</Button>
+								<Button
+									type="button"
+									variant="primary"
+									onClick={handleClose}
+									className="flex-1"
+								>
+									Done
+								</Button>
+							</div>
 						</div>
 					) : (
-						<form onSubmit={handleSubmit(onSubmit)} className="flex-1 flex flex-col justify-between">
-							<div className="space-y-2">
-								<Input
-									label="Full Name *"
-									placeholder="e.g. Jane Doe"
-									error={errors.fullName?.message}
-									reserveErrorSpace
-									{...register("fullName")}
-								/>
+						/* Invitation Form - Full Name, Email, and Member Role */
+						<form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+							<Input
+								label="Full Name *"
+								placeholder="e.g. Jane Doe"
+								error={errors.fullName?.message}
+								{...register("fullName")}
+							/>
 
-								<Input
-									label="Email Address *"
-									type="email"
-									error={errors.email?.message}
-									reserveErrorSpace
-									{...register("email")}
-								/>
+							<Input
+								label="Email Address *"
+								type="email"
+								placeholder="e.g. jane.doe@company.com"
+								error={errors.email?.message}
+								{...register("email")}
+							/>
 
-								<div className="grid grid-cols-2 gap-4">
-									<Input
-										label="Department (Optional)"
-										{...register("department")}
-									/>
-									<Input label="Job Title (Optional)" {...register("jobTitle")} />
+							{/* Role Section - Member Only */}
+							<div>
+								<div className="block text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1.5">
+									Role *
 								</div>
-
-								<div>
-									<Input
-										label="Joining Date (Optional)"
-										type="date"
-										{...register("joiningDate")}
-									/>
+								<div className="p-3.5 rounded-xl border border-blue-500/80 bg-blue-50/50 dark:bg-blue-950/20 dark:border-blue-500/60 ring-1 ring-blue-500/30 flex items-center justify-between transition-all">
+									<div>
+										<div className="font-semibold text-sm text-gray-900 dark:text-gray-100 flex items-center gap-2">
+											<span>Member</span>
+											<span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/60 text-blue-700 dark:text-blue-300">
+												Standard
+											</span>
+										</div>
+										<div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+											Can view &amp; work on assigned projects and tasks
+										</div>
+									</div>
+									<CheckCircle2 className="w-5 h-5 text-blue-600 dark:text-blue-400 shrink-0 ml-3" />
 								</div>
 							</div>
 
-							<div className="pt-4 flex justify-end shrink-0">
+							<div className="pt-3 flex items-center justify-end gap-3 border-t border-gray-100 dark:border-gray-800">
+								<Button
+									type="button"
+									variant="secondary"
+									onClick={handleClose}
+									disabled={loading}
+								>
+									Cancel
+								</Button>
 								<Button
 									type="submit"
 									variant="primary"
+									leftIcon={<Send className="w-4 h-4" />}
 									isLoading={loading}
 									disabled={isSubmitDisabled}
 								>
-									Create User
+									Send Invitation
 								</Button>
 							</div>
 						</form>

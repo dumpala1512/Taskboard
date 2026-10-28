@@ -6,6 +6,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
+import { apiClient } from "../../lib/axios";
 import {
 	type ForgotPasswordValues,
 	forgotPasswordSchema,
@@ -30,11 +31,14 @@ export default function ForgotPassword() {
 		setGlobalError(null);
 
 		try {
-			await axios.post("/api/auth/forgot-password", data);
+			await apiClient.post("/auth/forgot-password", {
+				email: data.email.trim().toLowerCase(),
+			});
 			setSuccess(true);
 		} catch (error: any) {
 			setGlobalError(
-				error.response?.data?.message ||
+				error.response?.data?.detail ||
+					error.response?.data?.message ||
 					"Something went wrong. Please try again.",
 			);
 		} finally {
