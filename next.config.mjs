@@ -2,15 +2,15 @@
 const nextConfig = {
   reactStrictMode: true,
   async rewrites() {
-    // Only rewrite /api calls to an external backend if BACKEND_API_URL is explicitly configured (e.g. on Vercel)
+    // Only rewrite non-auth API calls if BACKEND_API_URL is configured, and never rewrite NextAuth routes
     if (!process.env.BACKEND_API_URL) {
       return [];
     }
     return {
-      beforeFiles: [
+      afterFiles: [
         {
-          source: "/api/:path*",
-          destination: `${process.env.BACKEND_API_URL}/api/:path*`,
+          source: "/api/((?!auth).*)",
+          destination: `${process.env.BACKEND_API_URL}/api/:1*`,
         },
       ],
     };

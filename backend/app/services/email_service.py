@@ -1,4 +1,4 @@
-"""Email Service for sending welcome invitations and notifications using Resend HTTPS API."""
+"""Email Service for sending welcome invitations and notifications using Brevo HTTPS API."""
 
 import asyncio
 import json
@@ -22,7 +22,7 @@ jinja_env = Environment(
 
 
 class EmailService:
-    """Handles dispatching onboarding and notification emails asynchronously via Resend HTTPS REST API."""
+    """Handles dispatching onboarding and notification emails asynchronously via Brevo HTTPS REST API."""
 
     @staticmethod
     def _render_invitation_html(name: str, activation_url: str, role: str) -> str:
@@ -47,33 +47,51 @@ class EmailService:
         )
 
     @classmethod
-    def _send_resend_sync(cls, to_email: str, subject: str, html_content: str, text_content: str) -> bool:
-        """Send email via Resend HTTPS REST API (Port 443 - works everywhere without firewall restrictions)."""
+    def _send_brevo_sync(
+        cls,
+        to_email: str,
+        subject: str,
+        html_content: str,
+        text_content: str,
+        recipient_name: Optional[str] = None,
+    ) -> bool:
+        """Send email via Brevo HTTPS REST API (Port 443 - works everywhere and sends to any recipient)."""
         current_settings = get_settings()
-        api_key = current_settings.RESEND_API_KEY
-        if not api_key:
+        api_key = current_settings.BREVO_API_KEY
+        sender_email = current_settings.BREVO_SENDER_EMAIL
+
+        if not api_key or not sender_email:
             logger.info(
-                "[DEV MODE] RESEND_API_KEY not configured. Simulated email to: %s | Subject: '%s'",
+                "[DEV MODE] BREVO_API_KEY or BREVO_SENDER_EMAIL not configured. Simulated email to: %s | Subject: '%s'",
                 to_email,
                 subject,
             )
             return True
 
-        from_header = current_settings.RESEND_FROM or "Taskboard Support <onboarding@resend.dev>"
+        sender_name = current_settings.BREVO_SENDER_NAME or "Taskboard Support"
         payload = {
-            "from": from_header,
-            "to": [to_email],
+            "sender": {
+                "name": sender_name,
+                "email": sender_email,
+            },
+            "to": [
+                {
+                    "email": to_email,
+                    "name": recipient_name or to_email,
+                }
+            ],
             "subject": subject,
-            "html": html_content,
-            "text": text_content,
+            "htmlContent": html_content,
+            "textContent": text_content,
         }
         data = json.dumps(payload).encode("utf-8")
         req = urllib.request.Request(
-            "https://api.resend.com/emails",
+            "https://api.brevo.com/v3/smtp/email",
             data=data,
             headers={
-                "Authorization": f"Bearer {api_key}",
+                "api-key": api_key,
                 "Content-Type": "application/json",
+                "Accept": "application/json",
                 "User-Agent": "Taskboard-App/1.0",
             },
             method="POST",
@@ -82,16 +100,16 @@ class EmailService:
             with urllib.request.urlopen(req, timeout=15.0) as resp:
                 status_code = resp.getcode()
                 if 200 <= status_code < 300:
-                    logger.info("Successfully delivered email to %s via Resend HTTPS API (From: %s)", to_email, from_header)
+                    logger.info("Successfully delivered email to %s via Brevo HTTPS API (Sender: %s)", to_email, sender_email)
                     return True
-                logger.error("Resend API returned non-2xx status code: %d", status_code)
+                logger.error("Brevo API returned non-2xx status code: %d", status_code)
                 return False
         except urllib.error.HTTPError as err:
             err_body = err.read().decode("utf-8", errors="ignore")
-            logger.error("Failed to send email to %s via Resend API: HTTP %d - %s", to_email, err.code, err_body)
+            logger.error("Failed to send email to %s via Brevo API: HTTP %d - %s", to_email, err.code, err_body)
             return False
         except Exception as exc:
-            logger.error("Unexpected error sending email to %s via Resend API: %s", to_email, exc)
+            logger.error("Unexpected error sending email to %s via Brevo API: %s", to_email, exc)
             return False
 
     @classmethod
@@ -124,11 +142,12 @@ class EmailService:
 
         # Execute blocking I/O in worker thread pool
         return await asyncio.to_thread(
-            cls._send_resend_sync,
+            cls._send_brevo_sync,
             email,
             subject,
             html_content,
             plain_text,
+            name,
         )
 
     @classmethod
@@ -159,11 +178,13 @@ class EmailService:
         )
 
         return await asyncio.to_thread(
-            cls._send_resend_sync,
+            cls._send_brevo_sync,
             email,
             subject,
             html_content,
             plain_text,
+            name,
         )
+
 
 

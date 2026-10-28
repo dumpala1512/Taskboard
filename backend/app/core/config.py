@@ -62,9 +62,10 @@ class Settings(BaseSettings):
     # 5. CORS Allowed Origins (configured in .env)
     CORS_ORIGINS: Union[List[str], str] = ["http://localhost:3000", "http://127.0.0.1:3000"]
 
-    # 6. Email Settings (Resend HTTPS API)
-    RESEND_API_KEY: Optional[str] = None
-    RESEND_FROM: str = "Taskboard Support <onboarding@resend.dev>"
+    # 6. Email Settings (Brevo HTTPS API)
+    BREVO_API_KEY: Optional[str] = None
+    BREVO_SENDER_EMAIL: Optional[str] = None
+    BREVO_SENDER_NAME: str = "Taskboard Support"
     INVITATION_TOKEN_EXPIRE_HOURS: int = 48
 
     # --- Clean Validators ---
