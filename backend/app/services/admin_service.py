@@ -89,14 +89,12 @@ class AdminUserService:
             role=created_user.role,
         )
 
-        # 6. Return response conforming to prompt.md without exposing passwords
+        # 6. Return response without temporaryPassword or dev_invitation_token
         user_response = UserResponse.model_validate(created_user)
         return CreateUserResponse(
             success=True,
             message="User created successfully.",
             data=user_response,
-            temporaryPassword="Sent directly to member's email address",
-            dev_invitation_token=invitation_token if settings.DEBUG else None,
         )
 
     async def get_all_users(self) -> List[User]:

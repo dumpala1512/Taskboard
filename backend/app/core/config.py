@@ -62,12 +62,9 @@ class Settings(BaseSettings):
     # 5. CORS Allowed Origins (configured in .env)
     CORS_ORIGINS: Union[List[str], str] = ["http://localhost:3000", "http://127.0.0.1:3000"]
 
-    # 6. Email / SMTP Settings (configured in .env)
-    SMTP_HOST: Optional[str] = None
-    SMTP_PORT: int = 587
-    SMTP_USER: Optional[str] = None
-    SMTP_PASSWORD: Optional[str] = None
-    SMTP_FROM: str = "Taskboard Support <no-reply@taskboard.com>"
+    # 6. Email Settings (Resend HTTPS API)
+    RESEND_API_KEY: Optional[str] = None
+    RESEND_FROM: str = "Taskboard Support <onboarding@resend.dev>"
     INVITATION_TOKEN_EXPIRE_HOURS: int = 48
 
     # --- Clean Validators ---

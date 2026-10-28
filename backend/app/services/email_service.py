@@ -1,12 +1,12 @@
-"""Email Service for sending welcome invitations and notifications using Jinja templates."""
+"""Email Service for sending welcome invitations and notifications using Resend HTTPS API."""
 
 import asyncio
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
+import json
 import logging
 from pathlib import Path
-import smtplib
 from typing import Optional
+import urllib.error
+import urllib.request
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from app.core.config import get_settings
 
@@ -22,7 +22,7 @@ jinja_env = Environment(
 
 
 class EmailService:
-    """Handles dispatching onboarding and notification emails asynchronously."""
+    """Handles dispatching onboarding and notification emails asynchronously via Resend HTTPS REST API."""
 
     @staticmethod
     def _render_invitation_html(name: str, activation_url: str, role: str) -> str:
@@ -43,44 +43,55 @@ class EmailService:
             name=name or "there",
             reset_url=reset_url,
             expire_hours=1,
+            expire_minutes=60,
         )
 
     @classmethod
-    def _send_smtp_sync(cls, to_email: str, subject: str, html_content: str, text_content: str) -> bool:
-        """Internal synchronous helper for sending email via SMTP."""
+    def _send_resend_sync(cls, to_email: str, subject: str, html_content: str, text_content: str) -> bool:
+        """Send email via Resend HTTPS REST API (Port 443 - works everywhere without firewall restrictions)."""
         current_settings = get_settings()
-        if not current_settings.SMTP_USER or not current_settings.SMTP_PASSWORD:
+        api_key = current_settings.RESEND_API_KEY
+        if not api_key:
             logger.info(
-                "[DEV MODE] SMTP credentials not set. Simulated email to: %s | Subject: '%s'",
+                "[DEV MODE] RESEND_API_KEY not configured. Simulated email to: %s | Subject: '%s'",
                 to_email,
                 subject,
             )
             return True
 
-        from_header = current_settings.SMTP_FROM
-        # If SMTP_FROM still uses default placeholder with no-reply domain, align with authenticated user for Gmail deliverability
-        if "no-reply@taskboard.com" in from_header and current_settings.SMTP_USER:
-            from_header = f"Taskboard Support <{current_settings.SMTP_USER}>"
-
-        msg = MIMEMultipart("alternative")
-        msg["Subject"] = subject
-        msg["From"] = from_header
-        msg["To"] = to_email
-
-        msg.attach(MIMEText(text_content, "plain"))
-        msg.attach(MIMEText(html_content, "html"))
-
+        from_header = current_settings.RESEND_FROM or "Taskboard Support <onboarding@resend.dev>"
+        payload = {
+            "from": from_header,
+            "to": [to_email],
+            "subject": subject,
+            "html": html_content,
+            "text": text_content,
+        }
+        data = json.dumps(payload).encode("utf-8")
+        req = urllib.request.Request(
+            "https://api.resend.com/emails",
+            data=data,
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json",
+                "User-Agent": "Taskboard-App/1.0",
+            },
+            method="POST",
+        )
         try:
-            with smtplib.SMTP(current_settings.SMTP_HOST, current_settings.SMTP_PORT, timeout=15.0) as server:
-                server.ehlo()
-                server.starttls()
-                server.ehlo()
-                server.login(current_settings.SMTP_USER, current_settings.SMTP_PASSWORD)
-                server.send_message(msg)
-            logger.info("Successfully delivered email to %s via SMTP (From: %s)", to_email, from_header)
-            return True
+            with urllib.request.urlopen(req, timeout=15.0) as resp:
+                status_code = resp.getcode()
+                if 200 <= status_code < 300:
+                    logger.info("Successfully delivered email to %s via Resend HTTPS API (From: %s)", to_email, from_header)
+                    return True
+                logger.error("Resend API returned non-2xx status code: %d", status_code)
+                return False
+        except urllib.error.HTTPError as err:
+            err_body = err.read().decode("utf-8", errors="ignore")
+            logger.error("Failed to send email to %s via Resend API: HTTP %d - %s", to_email, err.code, err_body)
+            return False
         except Exception as exc:
-            logger.error("Failed to send email to %s: %s", to_email, exc)
+            logger.error("Unexpected error sending email to %s via Resend API: %s", to_email, exc)
             return False
 
     @classmethod
@@ -111,9 +122,9 @@ class EmailService:
             activation_url,
         )
 
-        # Execute blocking SMTP I/O in a separate thread pool
+        # Execute blocking I/O in worker thread pool
         return await asyncio.to_thread(
-            cls._send_smtp_sync,
+            cls._send_resend_sync,
             email,
             subject,
             html_content,
@@ -148,9 +159,11 @@ class EmailService:
         )
 
         return await asyncio.to_thread(
-            cls._send_smtp_sync,
+            cls._send_resend_sync,
             email,
             subject,
             html_content,
             plain_text,
         )
+
+

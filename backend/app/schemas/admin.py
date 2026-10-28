@@ -36,10 +36,7 @@ class CreateUserRequest(BaseModel):
 
 
 class CreateUserResponse(BaseModel):
-    """Response returned when an admin creates a new user.
-    
-    Conforms to prompt.md specification (success, message, data).
-    """
+    """Response returned when an admin creates a new user."""
 
     model_config = ConfigDict(extra="ignore")
 
@@ -49,14 +46,6 @@ class CreateUserResponse(BaseModel):
         description="Human-readable success message",
     )
     data: UserResponse = Field(..., description="Created user details")
-    temporaryPassword: str = Field(
-        default="Sent directly to member's email address",
-        description="Status message indicating credentials/invitation was emailed directly",
-    )
-    dev_invitation_token: Optional[str] = Field(
-        default=None,
-        description="Only populated in development/debug mode for convenient backend testing",
-    )
 
 
 class UpdateUserRequest(BaseModel):
