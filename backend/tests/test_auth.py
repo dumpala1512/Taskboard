@@ -539,32 +539,16 @@ async def test_forgot_password_nonexistent_email(async_client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_verify_reset_token_valid(async_client: AsyncClient):
-    """GET /taskboard/api/v1/auth/verify-reset-token returns 200 when token is in Redis."""
-    with patch("app.services.auth_service.get_redis_client") as mock_redis:
-        mock_redis_instance = AsyncMock()
-        mock_redis_instance.get.return_value = '{"user_id": "123", "email": "test@test.com"}'
-        mock_redis.return_value = mock_redis_instance
-
-        resp = await async_client.get(
-            "/taskboard/api/v1/auth/verify-reset-token?token=valid_token"
-        )
-        assert resp.status_code == 200
-        data = resp.json()
-        assert data["success"] is True
-        assert data["message"] == "Token is valid"
-
-
-@pytest.mark.asyncio
-async def test_verify_reset_token_invalid(async_client: AsyncClient):
-    """GET /taskboard/api/v1/auth/verify-reset-token returns 400 when token not found in Redis."""
+async def test_reset_password_invalid_token(async_client: AsyncClient):
+    """POST /taskboard/api/v1/auth/reset-password returns 400 when token not found in Redis."""
     with patch("app.services.auth_service.get_redis_client") as mock_redis:
         mock_redis_instance = AsyncMock()
         mock_redis_instance.get.return_value = None
         mock_redis.return_value = mock_redis_instance
 
-        resp = await async_client.get(
-            "/taskboard/api/v1/auth/verify-reset-token?token=invalid_token"
+        resp = await async_client.post(
+            "/taskboard/api/v1/auth/reset-password",
+            json={"token": "invalid_or_expired_token", "password": "NewSecurePassword123!"},
         )
         assert resp.status_code == 400
 

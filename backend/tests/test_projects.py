@@ -75,11 +75,13 @@ async def test_create_project_success(async_client: AsyncClient, admin_user: Use
     with patch("app.dao.user_repository.UserRepository.get_by_id", new_callable=AsyncMock) as mock_get_user, \
          patch("app.dao.project_repository.ProjectRepository.get_by_name", new_callable=AsyncMock) as mock_get_name, \
          patch("app.dao.project_repository.ProjectRepository.create", new_callable=AsyncMock) as mock_create, \
-         patch("app.dao.project_repository.ProjectRepository.assign_projects_to_user", new_callable=AsyncMock):
+         patch("app.dao.project_repository.ProjectRepository.assign_projects_to_user", new_callable=AsyncMock), \
+         patch("app.dao.project_repository.ProjectRepository.get_by_id", new_callable=AsyncMock) as mock_get_proj:
 
         mock_get_user.return_value = admin_user
         mock_get_name.return_value = None
         mock_create.return_value = sample_project
+        mock_get_proj.return_value = sample_project
 
         payload = {
             "name": "Task Board API",
@@ -234,6 +236,32 @@ async def test_create_project_validation_error(async_client: AsyncClient, admin_
         )
 
         assert response.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_create_project_invalid_status_rejected(async_client: AsyncClient, admin_user: User):
+    """Providing an invalid project status raises 422 Unprocessable Entity."""
+    admin_token = token_service.create_access_token(
+        str(admin_user.id), admin_user.email, admin_user.role
+    )
+
+    with patch("app.dao.user_repository.UserRepository.get_by_id", new_callable=AsyncMock) as mock_get_user:
+        mock_get_user.return_value = admin_user
+
+        response = await async_client.post(
+            "/taskboard/api/v1/projects",
+            headers={"Authorization": f"Bearer {admin_token}"},
+            json={
+                "name": "Invalid Status Project",
+                "status": "NONEXISTENT_STATUS",
+            },
+        )
+
+        assert response.status_code == 422
+        data = response.json()
+        assert data["success"] is False
+        assert data["error"] == "Validation Error"
+
 
 
 # ==============================================================================
@@ -537,3 +565,84 @@ async def test_remove_project_assignment_success(async_client: AsyncClient, admi
         data = response.json()
         assert data["success"] is True
         assert data["message"] == "Project assignment removed successfully."
+
+
+# ==============================================================================
+# 5. Project Progress Dynamic Calculation Tests
+# ==============================================================================
+def test_calculate_project_progress_completed_status():
+    """Completed status always yields 100% progress."""
+    from app.services.project_service import ProjectService
+    progress = ProjectService.calculate_project_progress(status="COMPLETED")
+    assert progress == 100
+
+
+def test_calculate_project_progress_planning_status():
+    """Planning status without tasks always yields 0% progress."""
+    from app.services.project_service import ProjectService
+    progress = ProjectService.calculate_project_progress(
+        status="PLANNING",
+        start_date="2026-10-01",
+        end_date="2026-11-01",
+        tasks=[],
+    )
+    assert progress == 0
+
+
+def test_calculate_project_progress_timeline_future():
+    """Active project starting in the future yields 0%."""
+    from app.services.project_service import ProjectService
+    progress = ProjectService.calculate_project_progress(
+        status="ACTIVE",
+        start_date="2099-01-01",
+        end_date="2099-02-01",
+    )
+    assert progress == 0
+
+
+def test_calculate_project_progress_timeline_past():
+    """Active project with end date in the past yields 100%."""
+    from app.services.project_service import ProjectService
+    progress = ProjectService.calculate_project_progress(
+        status="ACTIVE",
+        start_date="2020-01-01",
+        end_date="2020-02-01",
+    )
+    assert progress == 100
+
+
+def test_calculate_project_progress_timeline_midway():
+    """Active project with timeline spanning around today calculates elapsed percentage."""
+    from datetime import date, timedelta
+    from app.services.project_service import ProjectService
+    today = date.today()
+    start = today - timedelta(days=5)
+    end = today + timedelta(days=5)
+    # Total days = 10, elapsed days = 5 -> 50%
+    progress = ProjectService.calculate_project_progress(
+        status="ACTIVE",
+        start_date=start,
+        end_date=end,
+    )
+    assert progress == 50
+
+
+def test_calculate_project_progress_with_tasks():
+    """When tasks are present, task completion ratio overrides timeline."""
+    from unittest.mock import MagicMock
+    from app.services.project_service import ProjectService
+    
+    t1 = MagicMock(status="DONE")
+    t2 = MagicMock(status="IN_PROGRESS")
+    t3 = MagicMock(status="TODO")
+    t4 = MagicMock(status="DONE")
+
+    progress = ProjectService.calculate_project_progress(
+        status="ACTIVE",
+        start_date="2020-01-01",
+        end_date="2020-02-01",
+        tasks=[t1, t2, t3, t4],
+    )
+    # 2 out of 4 tasks are DONE -> 50%
+    assert progress == 50
+

@@ -61,6 +61,11 @@ class User(Base):
         nullable=False,
     )
 
+    @property
+    def name(self) -> str:
+        """Alias property matching name."""
+        return self.full_name
+
     # Relationships with Projects
     owned_projects: Mapped[List["Project"]] = relationship(
         "Project",

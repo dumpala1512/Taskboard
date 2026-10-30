@@ -781,3 +781,151 @@ async def test_delete_task_forbidden_for_member(
         data = response.json()
         assert data["success"] is False
         assert data["error"] == {"code": "INSUFFICIENT_PERMISSIONS"}
+
+
+# ==============================================================================
+# Task Status Validation against Project Columns Tests
+# ==============================================================================
+@pytest.mark.asyncio
+async def test_create_task_invalid_status_rejected(
+    async_client: AsyncClient, admin_user: User, sample_project: Project
+):
+    """Submitting an arbitrary/unnamed status string returns 400 Bad Request with INVALID_TASK_STATUS."""
+    admin_token = token_service.create_access_token(
+        str(admin_user.id), admin_user.email, admin_user.role
+    )
+
+    with patch("app.dao.user_repository.UserRepository.get_by_id", new_callable=AsyncMock) as mock_get_user, \
+         patch("app.dao.project_repository.ProjectRepository.get_by_id", new_callable=AsyncMock) as mock_get_proj:
+
+        mock_get_user.return_value = admin_user
+        mock_get_proj.return_value = sample_project
+
+        response = await async_client.post(
+            "/taskboard/api/v1/tasks",
+            headers={"Authorization": f"Bearer {admin_token}"},
+            json={
+                "project_id": str(sample_project.id),
+                "title": "Task with Random Status",
+                "status": "some random unnamed string",
+            },
+        )
+
+        assert response.status_code == 400
+        data = response.json()
+        assert data["success"] is False
+        assert data["error"] == {"code": "INVALID_TASK_STATUS"}
+        assert "is invalid" in data["message"]
+
+
+@pytest.mark.asyncio
+async def test_create_task_custom_project_column_status_accepted(
+    async_client: AsyncClient, admin_user: User, sample_project: Project
+):
+    """When a project defines custom columns, tasks with that column ID are accepted."""
+    admin_token = token_service.create_access_token(
+        str(admin_user.id), admin_user.email, admin_user.role
+    )
+    # Project with custom columns added by admin
+    sample_project.columns = [
+        {"id": "TODO", "title": "To Do"},
+        {"id": "QA_TESTING", "title": "QA Testing"},
+        {"id": "DONE", "title": "Done"},
+    ]
+
+    created_custom_task = Task(
+        id=uuid.uuid4(),
+        project_id=sample_project.id,
+        title="Custom Status Task",
+        status="QA_TESTING",
+        priority="MEDIUM",
+        created_at=datetime.now(timezone.utc),
+        updated_at=datetime.now(timezone.utc),
+        tags=[],
+    )
+
+    with patch("app.dao.user_repository.UserRepository.get_by_id", new_callable=AsyncMock) as mock_get_user, \
+         patch("app.dao.project_repository.ProjectRepository.get_by_id", new_callable=AsyncMock) as mock_get_proj, \
+         patch("app.dao.task_repository.TaskRepository.create", new_callable=AsyncMock) as mock_create, \
+         patch("app.services.task_service.get_redis_client") as mock_redis:
+
+        mock_get_user.return_value = admin_user
+        mock_get_proj.return_value = sample_project
+        mock_create.return_value = created_custom_task
+
+        fake_redis = AsyncMock()
+        fake_redis.keys = AsyncMock(return_value=[])
+        mock_redis.return_value = fake_redis
+
+        response = await async_client.post(
+            "/taskboard/api/v1/tasks",
+            headers={"Authorization": f"Bearer {admin_token}"},
+            json={
+                "project_id": str(sample_project.id),
+                "title": "Custom Status Task",
+                "status": "QA_TESTING",
+            },
+        )
+
+        assert response.status_code == 201
+        data = response.json()
+        assert data["success"] is True
+        assert data["data"]["status"] == "QA_TESTING"
+
+
+@pytest.mark.asyncio
+async def test_create_task_invalid_priority_rejected(
+    async_client: AsyncClient, admin_user: User, sample_project: Project
+):
+    """Submitting an invalid priority like 'lendf' returns 422 Unprocessable Entity."""
+    admin_token = token_service.create_access_token(
+        str(admin_user.id), admin_user.email, admin_user.role
+    )
+
+    with patch("app.dao.user_repository.UserRepository.get_by_id", new_callable=AsyncMock) as mock_get_user:
+        mock_get_user.return_value = admin_user
+
+        response = await async_client.post(
+            "/taskboard/api/v1/tasks",
+            headers={"Authorization": f"Bearer {admin_token}"},
+            json={
+                "project_id": str(sample_project.id),
+                "title": "Task with Invalid Priority",
+                "priority": "lendf",
+            },
+        )
+
+        assert response.status_code == 422
+        data = response.json()
+        assert data["success"] is False
+        assert data["error"] == "Validation Error"
+
+
+@pytest.mark.asyncio
+async def test_create_task_invalid_task_type_rejected(
+    async_client: AsyncClient, admin_user: User, sample_project: Project
+):
+    """Submitting an invalid task type returns 422 Unprocessable Entity."""
+    admin_token = token_service.create_access_token(
+        str(admin_user.id), admin_user.email, admin_user.role
+    )
+
+    with patch("app.dao.user_repository.UserRepository.get_by_id", new_callable=AsyncMock) as mock_get_user:
+        mock_get_user.return_value = admin_user
+
+        response = await async_client.post(
+            "/taskboard/api/v1/tasks",
+            headers={"Authorization": f"Bearer {admin_token}"},
+            json={
+                "project_id": str(sample_project.id),
+                "title": "Task with Invalid Type",
+                "taskType": "RandomType",
+            },
+        )
+
+        assert response.status_code == 422
+        data = response.json()
+        assert data["success"] is False
+        assert data["error"] == "Validation Error"
+
+

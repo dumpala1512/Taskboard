@@ -35,7 +35,7 @@ export function useActivities(projectId?: string) {
 			const { data } = await api.get("/activities", {
 				params: projectId ? { projectId } : undefined,
 			});
-			return data;
+			return Array.isArray(data) ? data : (data?.data ?? []);
 		},
 		refetchInterval: 15000,
 	});

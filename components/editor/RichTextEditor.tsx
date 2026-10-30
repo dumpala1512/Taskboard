@@ -69,7 +69,7 @@ export default function RichTextEditor({
 		editorProps: {
 			attributes: {
 				class:
-					"prose prose-sm max-w-none focus:outline-none min-h-[150px] p-4 text-gray-900",
+					"prose prose-sm dark:prose-invert max-w-none focus:outline-none min-h-[150px] p-4 text-gray-900 dark:text-slate-100",
 			},
 		},
 	});
@@ -97,14 +97,14 @@ export default function RichTextEditor({
 
 	return (
 		<div
-			className={`border rounded-lg overflow-hidden bg-white flex flex-col focus-within:ring-1 focus-within:ring-blue-500 focus-within:border-blue-500 transition-shadow ${error ? "border-red-500" : "border-gray-300"} ${className}`}
+			className={`border rounded-lg overflow-hidden bg-white dark:bg-[#1A233A] flex flex-col focus-within:ring-1 focus-within:ring-blue-500 focus-within:border-blue-500 transition-shadow ${error ? "border-red-500" : "border-gray-300 dark:border-[#222F49]"} ${className}`}
 		>
 			{!readOnly && <Toolbar editor={editor} />}
 			<div className="flex-1 overflow-y-auto min-h-[150px] max-h-[500px]">
 				<EditorContent editor={editor} />
 			</div>
 			{maxLength && (
-				<div className="bg-gray-50 px-3 py-1.5 text-xs text-gray-500 text-right border-t border-gray-200">
+				<div className="bg-gray-50 dark:bg-[#151D30] px-3 py-1.5 text-xs text-gray-500 dark:text-slate-400 text-right border-t border-gray-200 dark:border-[#222F49]">
 					{editor.storage.characterCount.characters()} / {maxLength} characters
 				</div>
 			)}

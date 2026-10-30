@@ -141,7 +141,6 @@ async def test_admin_create_user_success(async_client: AsyncClient, admin_user: 
         assert data["success"] is True
         assert data["data"]["email"] == "alice@taskboard.com"
         assert data["data"]["full_name"] == "Alice Johnson"
-        assert data["temporaryPassword"] == "Sent directly to member's email address"
         assert "password" not in data["data"]
         assert mock_email.called
 

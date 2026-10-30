@@ -134,23 +134,6 @@ async def forgot_password(
     return SuccessResponse(success=True, message=result["message"])
 
 
-@auth_router.get(
-    "/verify-reset-token",
-    response_model=SuccessResponse,
-    status_code=status.HTTP_200_OK,
-    summary="Verify Reset Token",
-    description="Validate whether a password reset token is active and valid before presenting reset form.",
-)
-async def verify_reset_token(
-    token: str = Query(..., min_length=1, description="Password reset token"),
-    db: AsyncSession = Depends(get_db),
-) -> SuccessResponse:
-    """Check validity and expiration of password reset token."""
-    service = AuthenticationService(db)
-    result = await service.verify_reset_token(token)
-    return SuccessResponse(success=True, message=result["message"])
-
-
 @auth_router.post(
     "/reset-password",
     response_model=SuccessResponse,

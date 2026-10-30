@@ -1,7 +1,8 @@
 """Project Service handling business logic, validation, and authorization checks."""
 
+from datetime import date, datetime, timezone
 import logging
-from typing import List, Optional, Union
+from typing import Any, List, Optional, Union
 import uuid
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -14,6 +15,7 @@ from app.schemas.project import (
     CreateProjectRequest,
     UpdateProjectRequest,
 )
+from app.services.activity_service import ActivityService
 
 logger = logging.getLogger(__name__)
 
@@ -25,9 +27,93 @@ class ProjectService:
         self.db = db
         self.project_repo = ProjectRepository(db)
         self.user_repo = UserRepository(db)
+        self.activity_service = ActivityService(db)
+
+    @classmethod
+    def _parse_date(cls, date_val: Optional[Union[str, date, datetime]]) -> Optional[date]:
+        """Safely parse a date value from string, date, or datetime representations."""
+        if not date_val:
+            return None
+        if isinstance(date_val, datetime):
+            return date_val.date()
+        if isinstance(date_val, date):
+            return date_val
+        if isinstance(date_val, str):
+            clean_str = date_val.strip()
+            if not clean_str:
+                return None
+            if "T" in clean_str:
+                clean_str = clean_str.split("T")[0]
+            try:
+                return date.fromisoformat(clean_str)
+            except ValueError:
+                return None
+        return None
+
+    @classmethod
+    def calculate_project_progress(
+        cls,
+        status: Optional[str] = None,
+        start_date: Optional[Union[str, date, datetime]] = None,
+        end_date: Optional[Union[str, date, datetime]] = None,
+        tasks: Optional[List[Any]] = None,
+    ) -> int:
+        """Calculate dynamic project progress percentage (0 to 100).
+
+        Calculation Rules:
+        1. If status is explicitly 'COMPLETED': progress is 100%.
+        2. If the project contains tasks (total tasks > 0):
+           Task completion takes precedence as work deliverables:
+           progress = round((count(tasks with status == 'DONE') / total_tasks) * 100)
+        3. If no tasks exist yet (such as during project creation):
+           a. If status is 'PLANNING': progress is 0% (project is still being planned).
+           b. If status is 'ACTIVE' or 'ON_HOLD' and timeline dates (start_date, end_date) are provided:
+              Calculate timeline elapsed percentage against today:
+              - If today < start_date: 0% (project starts in the future).
+              - If today >= end_date: 100% (timeline schedule is fully elapsed).
+              - If start_date <= today < end_date:
+                  elapsed_days = (today - start_date).days
+                  total_days = (end_date - start_date).days
+                  progress = round((elapsed_days / total_days) * 100)
+           c. If no timeline dates are provided:
+              Defaults to 0%.
+        """
+        normalized_status = (status or "").strip().upper()
+        if normalized_status == "COMPLETED":
+            return 100
+
+        # When tasks are present, calculate by task completion ratio
+        if tasks and len(tasks) > 0:
+            done_count = sum(
+                1 for t in tasks
+                if (getattr(t, "status", None) or "").strip().upper() == "DONE"
+            )
+            return min(100, max(0, round((done_count / len(tasks)) * 100)))
+
+        # When creating a project (0 tasks):
+        if normalized_status == "PLANNING":
+            return 0
+
+        parsed_start = cls._parse_date(start_date)
+        parsed_end = cls._parse_date(end_date)
+
+        if parsed_start and parsed_end:
+            today = datetime.now(timezone.utc).date()
+            if today < parsed_start:
+                return 0
+            if today >= parsed_end:
+                return 100
+            total_days = (parsed_end - parsed_start).days
+            if total_days <= 0:
+                return 100 if today >= parsed_end else 0
+            elapsed_days = (today - parsed_start).days
+            calc_percent = round((elapsed_days / total_days) * 100)
+            return min(100, max(0, calc_percent))
+
+        return 0
 
     async def create_project(self, data: CreateProjectRequest, current_user: User) -> Project:
-        """Create a new project. Enforces name uniqueness (409 Conflict on duplicate)."""
+        """Create a new project with dynamically calculated progress. Enforces name uniqueness."""
         clean_name = data.name.strip()
         existing = await self.project_repo.get_by_name(clean_name)
         if existing:
@@ -45,14 +131,22 @@ class ProjectService:
         # Key: use data.key if specified, or auto-generate from name
         key = data.key.strip().upper() if data.key else "".join([w[0] for w in clean_name.split() if w]).upper()[:10]
 
+        # Calculate progress dynamically rather than relying on a hardcoded value
+        calculated_progress = self.calculate_project_progress(
+            status=project_status,
+            start_date=data.start_date,
+            end_date=data.end_date,
+            tasks=[],
+        )
+
         new_project = Project(
             name=clean_name,
             key=key if key else None,
             description=data.description,
             status=project_status,
-            progress=data.progress if data.progress is not None else 0,
+            progress=calculated_progress,
             tags=data.tags or [],
-            columns=[],
+            columns=data.columns or [],
             start_date=data.start_date,
             end_date=data.end_date,
             created_by=creator_id,
@@ -73,6 +167,15 @@ class ProjectService:
 
         refetched = await self.project_repo.get_by_id(created_project.id)
         logger.info("User %s created project '%s' (%s)", current_user.email, created_project.name, created_project.id)
+
+        # Log activity
+        await self.activity_service.log_activity(
+            type="PROJECT_CREATED",
+            user_id=current_user.id,
+            project_id=created_project.id,
+            details=created_project.name,
+        )
+
         return refetched or created_project
 
     async def get_all_projects(self, current_user: User) -> List[Project]:
@@ -138,6 +241,16 @@ class ProjectService:
             updates["key"] = data.key.strip().upper() if data.key else None
         if data.progress is not None:
             updates["progress"] = data.progress
+        elif any(f is not None for f in (data.status, data.start_date, data.end_date)):
+            eff_status = updates.get("status", project.status)
+            eff_start = updates.get("start_date", project.start_date)
+            eff_end = updates.get("end_date", project.end_date)
+            updates["progress"] = self.calculate_project_progress(
+                status=eff_status,
+                start_date=eff_start,
+                end_date=eff_end,
+                tasks=project.tasks or [],
+            )
         if data.tags is not None:
             updates["tags"] = data.tags
         if data.columns is not None:
@@ -164,6 +277,16 @@ class ProjectService:
             updated_project = project
 
         logger.info("Admin %s updated project %s", current_user.email, project_id)
+
+        # Log activity
+        eff_project = updated_project or project
+        await self.activity_service.log_activity(
+            type="PROJECT_UPDATED",
+            user_id=current_user.id,
+            project_id=project_id,
+            details=eff_project.name,
+        )
+
         return updated_project
 
     async def delete_project(

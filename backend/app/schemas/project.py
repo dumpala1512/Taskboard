@@ -3,7 +3,9 @@
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 import uuid
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+
+VALID_PROJECT_STATUSES = {"PLANNING", "ACTIVE", "ON_HOLD", "COMPLETED"}
 
 
 class CreateProjectRequest(BaseModel):
@@ -19,8 +21,21 @@ class CreateProjectRequest(BaseModel):
     members: Optional[List[uuid.UUID]] = Field(default_factory=list, description="Initial team member IDs")
     tags: Optional[List[str]] = Field(default_factory=list, description="Project tags")
     progress: Optional[int] = Field(default=0, description="Project progress percentage")
+    columns: Optional[List[Dict[str, Any]]] = Field(default=None, description="Kanban columns")
     start_date: Optional[str] = Field(default=None, alias="startDate", description="Start date (YYYY-MM-DD)")
     end_date: Optional[str] = Field(default=None, alias="dueDate", description="End/Due date (YYYY-MM-DD)")
+
+    @field_validator("status", mode="before")
+    @classmethod
+    def validate_status(cls, v: Any) -> str:
+        if v is None:
+            return "ACTIVE"
+        if not isinstance(v, str) or not v.strip():
+            return "ACTIVE"
+        norm = v.strip().upper()
+        if norm not in VALID_PROJECT_STATUSES:
+            raise ValueError(f"Project status must be one of: {', '.join(sorted(VALID_PROJECT_STATUSES))}")
+        return norm
 
 
 class UpdateProjectRequest(BaseModel):
@@ -39,6 +54,18 @@ class UpdateProjectRequest(BaseModel):
     columns: Optional[List[Dict[str, Any]]] = Field(default=None, description="Updated board columns")
     start_date: Optional[str] = Field(default=None, alias="startDate", description="Updated start date")
     end_date: Optional[str] = Field(default=None, alias="dueDate", description="Updated end date")
+
+    @field_validator("status", mode="before")
+    @classmethod
+    def validate_status(cls, v: Any) -> Optional[str]:
+        if v is None:
+            return None
+        if not isinstance(v, str) or not v.strip():
+            return None
+        norm = v.strip().upper()
+        if norm not in VALID_PROJECT_STATUSES:
+            raise ValueError(f"Project status must be one of: {', '.join(sorted(VALID_PROJECT_STATUSES))}")
+        return norm
 
 
 class ProjectData(BaseModel):

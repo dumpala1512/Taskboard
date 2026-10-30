@@ -12,15 +12,8 @@ export const apiClient = axios.create({
 });
 
 apiClient.interceptors.request.use(async (config) => {
-	// 1. Route mock-dependent endpoints to Next.js API routes until backend counterparts are implemented
-	if (
-		config.url?.startsWith("/analytics") ||
-		config.url?.startsWith("/activities")
-	) {
-		config.baseURL = "/api";
-	} else {
-		config.baseURL = BACKEND_URL;
-	}
+	// 1. Route directly to FastAPI backend
+	config.baseURL = BACKEND_URL;
 
 	// 2. Attach JWT Bearer Token for real FastAPI protected endpoints
 	if (typeof window !== "undefined") {

@@ -9,6 +9,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base import Base
 
 if TYPE_CHECKING:
+    from app.models.comment import Comment
     from app.models.project import Project
     from app.models.user import User
 
@@ -115,6 +116,12 @@ class Task(Base):
     assignee: Mapped[Optional["User"]] = relationship(
         "User",
         foreign_keys=[assignee_id],
+        lazy="selectin",
+    )
+    comments: Mapped[List["Comment"]] = relationship(
+        "Comment",
+        back_populates="task",
+        cascade="all, delete-orphan",
         lazy="selectin",
     )
 

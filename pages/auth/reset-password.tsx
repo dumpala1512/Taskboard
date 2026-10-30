@@ -53,23 +53,11 @@ export default function ResetPassword() {
 		if (!router.isReady) return;
 
 		if (!token) {
-			setVerifying(false);
 			setTokenValid(false);
-			return;
+		} else {
+			setTokenValid(true);
 		}
-
-		const verifyToken = async () => {
-			try {
-				await apiClient.get(`/auth/verify-reset-token?token=${token}`);
-				setTokenValid(true);
-			} catch (error) {
-				setTokenValid(false);
-			} finally {
-				setVerifying(false);
-			}
-		};
-
-		verifyToken();
+		setVerifying(false);
 	}, [router.isReady, token]);
 
 	const onSubmit = async (data: ResetPasswordValues) => {
@@ -85,11 +73,17 @@ export default function ResetPassword() {
 			});
 			setSuccess(true);
 		} catch (error: any) {
-			setGlobalError(
+			const errMsg =
 				error.response?.data?.detail ||
-					error.response?.data?.message ||
-					"Failed to reset password. Please try again.",
-			);
+				error.response?.data?.message ||
+				"Failed to reset password. Please try again.";
+			setGlobalError(errMsg);
+			if (
+				errMsg.toLowerCase().includes("invalid or expired") ||
+				errMsg.toLowerCase().includes("not found")
+			) {
+				setTokenValid(false);
+			}
 		} finally {
 			setLoading(false);
 		}

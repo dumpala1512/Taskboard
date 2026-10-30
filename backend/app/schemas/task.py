@@ -3,7 +3,11 @@
 from datetime import datetime
 from typing import Any, List, Optional
 import uuid
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+
+VALID_TASK_PRIORITIES = {"LOW", "MEDIUM", "HIGH"}
+VALID_TASK_TYPES = {"Feature", "Bug", "Improvement", "Research", "Documentation"}
+TASK_TYPE_LOOKUP = {t.lower(): t for t in VALID_TASK_TYPES}
 
 
 class CreateTaskRequest(BaseModel):
@@ -41,6 +45,30 @@ class CreateTaskRequest(BaseModel):
                 values["tags"] = []
 
         return values
+
+    @field_validator("priority", mode="before")
+    @classmethod
+    def validate_priority(cls, v: Any) -> str:
+        if v is None:
+            return "MEDIUM"
+        if not isinstance(v, str) or not v.strip():
+            return "MEDIUM"
+        norm = v.strip().upper()
+        if norm not in VALID_TASK_PRIORITIES:
+            raise ValueError(f"Priority must be one of: {', '.join(sorted(VALID_TASK_PRIORITIES))}")
+        return norm
+
+    @field_validator("task_type", mode="before")
+    @classmethod
+    def validate_task_type(cls, v: Any) -> Optional[str]:
+        if v is None:
+            return None
+        if not isinstance(v, str) or not v.strip():
+            return None
+        norm = v.strip().lower()
+        if norm not in TASK_TYPE_LOOKUP:
+            raise ValueError(f"Task type must be one of: {', '.join(sorted(VALID_TASK_TYPES))}")
+        return TASK_TYPE_LOOKUP[norm]
 
 
 class TaskData(BaseModel):
@@ -90,6 +118,30 @@ class UpdateTaskRequest(BaseModel):
                 if val == "" or (isinstance(val, str) and not val.strip()):
                     values[key] = None
         return values
+
+    @field_validator("priority", mode="before")
+    @classmethod
+    def validate_priority(cls, v: Any) -> Optional[str]:
+        if v is None:
+            return None
+        if not isinstance(v, str) or not v.strip():
+            return None
+        norm = v.strip().upper()
+        if norm not in VALID_TASK_PRIORITIES:
+            raise ValueError(f"Priority must be one of: {', '.join(sorted(VALID_TASK_PRIORITIES))}")
+        return norm
+
+    @field_validator("task_type", mode="before")
+    @classmethod
+    def validate_task_type(cls, v: Any) -> Optional[str]:
+        if v is None:
+            return None
+        if not isinstance(v, str) or not v.strip():
+            return None
+        norm = v.strip().lower()
+        if norm not in TASK_TYPE_LOOKUP:
+            raise ValueError(f"Task type must be one of: {', '.join(sorted(VALID_TASK_TYPES))}")
+        return TASK_TYPE_LOOKUP[norm]
 
 
 class TaskResponseEnvelope(BaseModel):
