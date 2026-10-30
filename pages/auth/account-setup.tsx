@@ -193,7 +193,7 @@ export default function AccountSetup() {
 					{/* New Password */}
 					<div className="relative">
 						<Input
-							label="New Password *"
+							label="New Password"
 							type={showNewPassword ? "text" : "password"}
 							placeholder="Enter a secure password"
 							leftIcon={<Lock className="h-5 w-5" />}
@@ -221,7 +221,7 @@ export default function AccountSetup() {
 					{/* Confirm Password */}
 					<div className="relative">
 						<Input
-							label="Confirm Password *"
+							label="Confirm Password"
 							type={showConfirmPassword ? "text" : "password"}
 							placeholder="Re-enter your password"
 							leftIcon={<ShieldCheck className="h-5 w-5" />}

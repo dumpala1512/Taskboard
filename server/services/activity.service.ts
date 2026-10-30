@@ -33,18 +33,28 @@ export class ActivityService {
 	async getActivitiesByProjectId(projectId: string, limit: number = 50) {
 		const activities = await activityRepository.findAll();
 		const sortedActivities = activities.sort(
-			(a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+			(a, b) =>
+				new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
 		);
 		const filtered = sortedActivities.filter(
-			(act) => act.projectId && act.projectId.toLowerCase() === projectId.toLowerCase()
+			(act) =>
+				act.projectId &&
+				act.projectId.toLowerCase() === projectId.toLowerCase(),
 		);
 		return filtered.slice(0, limit);
 	}
 
-	async getRecentActivities(limit: number = 20, userId?: string, role?: string) {
+	async getRecentActivities(
+		limit: number = 20,
+		userId?: string,
+		role?: string,
+	) {
 		const activities = await activityRepository.findAll();
-		const sortedActivities = activities.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-		
+		const sortedActivities = activities.sort(
+			(a, b) =>
+				new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+		);
+
 		if (role === "ADMIN" || !userId) {
 			return sortedActivities.slice(0, limit);
 		}
@@ -56,8 +66,14 @@ export class ActivityService {
 		const allProjects = await projectRepository.findAll();
 		const allTasks = await taskRepository.findAll();
 
-		const userProjectIds = allProjects.filter((p: any) => p.members?.includes(userId)).map((p: any) => p.id);
-		const userTaskIds = allTasks.filter((t: any) => t.assignees?.includes(userId) || t.assigneeId === userId).map((t: any) => t.id);
+		const userProjectIds = allProjects
+			.filter((p: any) => p.members?.includes(userId))
+			.map((p: any) => p.id);
+		const userTaskIds = allTasks
+			.filter(
+				(t: any) => t.assignees?.includes(userId) || t.assigneeId === userId,
+			)
+			.map((t: any) => t.id);
 
 		const filtered = sortedActivities.filter((act) => {
 			if (act.userId === userId) return true;

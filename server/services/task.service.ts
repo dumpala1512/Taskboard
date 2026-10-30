@@ -1,12 +1,12 @@
-import { taskRepository } from "../repositories/task.repository";
-import { projectRepository } from "../repositories/project.repository";
-import { userRepository } from "../repositories/user.repository";
 import { v4 as uuidv4 } from "uuid";
+import { projectRepository } from "../repositories/project.repository";
+import { taskRepository } from "../repositories/task.repository";
+import { userRepository } from "../repositories/user.repository";
 import type { Task } from "../types";
 import { activityService } from "./activity.service";
 
 export class TaskService {
-	async getAllTasks(userId?: string, role?: string): Promise<Task[]> {
+	async getAllTasks(_userId?: string, _role?: string): Promise<Task[]> {
 		const [tasks, projects] = await Promise.all([
 			taskRepository.findAll(),
 			projectRepository.findAll(),
@@ -17,19 +17,25 @@ export class TaskService {
 			if (p.key) validProjectIds.add(p.key.toLowerCase());
 		});
 		const validTasks = tasks.filter(
-			(t) => t.projectId && validProjectIds.has(t.projectId.toLowerCase())
+			(t) => t.projectId && validProjectIds.has(t.projectId.toLowerCase()),
 		);
-		return validTasks.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+		return validTasks.sort(
+			(a, b) =>
+				new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+		);
 	}
 
 	async getTasksByProjectId(projectId: string): Promise<Task[]> {
 		const tasks = await taskRepository.findByProjectId(projectId);
-		return tasks.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+		return tasks.sort(
+			(a, b) =>
+				new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+		);
 	}
 
 	async createTask(
 		taskData: Omit<Task, "id" | "createdAt" | "updatedAt">,
-		userId?: string
+		userId?: string,
 	): Promise<Task> {
 		if (taskData.projectId && taskData.dueDate) {
 			const project = await projectRepository.findById(taskData.projectId);
@@ -39,7 +45,7 @@ export class TaskService {
 				if (taskDue > projectDue) {
 					const formattedProjDue = project.dueDate.split("T")[0];
 					throw new Error(
-						`Task due date must not cross the project target date (${formattedProjDue})`
+						`Task due date must not cross the project target date (${formattedProjDue})`,
 					);
 				}
 			}
@@ -86,7 +92,7 @@ export class TaskService {
 	async updateTask(
 		id: string,
 		updates: Partial<Task>,
-		userId?: string
+		userId?: string,
 	): Promise<Task | undefined> {
 		const existingTask = await taskRepository.findById(id);
 
@@ -100,7 +106,7 @@ export class TaskService {
 				if (taskDue > projectDue) {
 					const formattedProjDue = project.dueDate.split("T")[0];
 					throw new Error(
-						`Task due date must not cross the project target date (${formattedProjDue})`
+						`Task due date must not cross the project target date (${formattedProjDue})`,
 					);
 				}
 			}
@@ -120,7 +126,9 @@ export class TaskService {
 						(Array.isArray(project.members) &&
 							project.members.includes(updates.assigneeId));
 					if (!isMember) {
-						throw new Error("Add the member to the project and then assign task");
+						throw new Error(
+							"Add the member to the project and then assign task",
+						);
 					}
 				}
 			}
@@ -135,7 +143,11 @@ export class TaskService {
 		}
 
 		// Enforce step-by-step workflow transitions (no direct skipping to REVIEW or DONE)
-		if (updates.status && existingTask && updates.status !== existingTask.status) {
+		if (
+			updates.status &&
+			existingTask &&
+			updates.status !== existingTask.status
+		) {
 			const project = existingTask.projectId
 				? await projectRepository.findById(existingTask.projectId)
 				: null;
@@ -150,7 +162,7 @@ export class TaskService {
 
 			if (curIdx !== -1 && newIdx !== -1 && Math.abs(newIdx - curIdx) > 1) {
 				throw new Error(
-					`Tasks must move step by step through workflow stages (cannot skip directly from ${existingTask.status} to ${updates.status})`
+					`Tasks must move step by step through workflow stages (cannot skip directly from ${existingTask.status} to ${updates.status})`,
 				);
 			}
 		}
@@ -158,7 +170,7 @@ export class TaskService {
 		// Track all minor and major modifications
 		const changes: string[] = [];
 		const isStatusTransition = Boolean(
-			updates.status && existingTask && updates.status !== existingTask.status
+			updates.status && existingTask && updates.status !== existingTask.status,
 		);
 		const fromStatus = existingTask?.status;
 		const toStatus = updates.status;
@@ -167,15 +179,29 @@ export class TaskService {
 			changes.push(`status to ${toStatus}`);
 		}
 
-		if (updates.priority && existingTask && updates.priority !== existingTask.priority) {
-			changes.push(`priority from ${existingTask.priority} to ${updates.priority}`);
+		if (
+			updates.priority &&
+			existingTask &&
+			updates.priority !== existingTask.priority
+		) {
+			changes.push(
+				`priority from ${existingTask.priority} to ${updates.priority}`,
+			);
 		}
 
-		if (updates.title && existingTask && updates.title.trim() !== existingTask.title.trim()) {
+		if (
+			updates.title &&
+			existingTask &&
+			updates.title.trim() !== existingTask.title.trim()
+		) {
 			changes.push(`renamed to "${updates.title.trim()}"`);
 		}
 
-		if (updates.assigneeId !== undefined && existingTask && updates.assigneeId !== existingTask.assigneeId) {
+		if (
+			updates.assigneeId !== undefined &&
+			existingTask &&
+			updates.assigneeId !== existingTask.assigneeId
+		) {
 			if (updates.assigneeId) {
 				const assignee = await userRepository.findById(updates.assigneeId);
 				changes.push(`assigned to ${assignee?.name || "team member"}`);
@@ -184,7 +210,11 @@ export class TaskService {
 			}
 		}
 
-		if (updates.dueDate !== undefined && existingTask && updates.dueDate !== existingTask.dueDate) {
+		if (
+			updates.dueDate !== undefined &&
+			existingTask &&
+			updates.dueDate !== existingTask.dueDate
+		) {
 			if (updates.dueDate) {
 				const due = new Date(updates.dueDate).toLocaleDateString("en-US", {
 					month: "short",
@@ -197,7 +227,11 @@ export class TaskService {
 			}
 		}
 
-		if (updates.startDate !== undefined && existingTask && updates.startDate !== existingTask.startDate) {
+		if (
+			updates.startDate !== undefined &&
+			existingTask &&
+			updates.startDate !== existingTask.startDate
+		) {
 			if (updates.startDate) {
 				const start = new Date(updates.startDate).toLocaleDateString("en-US", {
 					month: "short",
@@ -210,19 +244,35 @@ export class TaskService {
 			}
 		}
 
-		if (updates.estimatedTime !== undefined && existingTask && updates.estimatedTime !== existingTask.estimatedTime) {
+		if (
+			updates.estimatedTime !== undefined &&
+			existingTask &&
+			updates.estimatedTime !== existingTask.estimatedTime
+		) {
 			changes.push(`estimate to ${updates.estimatedTime}h`);
 		}
 
-		if (updates.taskType && existingTask && updates.taskType !== existingTask.taskType) {
+		if (
+			updates.taskType &&
+			existingTask &&
+			updates.taskType !== existingTask.taskType
+		) {
 			changes.push(`type to ${updates.taskType}`);
 		}
 
-		if (updates.description !== undefined && existingTask && updates.description !== existingTask.description) {
+		if (
+			updates.description !== undefined &&
+			existingTask &&
+			updates.description !== existingTask.description
+		) {
 			changes.push("updated description");
 		}
 
-		if (updates.tags && existingTask && JSON.stringify(updates.tags) !== JSON.stringify(existingTask.tags)) {
+		if (
+			updates.tags &&
+			existingTask &&
+			JSON.stringify(updates.tags) !== JSON.stringify(existingTask.tags)
+		) {
 			changes.push("updated tags");
 		}
 
@@ -288,7 +338,7 @@ export class TaskService {
 				title: `${rest.title} (Copy)`,
 				status: "TODO", // reset status for duplicated tasks
 			},
-			userId
+			userId,
 		);
 	}
 }

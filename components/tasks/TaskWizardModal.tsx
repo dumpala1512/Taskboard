@@ -1,12 +1,12 @@
 import { ChevronLeft, ChevronRight, Loader2, Save, X } from "lucide-react";
 import { useRouter } from "next/router";
 import React, { useEffect, useState } from "react";
-import { Portal } from "../ui/Portal";
 import { toast } from "react-hot-toast";
-import { useCreateTask, useUpdateTask } from "../../hooks/useTasks";
 import { useProjects } from "../../hooks/useProjects";
+import { useCreateTask, useUpdateTask } from "../../hooks/useTasks";
 import type { Task } from "../../server/types";
 import { Button } from "../ui/Button";
+import { Portal } from "../ui/Portal";
 import { Step1BasicInfo } from "./wizard/Step1BasicInfo";
 import { Step2Assignment } from "./wizard/Step2Assignment";
 import { Step3Details } from "./wizard/Step3Details";
@@ -36,22 +36,25 @@ export function TaskWizardModal({
 	const updateTask = useUpdateTask();
 	const router = useRouter();
 
-	const initialFormData = {
-		title: "",
-		description: "",
-		projectId: initialProjectId || "",
-		priority: "MEDIUM",
-		taskType: "",
-		assigneeId: "",
-		status: "TODO",
-		startDate: "",
-		dueDate: "",
-		estimatedTime: null as number | null,
-		tags: [],
-		attachments: [],
-		notes: "",
-		isDraft: false,
-	};
+	const initialFormData = React.useMemo(
+		() => ({
+			title: "",
+			description: "",
+			projectId: initialProjectId || "",
+			priority: "MEDIUM",
+			taskType: "",
+			assigneeId: "",
+			status: "TODO",
+			startDate: "",
+			dueDate: "",
+			estimatedTime: null as number | null,
+			tags: [],
+			attachments: [],
+			notes: "",
+			isDraft: false,
+		}),
+		[initialProjectId],
+	);
 
 	const [formData, setFormData] = useState<any>(initialFormData);
 
@@ -77,7 +80,7 @@ export function TaskWizardModal({
 		} else {
 			setFormData(initialFormData);
 		}
-	}, [isOpen, taskToEdit]);
+	}, [isOpen, taskToEdit, initialFormData]);
 
 	if (!isOpen) return null;
 
@@ -227,10 +230,7 @@ export function TaskWizardModal({
 					if (due > projectDue) {
 						const formattedProjDue = project.dueDate.split("T")[0];
 						next.dueDate = `Task due date must not cross the project target date (${formattedProjDue})`;
-					} else if (
-						next.dueDate &&
-						next.dueDate.startsWith("Task due date must not cross")
-					) {
+					} else if (next.dueDate?.startsWith("Task due date must not cross")) {
 						delete next.dueDate;
 					}
 				}
@@ -333,14 +333,17 @@ export function TaskWizardModal({
 					const colIds = project?.columns?.length
 						? project.columns.map((c) => c.id)
 						: defaultCols;
-					const workflow = ["BACKLOG", ...colIds.filter((c) => c !== "BACKLOG")];
+					const workflow = [
+						"BACKLOG",
+						...colIds.filter((c) => c !== "BACKLOG"),
+					];
 
 					const curIdx = workflow.indexOf(taskToEdit.status);
 					const newIdx = workflow.indexOf(submitData.status);
 
 					if (curIdx !== -1 && newIdx !== -1 && Math.abs(newIdx - curIdx) > 1) {
 						toast.error(
-							`Tasks must move step by step through workflow stages (cannot skip directly from "${taskToEdit.status}" to "${submitData.status}").`
+							`Tasks must move step by step through workflow stages (cannot skip directly from "${taskToEdit.status}" to "${submitData.status}").`,
 						);
 						setIsSubmitting(false);
 						return;
@@ -370,41 +373,41 @@ export function TaskWizardModal({
 
 	return (
 		<Portal>
-		<div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-[#33475B]/20 backdrop-blur-sm overflow-y-auto">
-			<div className="bg-white dark:bg-[#131B2E] rounded-md shadow-[0_4px_20px_rgba(0,0,0,0.12)] border border-[#E0E3E8] dark:border-[#222F49] w-full max-w-3xl flex flex-col my-8 h-[700px] max-h-[90vh]">
-				{/* Header */}
-				<div className="flex justify-between items-center px-6 py-4 border-b border-[#E0E3E8] dark:border-[#222F49] bg-white dark:bg-[#131B2E] rounded-t-[6px] shrink-0">
-					<div>
-						<h2 className="text-lg font-semibold text-[#33475B] dark:text-slate-100">
-							{taskToEdit ? "Edit Task" : "Create Task"}
-						</h2>
-						<p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-							Step {step} of 4: {STEPS[step - 1]}
-						</p>
+			<div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-[#33475B]/20 backdrop-blur-sm overflow-y-auto">
+				<div className="bg-white dark:bg-[#131B2E] rounded-md shadow-[0_4px_20px_rgba(0,0,0,0.12)] border border-[#E0E3E8] dark:border-[#222F49] w-full max-w-3xl flex flex-col my-8 h-[700px] max-h-[90vh]">
+					{/* Header */}
+					<div className="flex justify-between items-center px-6 py-4 border-b border-[#E0E3E8] dark:border-[#222F49] bg-white dark:bg-[#131B2E] rounded-t-[6px] shrink-0">
+						<div>
+							<h2 className="text-lg font-semibold text-[#33475B] dark:text-slate-100">
+								{taskToEdit ? "Edit Task" : "Create Task"}
+							</h2>
+							<p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+								Step {step} of 4: {STEPS[step - 1]}
+							</p>
+						</div>
+						<button
+							onClick={handleClose}
+							className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+						>
+							<X className="w-6 h-6" />
+						</button>
 					</div>
-					<button
-						onClick={handleClose}
-						className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
-					>
-						<X className="w-6 h-6" />
-					</button>
-				</div>
 
-				{/* Progress Bar */}
-				<div className="px-10 sm:px-16 pt-4 pb-12 shrink-0">
-					<div className="flex items-center justify-between relative">
-						<div className="absolute left-0 top-1/2 -translate-y-1/2 w-full h-1 bg-slate-100 dark:bg-slate-800 rounded-full" />
-						<div
-							className="absolute left-0 top-1/2 -translate-y-1/2 h-1 bg-indigo-600 transition-all duration-300 rounded-full"
-							style={{ width: `${((step - 1) / 3) * 100}%` }}
-						/>
-						{STEPS.map((label, i) => (
+					{/* Progress Bar */}
+					<div className="px-10 sm:px-16 pt-4 pb-12 shrink-0">
+						<div className="flex items-center justify-between relative">
+							<div className="absolute left-0 top-1/2 -translate-y-1/2 w-full h-1 bg-slate-100 dark:bg-slate-800 rounded-full" />
 							<div
-								key={label}
-								className="relative z-10 flex flex-col items-center"
-							>
+								className="absolute left-0 top-1/2 -translate-y-1/2 h-1 bg-indigo-600 transition-all duration-300 rounded-full"
+								style={{ width: `${((step - 1) / 3) * 100}%` }}
+							/>
+							{STEPS.map((label, i) => (
 								<div
-									className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors border-2
+									key={label}
+									className="relative z-10 flex flex-col items-center"
+								>
+									<div
+										className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors border-2
 										${
 											step > i + 1
 												? "bg-indigo-600 border-indigo-600 text-white"
@@ -412,88 +415,88 @@ export function TaskWizardModal({
 													? "bg-white dark:bg-[#131B2E] border-indigo-600 text-indigo-600 dark:text-indigo-400"
 													: "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-400 dark:text-slate-500"
 										}`}
-								>
-									{i + 1}
-								</div>
-								<span
-									className={`absolute top-10 text-xs whitespace-nowrap hidden sm:block font-medium
+									>
+										{i + 1}
+									</div>
+									<span
+										className={`absolute top-10 text-xs whitespace-nowrap hidden sm:block font-medium
 									${step >= i + 1 ? "text-slate-900 dark:text-slate-200" : "text-slate-400 dark:text-slate-500"}`}
-								>
-									{label}
-								</span>
-							</div>
-						))}
+									>
+										{label}
+									</span>
+								</div>
+							))}
+						</div>
 					</div>
-				</div>
 
-				{/* Content */}
-				<div className="p-6 overflow-y-auto flex-1 mt-0">
-					{step === 1 && (
-						<Step1BasicInfo
-							formData={formData}
-							setFormData={setFormData}
-							errors={errors}
-							isFixedProject={!!initialProjectId}
-							onBlurField={handleBlurField}
-						/>
-					)}
-					{step === 2 && (
-						<Step2Assignment
-							formData={formData}
-							setFormData={setFormData}
-							errors={errors}
-							onBlurField={handleBlurField}
-							taskToEdit={taskToEdit}
-						/>
-					)}
-					{step === 3 && (
-						<Step3Details
-							formData={formData}
-							setFormData={setFormData}
-							errors={errors}
-						/>
-					)}
-					{step === 4 && <Step4Review formData={formData} />}
-				</div>
+					{/* Content */}
+					<div className="p-6 overflow-y-auto flex-1 mt-0">
+						{step === 1 && (
+							<Step1BasicInfo
+								formData={formData}
+								setFormData={setFormData}
+								errors={errors}
+								isFixedProject={!!initialProjectId}
+								onBlurField={handleBlurField}
+							/>
+						)}
+						{step === 2 && (
+							<Step2Assignment
+								formData={formData}
+								setFormData={setFormData}
+								errors={errors}
+								onBlurField={handleBlurField}
+								taskToEdit={taskToEdit}
+							/>
+						)}
+						{step === 3 && (
+							<Step3Details
+								formData={formData}
+								setFormData={setFormData}
+								errors={errors}
+							/>
+						)}
+						{step === 4 && <Step4Review formData={formData} />}
+					</div>
 
-				{/* Footer */}
-				<div className="px-6 py-4 border-t border-[#E0E3E8] dark:border-[#222F49] bg-[#F8FAFC] dark:bg-[#0E1526] rounded-b-md flex items-center justify-end shrink-0">
-					<div className="flex items-center gap-3">
-						{step > 1 && (
-							<Button
-								variant="secondary"
-								onClick={prevStep}
-								disabled={isSubmitting}
-								leftIcon={<ChevronLeft className="w-4 h-4" />}
-							>
-								Back
-							</Button>
-						)}
-						{step < 4 ? (
-							<Button
-								variant="primary"
-								onClick={nextStep}
-								rightIcon={<ChevronRight className="w-4 h-4" />}
-								disabled={isContinueDisabled()}
-							>
-								Continue
-							</Button>
-						) : (
-							<Button
-								variant="primary"
-								onClick={handleSubmit}
-								disabled={isSubmitting || !isStep1Valid || !isStep2Valid}
-							>
-								{isSubmitting && (
-									<Loader2 className="w-4 h-4 mr-2 animate-spin" />
-								)}
-								{taskToEdit ? "Update Task" : "Create Task"}
-							</Button>
-						)}
+					{/* Footer */}
+					<div className="px-6 py-4 border-t border-[#E0E3E8] dark:border-[#222F49] bg-[#F8FAFC] dark:bg-[#0E1526] rounded-b-md flex items-center justify-end shrink-0">
+						<div className="flex items-center gap-3">
+							{step > 1 && (
+								<Button
+									variant="secondary"
+									onClick={prevStep}
+									disabled={isSubmitting}
+									leftIcon={<ChevronLeft className="w-4 h-4" />}
+								>
+									Back
+								</Button>
+							)}
+							{step < 4 ? (
+								<Button
+									variant="primary"
+									onClick={nextStep}
+									rightIcon={<ChevronRight className="w-4 h-4" />}
+									disabled={isContinueDisabled()}
+								>
+									Continue
+								</Button>
+							) : (
+								<Button
+									variant="primary"
+									onClick={handleSubmit}
+									disabled={isSubmitting || !isStep1Valid || !isStep2Valid}
+								>
+									{isSubmitting && (
+										<Loader2 className="w-4 h-4 mr-2 animate-spin" />
+									)}
+									{taskToEdit ? "Update Task" : "Create Task"}
+								</Button>
+							)}
+						</div>
 					</div>
 				</div>
 			</div>
-		</div>
 		</Portal>
 	);
 }

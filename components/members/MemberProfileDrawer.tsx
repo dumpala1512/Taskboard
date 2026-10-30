@@ -8,10 +8,10 @@ import {
 	User,
 	X,
 } from "lucide-react";
+import { useSession } from "next-auth/react";
 import React from "react";
 import { toast } from "react-hot-toast";
-import { useSession } from "next-auth/react";
-import { useDeleteUser, type UserDetailed } from "../../hooks/useUsers";
+import { type UserDetailed, useDeleteUser } from "../../hooks/useUsers";
 import { ConfirmDialog } from "../ui/ConfirmDialog";
 import { Portal } from "../ui/Portal";
 
@@ -49,13 +49,17 @@ export default function MemberProfileDrawer({
 
 	if (!isOpen || !user) return null;
 
-	const formattedJoiningDate = user.joiningDate || user.createdAt
-		? new Date(user.joiningDate || user.createdAt).toLocaleDateString("en-US", {
-				month: "long",
-				day: "numeric",
-				year: "numeric",
-		  })
-		: "—";
+	const formattedJoiningDate =
+		user.joiningDate || user.createdAt
+			? new Date(user.joiningDate || user.createdAt).toLocaleDateString(
+					"en-US",
+					{
+						month: "long",
+						day: "numeric",
+						year: "numeric",
+					},
+				)
+			: "—";
 
 	return (
 		<Portal>
@@ -91,8 +95,12 @@ export default function MemberProfileDrawer({
 							className="w-20 h-20 rounded-full border border-slate-200 dark:border-[#222F49] shrink-0 object-cover"
 						/>
 						<div className="min-w-0 flex-1">
-							<h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 truncate">{user.name}</h3>
-							<p className="text-sm text-slate-500 dark:text-slate-400 truncate">{user.email}</p>
+							<h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 truncate">
+								{user.name}
+							</h3>
+							<p className="text-sm text-slate-500 dark:text-slate-400 truncate">
+								{user.email}
+							</p>
 							<div className="mt-3 flex flex-wrap items-center gap-2">
 								<span
 									className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold ${
@@ -127,7 +135,9 @@ export default function MemberProfileDrawer({
 							<div className="flex items-center gap-3 p-3 rounded-lg border border-slate-100 dark:border-[#222F49] bg-slate-50/50 dark:bg-[#1A233A]">
 								<Mail className="w-4 h-4 text-slate-400 dark:text-slate-400 shrink-0" />
 								<div className="min-w-0 flex-1">
-									<p className="text-xs text-slate-500 dark:text-slate-400">Email Address</p>
+									<p className="text-xs text-slate-500 dark:text-slate-400">
+										Email Address
+									</p>
 									<p className="text-sm font-medium text-slate-900 dark:text-slate-100 truncate">
 										{user.email || "—"}
 									</p>
@@ -137,7 +147,9 @@ export default function MemberProfileDrawer({
 							<div className="flex items-center gap-3 p-3 rounded-lg border border-slate-100 dark:border-[#222F49] bg-slate-50/50 dark:bg-[#1A233A]">
 								<User className="w-4 h-4 text-slate-400 dark:text-slate-400 shrink-0" />
 								<div className="min-w-0 flex-1">
-									<p className="text-xs text-slate-500 dark:text-slate-400">Designation / Role</p>
+									<p className="text-xs text-slate-500 dark:text-slate-400">
+										Designation / Role
+									</p>
 									<p className="text-sm font-medium text-slate-900 dark:text-slate-100 truncate">
 										{user.jobTitle || user.role || "—"}
 									</p>
@@ -147,7 +159,9 @@ export default function MemberProfileDrawer({
 							<div className="flex items-center gap-3 p-3 rounded-lg border border-slate-100 dark:border-[#222F49] bg-slate-50/50 dark:bg-[#1A233A]">
 								<Building2 className="w-4 h-4 text-slate-400 dark:text-slate-400 shrink-0" />
 								<div className="min-w-0 flex-1">
-									<p className="text-xs text-slate-500 dark:text-slate-400">Department</p>
+									<p className="text-xs text-slate-500 dark:text-slate-400">
+										Department
+									</p>
 									<p className="text-sm font-medium text-slate-900 dark:text-slate-100 truncate">
 										{user.department || "—"}
 									</p>
@@ -158,7 +172,9 @@ export default function MemberProfileDrawer({
 								<div className="flex items-center gap-3 p-3 rounded-lg border border-slate-100 dark:border-[#222F49] bg-slate-50/50 dark:bg-[#1A233A]">
 									<Phone className="w-4 h-4 text-slate-400 dark:text-slate-400 shrink-0" />
 									<div className="min-w-0 flex-1">
-										<p className="text-xs text-slate-500 dark:text-slate-400">Phone</p>
+										<p className="text-xs text-slate-500 dark:text-slate-400">
+											Phone
+										</p>
 										<p className="text-sm font-medium text-slate-900 dark:text-slate-100 truncate">
 											{user.phone}
 										</p>
@@ -169,7 +185,9 @@ export default function MemberProfileDrawer({
 							<div className="flex items-center gap-3 p-3 rounded-lg border border-slate-100 dark:border-[#222F49] bg-slate-50/50 dark:bg-[#1A233A]">
 								<Calendar className="w-4 h-4 text-slate-400 dark:text-slate-400 shrink-0" />
 								<div className="min-w-0 flex-1">
-									<p className="text-xs text-slate-500 dark:text-slate-400">Member Since</p>
+									<p className="text-xs text-slate-500 dark:text-slate-400">
+										Member Since
+									</p>
 									<p className="text-sm font-medium text-slate-900 dark:text-slate-100 truncate">
 										{formattedJoiningDate}
 									</p>
@@ -186,8 +204,8 @@ export default function MemberProfileDrawer({
 							</h4>
 							<div className="bg-red-50 dark:bg-red-950/20 p-4 rounded-lg border border-red-100 dark:border-red-900/40">
 								<p className="text-sm text-red-800 dark:text-red-300 mb-3">
-									Deleting this user will permanently remove them from the system.
-									This action cannot be undone.
+									Deleting this user will permanently remove them from the
+									system. This action cannot be undone.
 								</p>
 								<button
 									onClick={() => setIsDeleteDialogOpen(true)}

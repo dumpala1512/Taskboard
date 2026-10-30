@@ -25,7 +25,10 @@ export function TaskSummary({ task }: TaskSummaryProps) {
 	};
 
 	const getProgress = () => {
-		if (typeof (task as any).progress === "number" && !isNaN((task as any).progress)) {
+		if (
+			typeof (task as any).progress === "number" &&
+			!Number.isNaN((task as any).progress)
+		) {
 			return Math.min(100, Math.max(0, (task as any).progress));
 		}
 		switch (task.status) {
@@ -35,8 +38,6 @@ export function TaskSummary({ task }: TaskSummaryProps) {
 				return 75;
 			case "IN_PROGRESS":
 				return 50;
-			case "TODO":
-			case "BACKLOG":
 			default:
 				return 0;
 		}
@@ -56,7 +57,9 @@ export function TaskSummary({ task }: TaskSummaryProps) {
 					<span className="text-2xl font-semibold text-gray-900 dark:text-slate-100">
 						{`${progress}%`}
 					</span>
-					<span className="text-sm text-gray-500 dark:text-slate-400 truncate">Status: {task.status}</span>
+					<span className="text-sm text-gray-500 dark:text-slate-400 truncate">
+						Status: {task.status}
+					</span>
 				</div>
 				<div className="w-full bg-gray-200 dark:bg-slate-700 rounded-full h-2 mt-3">
 					<div
@@ -109,7 +112,9 @@ export function TaskSummary({ task }: TaskSummaryProps) {
 								</span>
 							))
 						) : (
-							<span className="text-xs text-gray-400 dark:text-slate-500">No tags</span>
+							<span className="text-xs text-gray-400 dark:text-slate-500">
+								No tags
+							</span>
 						)}
 					</div>
 				</div>

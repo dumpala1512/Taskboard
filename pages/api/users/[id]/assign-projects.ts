@@ -10,7 +10,7 @@ export default async function handler(
 ) {
 	const session = await getServerSession(req, res, authOptions);
 
-	if (!session || !session.user || (session.user as any).role !== "ADMIN") {
+	if (!session?.user || (session.user as any).role !== "ADMIN") {
 		return res.status(403).json({ message: "Forbidden: Admins only" });
 	}
 
@@ -43,7 +43,9 @@ export default async function handler(
 				const project = allProjects.find((p) => p.id === projectId);
 				if (project) {
 					const members = project.members || [];
-					const hasMember = members.includes(user.id) || (user.email && members.includes(user.email));
+					const hasMember =
+						members.includes(user.id) ||
+						(user.email && members.includes(user.email));
 					if (!hasMember) {
 						await projectRepository.update(projectId, {
 							members: [...members, user.id],
@@ -103,7 +105,8 @@ export default async function handler(
 				const isAssignee = task.assigneeId === userId;
 				const nextAssignees = task.assignees?.filter((a) => a !== userId) || [];
 				const nextAssigneeId = isAssignee ? "" : task.assigneeId;
-				const nextStatus = !nextAssigneeId && task.status === "TODO" ? "BACKLOG" : task.status;
+				const nextStatus =
+					!nextAssigneeId && task.status === "TODO" ? "BACKLOG" : task.status;
 				await import("../../../../server/repositories/task.repository").then(
 					(m) =>
 						m.taskRepository.update(task.id, {

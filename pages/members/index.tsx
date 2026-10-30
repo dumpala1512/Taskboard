@@ -4,12 +4,12 @@ import { useRouter } from "next/router";
 import { useSession } from "next-auth/react";
 import React, { useEffect, useState } from "react";
 import { AppLayout } from "../../components/layout/AppLayout";
+import { CreateUserModal } from "../../components/members/CreateUserModal";
 import MembersStats from "../../components/members/MembersStats";
 import MembersTable from "../../components/members/MembersTable";
-import { CreateUserModal } from "../../components/members/CreateUserModal";
-import { useAdminUsers } from "../../hooks/useUsers";
-import { Skeleton } from "../../components/ui/Skeleton";
 import { Button } from "../../components/ui/Button";
+import { Skeleton } from "../../components/ui/Skeleton";
+import { useAdminUsers } from "../../hooks/useUsers";
 
 export default function MembersPage() {
 	const router = useRouter();
@@ -43,8 +43,10 @@ export default function MembersPage() {
 					<div className="w-full space-y-4">
 						{/* Header and Search */}
 						<div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3 sm:gap-4 pt-1 sm:pt-2 pb-3 sm:pb-4">
-							<h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-slate-100">Team Members</h1>
-							
+							<h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-slate-100">
+								Team Members
+							</h1>
+
 							<div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
 								<div className="relative flex-1 sm:w-64">
 									<Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
@@ -82,7 +84,7 @@ export default function MembersPage() {
 											</tr>
 										</thead>
 										<tbody className="divide-y divide-slate-200">
-											{[1, 2, 3, 4, 5].map(i => (
+											{[1, 2, 3, 4, 5].map((i) => (
 												<tr key={i}>
 													<td className="px-6 py-4 whitespace-nowrap">
 														<div className="flex items-center">
@@ -90,9 +92,15 @@ export default function MembersPage() {
 															<Skeleton className="h-4 w-32" />
 														</div>
 													</td>
-													<td className="px-6 py-4 whitespace-nowrap"><Skeleton className="h-4 w-40" /></td>
-													<td className="px-6 py-4 whitespace-nowrap"><Skeleton className="h-4 w-24" /></td>
-													<td className="px-6 py-4 whitespace-nowrap"><Skeleton className="h-4 w-32" /></td>
+													<td className="px-6 py-4 whitespace-nowrap">
+														<Skeleton className="h-4 w-40" />
+													</td>
+													<td className="px-6 py-4 whitespace-nowrap">
+														<Skeleton className="h-4 w-24" />
+													</td>
+													<td className="px-6 py-4 whitespace-nowrap">
+														<Skeleton className="h-4 w-32" />
+													</td>
 												</tr>
 											))}
 										</tbody>
@@ -110,12 +118,12 @@ export default function MembersPage() {
 				</div>
 			</div>
 
-			<CreateUserModal 
-				isOpen={isCreateModalOpen} 
-				onClose={() => setIsCreateModalOpen(false)} 
+			<CreateUserModal
+				isOpen={isCreateModalOpen}
+				onClose={() => setIsCreateModalOpen(false)}
 				onSuccess={() => {
 					refetch();
-				}} 
+				}}
 			/>
 		</AppLayout>
 	);

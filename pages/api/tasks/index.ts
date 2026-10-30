@@ -1,5 +1,5 @@
-import type { NextApiRequest, NextApiResponse } from "next";
 import axios from "axios";
+import type { NextApiRequest, NextApiResponse } from "next";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "../auth/[...nextauth]";
 
@@ -47,10 +47,9 @@ export default async function handler(
 	} catch (error: any) {
 		console.error("Error proxying /tasks to backend:", error?.message);
 		const status = error.response?.status || 500;
-		const data =
-			error.response?.data || {
-				message: error?.message || "Internal server error",
-			};
+		const data = error.response?.data || {
+			message: error?.message || "Internal server error",
+		};
 		return res.status(status).json(data);
 	}
 }

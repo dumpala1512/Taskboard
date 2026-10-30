@@ -1,7 +1,7 @@
-import { NextApiRequest, NextApiResponse } from "next";
+import type { NextApiRequest, NextApiResponse } from "next";
 import { getServerSession } from "next-auth/next";
-import { authOptions } from "./[...nextauth]";
 import { authService } from "../../../server/services/auth.service";
+import { authOptions } from "./[...nextauth]";
 
 export default async function handler(
 	req: NextApiRequest,
@@ -14,7 +14,12 @@ export default async function handler(
 	try {
 		const session = await getServerSession(req, res, authOptions);
 
-		const { currentPassword, newPassword, email: bodyEmail, userId: bodyUserId } = req.body;
+		const {
+			currentPassword,
+			newPassword,
+			email: bodyEmail,
+			userId: bodyUserId,
+		} = req.body;
 
 		const userEmail = session?.user?.email || bodyEmail;
 		const userId = (session?.user as any)?.id || bodyUserId;
@@ -26,8 +31,13 @@ export default async function handler(
 		if (!currentPassword || !newPassword) {
 			return res.status(400).json({ message: "Missing required fields" });
 		}
-		
-		const updated = await authService.setupAccount(userId || userEmail, currentPassword, newPassword, userEmail);
+
+		const updated = await authService.setupAccount(
+			userId || userEmail,
+			currentPassword,
+			newPassword,
+			userEmail,
+		);
 
 		return res.status(200).json({
 			message: "Account setup successful",
@@ -40,6 +50,8 @@ export default async function handler(
 		});
 	} catch (error: any) {
 		console.error("Account setup error:", error);
-		return res.status(400).json({ message: error.message || "Failed to setup account" });
+		return res
+			.status(400)
+			.json({ message: error.message || "Failed to setup account" });
 	}
 }

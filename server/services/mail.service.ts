@@ -1,5 +1,5 @@
-import nodemailer from "nodemailer";
 import type { Transporter } from "nodemailer";
+import nodemailer from "nodemailer";
 import { Resend } from "resend";
 
 export interface SendPasswordResetOptions {
@@ -27,7 +27,9 @@ export class MailService {
 		// 1. Check for Resend API Key
 		const resendApiKey =
 			process.env.RESEND_API_KEY ||
-			(process.env.SMTP_PASSWORD?.startsWith("re_") ? process.env.SMTP_PASSWORD : null);
+			(process.env.SMTP_PASSWORD?.startsWith("re_")
+				? process.env.SMTP_PASSWORD
+				: null);
 
 		if (resendApiKey) {
 			try {
@@ -40,7 +42,9 @@ export class MailService {
 
 		// 2. Check for SMTP credentials
 		const host = process.env.SMTP_HOST;
-		const port = process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT, 10) : 587;
+		const port = process.env.SMTP_PORT
+			? parseInt(process.env.SMTP_PORT, 10)
+			: 587;
 		const secure = process.env.SMTP_SECURE === "true" || port === 465;
 		const user = process.env.SMTP_USER;
 		const pass = process.env.SMTP_PASSWORD || process.env.SMTP_PASS;
@@ -53,9 +57,16 @@ export class MailService {
 					secure,
 					auth: { user, pass },
 				});
-				console.log("[MailService] Configured SMTP transporter with:", host || "smtp.resend.com", user);
+				console.log(
+					"[MailService] Configured SMTP transporter with:",
+					host || "smtp.resend.com",
+					user,
+				);
 			} catch (error) {
-				console.error("[MailService] Failed to create nodemailer transporter:", error);
+				console.error(
+					"[MailService] Failed to create nodemailer transporter:",
+					error,
+				);
 			}
 		}
 
@@ -66,10 +77,18 @@ export class MailService {
 		if (this.resendClient) {
 			return process.env.RESEND_FROM || "Taskboard <onboarding@resend.dev>";
 		}
-		return process.env.SMTP_FROM || `"Taskboard" <${process.env.SMTP_USER || "onboarding@resend.dev"}>`;
+		return (
+			process.env.SMTP_FROM ||
+			`"Taskboard" <${process.env.SMTP_USER || "onboarding@resend.dev"}>`
+		);
 	}
 
-	private async dispatchEmail(to: string, subject: string, html: string, text: string): Promise<boolean> {
+	private async dispatchEmail(
+		to: string,
+		subject: string,
+		html: string,
+		text: string,
+	): Promise<boolean> {
 		this.init();
 		const from = this.getFromAddress();
 
@@ -93,7 +112,9 @@ export class MailService {
 					return false;
 				}
 
-				console.log(`[MailService: Resend] Email delivered to ${to}. ID: ${data?.id}`);
+				console.log(
+					`[MailService: Resend] Email delivered to ${to}. ID: ${data?.id}`,
+				);
 				return true;
 			} catch (err: any) {
 				console.error("[MailService: Resend Exception]", err?.message || err);
@@ -111,10 +132,15 @@ export class MailService {
 					html,
 					text,
 				});
-				console.log(`[MailService: SMTP] Email sent to ${to}. MessageId: ${info.messageId}`);
+				console.log(
+					`[MailService: SMTP] Email sent to ${to}. MessageId: ${info.messageId}`,
+				);
 				return true;
 			} catch (error: any) {
-				console.error(`[MailService: SMTP Failed] Failed to send email to ${to}:`, error?.message || error);
+				console.error(
+					`[MailService: SMTP Failed] Failed to send email to ${to}:`,
+					error?.message || error,
+				);
 				return false;
 			}
 		}
@@ -132,7 +158,11 @@ export class MailService {
 	/**
 	 * Send Password Reset Link Email
 	 */
-	async sendPasswordResetEmail({ to, name, resetUrl }: SendPasswordResetOptions): Promise<boolean> {
+	async sendPasswordResetEmail({
+		to,
+		name,
+		resetUrl,
+	}: SendPasswordResetOptions): Promise<boolean> {
 		const recipientName = name || "there";
 		const subject = "Reset your Taskboard password";
 
@@ -411,13 +441,13 @@ Taskboard Team
           <span class="cred-val">${to}</span>
         </div>
         ${
-			temporaryPassword
-				? `<div class="cred-row">
+					temporaryPassword
+						? `<div class="cred-row">
           <span class="cred-label">Temporary Password:</span>
           <span class="cred-val">${temporaryPassword}</span>
         </div>`
-				: ""
-		}
+						: ""
+				}
       </div>
 
       <div class="btn-container">

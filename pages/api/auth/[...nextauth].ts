@@ -1,9 +1,9 @@
+import bcrypt from "bcryptjs";
 import NextAuth, { type NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-import bcrypt from "bcryptjs";
-import { authService } from "../../../server/services/auth.service";
-import { userRepository } from "../../../server/repositories/user.repository";
 import { isUserDeleted, loadDb } from "../../../server/data";
+import { userRepository } from "../../../server/repositories/user.repository";
+import { authService } from "../../../server/services/auth.service";
 
 export const authOptions: NextAuthOptions = {
 	providers: [
@@ -60,7 +60,8 @@ export const authOptions: NextAuthOptions = {
 
 								return {
 									id: String(meData.id),
-									name: meData.full_name || meData.name || cleanEmail.split("@")[0],
+									name:
+										meData.full_name || meData.name || cleanEmail.split("@")[0],
 									email: meData.email,
 									role: userRole,
 									status: "ACTIVE",
@@ -74,10 +75,7 @@ export const authOptions: NextAuthOptions = {
 							console.warn("Backend rejected credentials for:", cleanEmail);
 							return null;
 						}
-					} catch (err) {
-						// Network connection to this candidate URL failed, try next candidate
-						continue;
-					}
+					} catch (err) {}
 				}
 
 				// Fallback to local authService if FastAPI is offline or local dev seed
@@ -86,17 +84,16 @@ export const authOptions: NextAuthOptions = {
 					return null;
 				}
 
-				const user = await authService.login(
-					cleanEmail,
-					credentials.password,
-				).catch(() => null);
+				const user = await authService
+					.login(cleanEmail, credentials.password)
+					.catch(() => null);
 
 				if (user) {
 					if (isUserDeleted(user.id) || isUserDeleted(user.email)) {
 						return null;
 					}
 					const isFirstLogin =
-						user.isFirstLogin === false || !!user.passwordChangedAt
+						user.isFirstLogin === false || user.passwordChangedAt
 							? false
 							: !!user.isFirstLogin;
 					return {
@@ -140,7 +137,10 @@ export const authOptions: NextAuthOptions = {
 			if (token.id && token.isFirstLogin) {
 				try {
 					const dbUser = await userRepository.findById(token.id as string);
-					if (dbUser && (dbUser.isFirstLogin === false || !!dbUser.passwordChangedAt)) {
+					if (
+						dbUser &&
+						(dbUser.isFirstLogin === false || !!dbUser.passwordChangedAt)
+					) {
 						token.isFirstLogin = false;
 					}
 				} catch (_) {}
@@ -149,7 +149,10 @@ export const authOptions: NextAuthOptions = {
 		},
 		async session({ session, token }) {
 			if (session.user && token.id) {
-				if (isUserDeleted(token.id as string) || isUserDeleted(session.user.email || undefined)) {
+				if (
+					isUserDeleted(token.id as string) ||
+					isUserDeleted(session.user.email || undefined)
+				) {
 					return null as any;
 				}
 				(session.user as any).id = token.id;

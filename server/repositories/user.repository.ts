@@ -1,5 +1,10 @@
 import { v4 as uuidv4 } from "uuid";
-import db, { loadDb, markUserDeleted, saveDb, unmarkUserDeleted } from "../data";
+import db, {
+	loadDb,
+	markUserDeleted,
+	saveDb,
+	unmarkUserDeleted,
+} from "../data";
 import type { User } from "../types";
 
 export class UserRepository {
@@ -92,7 +97,10 @@ export class UserRepository {
 		const freshDb = loadDb();
 		const targetId = id.toLowerCase();
 		const userToDelete = (freshDb.users || []).find(
-			(u: any) => u.id === id || u.id.toLowerCase() === targetId || (u.email && u.email.toLowerCase() === targetId),
+			(u: any) =>
+				u.id === id ||
+				u.id.toLowerCase() === targetId ||
+				(u.email && u.email.toLowerCase() === targetId),
 		);
 		if (userToDelete) {
 			markUserDeleted(userToDelete.id);
@@ -100,11 +108,21 @@ export class UserRepository {
 		}
 
 		const idsToRemove = new Set(
-			[id, targetId, userToDelete?.id, userToDelete?.id?.toLowerCase(), userToDelete?.email, userToDelete?.email?.toLowerCase()].filter(Boolean) as string[],
+			[
+				id,
+				targetId,
+				userToDelete?.id,
+				userToDelete?.id?.toLowerCase(),
+				userToDelete?.email,
+				userToDelete?.email?.toLowerCase(),
+			].filter(Boolean) as string[],
 		);
 
 		db.users = (freshDb.users || []).filter(
-			(u: any) => !idsToRemove.has(u.id) && !idsToRemove.has(u.id.toLowerCase()) && (!u.email || !idsToRemove.has(u.email.toLowerCase())),
+			(u: any) =>
+				!idsToRemove.has(u.id) &&
+				!idsToRemove.has(u.id.toLowerCase()) &&
+				(!u.email || !idsToRemove.has(u.email.toLowerCase())),
 		);
 		if (freshDb.projects) db.projects = freshDb.projects;
 		if (freshDb.tasks) db.tasks = freshDb.tasks;
@@ -113,9 +131,16 @@ export class UserRepository {
 		if (db.projects) {
 			db.projects.forEach((p: any) => {
 				if (p.members) {
-					p.members = p.members.filter((m: any) => !idsToRemove.has(m) && !idsToRemove.has(m.toLowerCase()));
+					p.members = p.members.filter(
+						(m: any) =>
+							!idsToRemove.has(m) && !idsToRemove.has(m.toLowerCase()),
+					);
 				}
-				if (p.ownerId && (idsToRemove.has(p.ownerId) || idsToRemove.has(p.ownerId.toLowerCase()))) {
+				if (
+					p.ownerId &&
+					(idsToRemove.has(p.ownerId) ||
+						idsToRemove.has(p.ownerId.toLowerCase()))
+				) {
 					p.ownerId = undefined;
 				}
 			});
@@ -124,11 +149,18 @@ export class UserRepository {
 		// Unassign user from all tasks
 		if (db.tasks) {
 			db.tasks.forEach((t: any) => {
-				if (t.assigneeId && (idsToRemove.has(t.assigneeId) || idsToRemove.has(t.assigneeId.toLowerCase()))) {
+				if (
+					t.assigneeId &&
+					(idsToRemove.has(t.assigneeId) ||
+						idsToRemove.has(t.assigneeId.toLowerCase()))
+				) {
 					t.assigneeId = null;
 				}
 				if (t.assignees) {
-					t.assignees = t.assignees.filter((a: string) => !idsToRemove.has(a) && !idsToRemove.has(a.toLowerCase()));
+					t.assignees = t.assignees.filter(
+						(a: string) =>
+							!idsToRemove.has(a) && !idsToRemove.has(a.toLowerCase()),
+					);
 				}
 			});
 		}

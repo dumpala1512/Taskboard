@@ -84,7 +84,9 @@ export function useUpdateProject() {
 		mutationFn: async ({ id, ...data }: Partial<Project> & { id: string }) => {
 			const payload: any = {
 				...(data.name !== undefined && { name: data.name }),
-				...(data.description !== undefined && { description: data.description }),
+				...(data.description !== undefined && {
+					description: data.description,
+				}),
 				...(data.status !== undefined && { status: data.status }),
 				...(data.key !== undefined && { key: data.key }),
 				...(data.ownerId !== undefined && { owner_id: data.ownerId }),
@@ -122,7 +124,7 @@ export function useDeleteProject() {
 						p &&
 						p.id !== deletedId &&
 						p.id?.toLowerCase() !== target &&
-						(!p.key || p.key.toLowerCase() !== target)
+						(!p.key || p.key.toLowerCase() !== target),
 				);
 			});
 			queryClient.invalidateQueries({ queryKey: ["projects"] });

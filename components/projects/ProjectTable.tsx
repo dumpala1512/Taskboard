@@ -1,9 +1,9 @@
-import React from "react";
+import { Clock, Edit2, Trash2 } from "lucide-react";
 import Link from "next/link";
-import { Edit2, Trash2, Clock } from "lucide-react";
-import type { Project } from "../../server/types";
-import { useUsers } from "../../hooks/useUsers";
 import { useSession } from "next-auth/react";
+import React from "react";
+import { useUsers } from "../../hooks/useUsers";
+import type { Project } from "../../server/types";
 
 interface ProjectTableProps {
 	projects: Project[];
@@ -11,7 +11,11 @@ interface ProjectTableProps {
 	onDelete?: (project: Project) => void;
 }
 
-export function ProjectTable({ projects, onEdit, onDelete }: ProjectTableProps) {
+export function ProjectTable({
+	projects,
+	onEdit,
+	onDelete,
+}: ProjectTableProps) {
 	const { data: session } = useSession();
 	const isAdmin = (session?.user as any)?.role === "ADMIN";
 	const { data: users = [] } = useUsers();
@@ -57,19 +61,31 @@ export function ProjectTable({ projects, onEdit, onDelete }: ProjectTableProps) 
 						<th className="px-6 py-4 font-medium">Status</th>
 						<th className="px-6 py-4 font-medium">Progress</th>
 						<th className="px-6 py-4 font-medium">Owner</th>
-						<th className="px-6 py-4 font-medium hidden md:table-cell">Members</th>
-						<th className="px-6 py-4 font-medium hidden sm:table-cell">Due Date</th>
-						{isAdmin && <th className="px-6 py-4 font-medium text-right">Actions</th>}
+						<th className="px-6 py-4 font-medium hidden md:table-cell">
+							Members
+						</th>
+						<th className="px-6 py-4 font-medium hidden sm:table-cell">
+							Due Date
+						</th>
+						{isAdmin && (
+							<th className="px-6 py-4 font-medium text-right">Actions</th>
+						)}
 					</tr>
 				</thead>
 				<tbody className="divide-y divide-gray-100 dark:divide-[#222F49]">
 					{projects.map((project) => {
-						const currentStatus = statusConfig[project.status] || statusConfig.ACTIVE;
+						const currentStatus =
+							statusConfig[project.status] || statusConfig.ACTIVE;
 						const owner = users.find((u) => u.id === project.ownerId);
-						const projectMembers = users.filter((u) => project.members.includes(u.id));
+						const projectMembers = users.filter((u) =>
+							project.members.includes(u.id),
+						);
 
 						return (
-							<tr key={project.id} className="hover:bg-gray-50 dark:hover:bg-[#1A233A] transition-colors group">
+							<tr
+								key={project.id}
+								className="hover:bg-gray-50 dark:hover:bg-[#1A233A] transition-colors group"
+							>
 								{/* Name */}
 								<td className="px-6 py-4">
 									<Link href={`/projects/${project.id}`}>
@@ -78,7 +94,9 @@ export function ProjectTable({ projects, onEdit, onDelete }: ProjectTableProps) 
 												{project.name}
 											</span>
 											<div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-												<span className="text-xs text-gray-500 dark:text-slate-400">{project.key || "PRJ"}</span>
+												<span className="text-xs text-gray-500 dark:text-slate-400">
+													{project.key || "PRJ"}
+												</span>
 												{project.tags && project.tags.length > 0 && (
 													<div className="flex items-center gap-1 flex-wrap">
 														{project.tags.slice(0, 2).map((tag) => (
@@ -100,7 +118,7 @@ export function ProjectTable({ projects, onEdit, onDelete }: ProjectTableProps) 
 										</div>
 									</Link>
 								</td>
-								
+
 								{/* Status */}
 								<td className="px-6 py-4">
 									<span
@@ -123,7 +141,9 @@ export function ProjectTable({ projects, onEdit, onDelete }: ProjectTableProps) 
 												style={{ width: `${project.progress}%` }}
 											/>
 										</div>
-										<span className="text-sm font-medium text-gray-700 dark:text-slate-200">{project.progress}%</span>
+										<span className="text-sm font-medium text-gray-700 dark:text-slate-200">
+											{project.progress}%
+										</span>
 									</div>
 								</td>
 
@@ -133,7 +153,9 @@ export function ProjectTable({ projects, onEdit, onDelete }: ProjectTableProps) 
 										<div className="w-6 h-6 rounded-full bg-indigo-100 dark:bg-indigo-950/70 text-indigo-700 dark:text-indigo-300 flex items-center justify-center text-xs font-medium">
 											{owner?.name.charAt(0) || "U"}
 										</div>
-										<span className="text-sm text-gray-600 dark:text-slate-300">{owner?.name || "Unassigned"}</span>
+										<span className="text-sm text-gray-600 dark:text-slate-300">
+											{owner?.name || "Unassigned"}
+										</span>
 									</div>
 								</td>
 
@@ -191,7 +213,10 @@ export function ProjectTable({ projects, onEdit, onDelete }: ProjectTableProps) 
 					})}
 					{projects.length === 0 && (
 						<tr>
-							<td colSpan={isAdmin ? 7 : 6} className="px-6 py-12 text-center text-gray-500 dark:text-slate-400">
+							<td
+								colSpan={isAdmin ? 7 : 6}
+								className="px-6 py-12 text-center text-gray-500 dark:text-slate-400"
+							>
 								No projects found.
 							</td>
 						</tr>

@@ -3,14 +3,16 @@ import Head from "next/head";
 import { useSession } from "next-auth/react";
 import React, { useState } from "react";
 import { AppLayout } from "../../components/layout/AppLayout";
+import { useProjects } from "../../hooks/useProjects";
 import { useTasks } from "../../hooks/useTasks";
 import { useUsers } from "../../hooks/useUsers";
-import { useProjects } from "../../hooks/useProjects";
 
 export default function Overview() {
 	const { data: session } = useSession();
 	const [selectedProjectId, setSelectedProjectId] = useState<string>("all");
-	const { data: tasks, isLoading: tasksLoading } = useTasks(selectedProjectId !== "all" ? selectedProjectId : undefined);
+	const { data: tasks, isLoading: tasksLoading } = useTasks(
+		selectedProjectId !== "all" ? selectedProjectId : undefined,
+	);
 	const { data: users } = useUsers();
 	const { data: projects = [] } = useProjects();
 
@@ -31,7 +33,10 @@ export default function Overview() {
 	}, [projects]);
 
 	const safeTasks: any[] = (tasks || []).filter(
-		(t) => t.projectId && (validProjectIds.size === 0 || validProjectIds.has(t.projectId.toLowerCase()))
+		(t) =>
+			t.projectId &&
+			(validProjectIds.size === 0 ||
+				validProjectIds.has(t.projectId.toLowerCase())),
 	);
 
 	// Filter tasks based on view and project
@@ -46,8 +51,10 @@ export default function Overview() {
 	).filter((t) => {
 		if (selectedProjectId === "all") return true;
 		return (
-			(t.projectId && t.projectId.toLowerCase() === selectedProjectId.toLowerCase()) ||
-			(t.projectKey && t.projectKey.toLowerCase() === selectedProjectId.toLowerCase())
+			(t.projectId &&
+				t.projectId.toLowerCase() === selectedProjectId.toLowerCase()) ||
+			(t.projectKey &&
+				t.projectKey.toLowerCase() === selectedProjectId.toLowerCase())
 		);
 	});
 
@@ -133,11 +140,18 @@ export default function Overview() {
 											onChange={(e) => setSelectedProjectId(e.target.value)}
 											className="appearance-none bg-[#F5F5F5] dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-gray-700 dark:text-slate-200 py-1.5 pl-3 pr-8 rounded-md text-xs font-medium focus:outline-none focus:ring-1 focus:ring-gray-400 dark:focus:ring-slate-600 max-w-[200px] truncate"
 										>
-											<option value="all" className="dark:bg-slate-800 dark:text-slate-200">
+											<option
+												value="all"
+												className="dark:bg-slate-800 dark:text-slate-200"
+											>
 												All Projects
 											</option>
 											{projects.map((p) => (
-												<option key={p.id} value={p.id} className="dark:bg-slate-800 dark:text-slate-200">
+												<option
+													key={p.id}
+													value={p.id}
+													className="dark:bg-slate-800 dark:text-slate-200"
+												>
 													{p.name} {p.key ? `(${p.key})` : ""}
 												</option>
 											))}

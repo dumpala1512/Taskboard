@@ -47,7 +47,9 @@ export default function KanbanColumn({
 						className="w-2 h-2 rounded-full flex-shrink-0"
 						style={{ background: dotColor }}
 					/>
-					<h3 className="text-sm font-semibold text-[#33475B] dark:text-slate-100">{title}</h3>
+					<h3 className="text-sm font-semibold text-[#33475B] dark:text-slate-100">
+						{title}
+					</h3>
 				</div>
 				<div className="flex items-center gap-2">
 					<span className="bg-[#F5F6F8] dark:bg-[#1A233A] text-[#6E7B8B] dark:text-slate-300 text-xs font-medium px-2 py-0.5 rounded-full border border-[#E0E3E8] dark:border-[#222F49]">

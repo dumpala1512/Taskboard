@@ -1,4 +1,4 @@
-import db, { loadDb, saveDb, markTaskDeleted } from "../data";
+import db, { loadDb, markTaskDeleted, saveDb } from "../data";
 import type { Task } from "../types";
 
 export class TaskRepository {
@@ -40,9 +40,13 @@ export class TaskRepository {
 		const index = db.tasks.findIndex((t: any) => t.id === id);
 		if (index === -1) return undefined;
 		const now = new Date().toISOString();
-		const isDone = (updates.status || "").toUpperCase() === "DONE" || (updates.status || "").toUpperCase() === "COMPLETED";
+		const isDone =
+			(updates.status || "").toUpperCase() === "DONE" ||
+			(updates.status || "").toUpperCase() === "COMPLETED";
 		const completedAt = isDone
-			? (updates as any).completedAt || (db.tasks[index] as any).completedAt || now
+			? (updates as any).completedAt ||
+				(db.tasks[index] as any).completedAt ||
+				now
 			: undefined;
 		db.tasks[index] = {
 			...db.tasks[index],

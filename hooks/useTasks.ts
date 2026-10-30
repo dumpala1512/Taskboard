@@ -8,9 +8,19 @@ function normalizeTask(raw: any): Task {
 	return {
 		...raw,
 		id: String(raw.id),
-		projectId: raw.project_id ? String(raw.project_id) : String(raw.projectId || ""),
-		assigneeId: raw.assignee_id ? String(raw.assignee_id) : (raw.assigneeId ? String(raw.assigneeId) : undefined),
-		assignees: Array.isArray(raw.assignees) ? raw.assignees : (raw.assignee_id ? [String(raw.assignee_id)] : []),
+		projectId: raw.project_id
+			? String(raw.project_id)
+			: String(raw.projectId || ""),
+		assigneeId: raw.assignee_id
+			? String(raw.assignee_id)
+			: raw.assigneeId
+				? String(raw.assigneeId)
+				: undefined,
+		assignees: Array.isArray(raw.assignees)
+			? raw.assignees
+			: raw.assignee_id
+				? [String(raw.assignee_id)]
+				: [],
 		startDate: raw.start_date || raw.startDate || null,
 		dueDate: raw.due_date || raw.dueDate || null,
 		estimatedTime: raw.estimated_time ?? raw.estimatedTime ?? null,
@@ -22,7 +32,6 @@ function normalizeTask(raw: any): Task {
 		updatedAt: raw.updated_at || raw.updatedAt || new Date().toISOString(),
 	} as Task;
 }
-
 
 export function useTasks(projectId?: string) {
 	return useQuery({

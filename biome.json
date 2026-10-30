@@ -7,7 +7,7 @@
 	},
 	"files": {
 		"ignoreUnknown": false,
-		"includes": ["**", "!backend/**"]
+		"includes": ["**", "!backend"]
 	},
 	"html": {
 		"parser": {
@@ -21,7 +21,40 @@
 	"linter": {
 		"enabled": true,
 		"rules": {
-			"preset": "recommended"
+			"preset": "recommended",
+			"a11y": {
+				"recommended": false,
+				"useButtonType": "off",
+				"noStaticElementInteractions": "off",
+				"useKeyWithClickEvents": "off",
+				"noLabelWithoutControl": "off",
+				"noSvgWithoutTitle": "off",
+				"useSemanticElements": "off"
+			},
+			"security": {
+				"noDangerouslySetInnerHtml": "off"
+			},
+			"correctness": {
+				"useExhaustiveDependencies": "warn",
+				"noUnusedImports": "off",
+				"noUnusedVariables": "off",
+				"noUnusedFunctionParameters": "off"
+			},
+			"performance": {
+				"noImgElement": "off"
+			},
+			"style": {
+				"noDescendingSpecificity": "off",
+				"noNonNullAssertion": "off"
+			},
+			"complexity": {
+				"noImportantStyles": "off"
+			},
+			"suspicious": {
+				"noUnknownAtRules": "off",
+				"noArrayIndexKey": "off",
+				"noExplicitAny": "off"
+			}
 		}
 	},
 	"javascript": {

@@ -1,7 +1,7 @@
+import { AlertTriangle, Loader2, X } from "lucide-react";
 import React from "react";
-import { Portal } from "./Portal";
-import { X, Loader2, AlertTriangle } from "lucide-react";
 import { Button } from "./Button";
+import { Portal } from "./Portal";
 
 interface ConfirmDialogProps {
 	isOpen: boolean;
@@ -34,7 +34,7 @@ export function ConfirmDialog({
 	checkboxLabel = "I understand this action is irreversible",
 	isProcessing = false,
 	onClose,
-	onConfirm
+	onConfirm,
 }: ConfirmDialogProps) {
 	const [isConfirmed, setIsConfirmed] = React.useState(false);
 
@@ -66,16 +66,24 @@ export function ConfirmDialog({
 					>
 						<X className="w-5 h-5" />
 					</button>
-					
+
 					<div className="p-6 pb-4 flex flex-col items-center text-center">
-						<div className={`w-12 h-12 rounded-full flex items-center justify-center mb-3 ${iconClassName}`}>
+						<div
+							className={`w-12 h-12 rounded-full flex items-center justify-center mb-3 ${iconClassName}`}
+						>
 							{icon}
 						</div>
-						<h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-4">{title}</h3>
-						
+						<h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-4">
+							{title}
+						</h3>
+
 						<div className="text-left w-full space-y-3 text-sm text-gray-600 dark:text-slate-300">
-							{typeof description === 'string' ? <p>{description}</p> : description}
-							
+							{typeof description === "string" ? (
+								<p>{description}</p>
+							) : (
+								description
+							)}
+
 							{requireCheckbox && (
 								<div className="pt-4 pb-2">
 									<label className="flex items-start gap-3 cursor-pointer group">
@@ -110,7 +118,11 @@ export function ConfirmDialog({
 							onClick={onConfirm}
 							disabled={isProcessing || !canConfirm}
 							className={`px-4 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed ${confirmButtonClassName}`}
-							leftIcon={isProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : undefined}
+							leftIcon={
+								isProcessing ? (
+									<Loader2 className="w-4 h-4 animate-spin" />
+								) : undefined
+							}
 						>
 							{isProcessing ? "Processing..." : confirmText}
 						</Button>

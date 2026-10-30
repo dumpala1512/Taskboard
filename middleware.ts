@@ -7,7 +7,11 @@ export default withAuth(
 		const path = req.nextUrl.pathname;
 
 		// Admin routes
-		if (path.startsWith("/admin") || path === "/members" || path.startsWith("/members/")) {
+		if (
+			path.startsWith("/admin") ||
+			path === "/members" ||
+			path.startsWith("/members/")
+		) {
 			if (token?.role !== "ADMIN") {
 				return NextResponse.rewrite(new URL("/access-denied", req.url));
 			}
@@ -21,7 +25,6 @@ export default withAuth(
 				return NextResponse.redirect(new URL("/dashboard", req.url));
 			}
 		}
-
 
 		return NextResponse.next();
 	},
@@ -47,4 +50,3 @@ export const config = {
 		"/settings/:path*",
 	],
 };
-

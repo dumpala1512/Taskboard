@@ -1,5 +1,5 @@
+import crypto from "node:crypto";
 import * as bcrypt from "bcryptjs";
-import crypto from "crypto";
 import { deletedUserIds } from "../data";
 import { userRepository } from "../repositories/user.repository";
 import type { User } from "../types";

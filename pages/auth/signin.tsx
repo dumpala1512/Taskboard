@@ -65,7 +65,10 @@ export default function SignIn() {
 				if (directRes.ok) {
 					const tokenData = await directRes.json();
 					if (tokenData.access_token) {
-						localStorage.setItem("taskboard_access_token", tokenData.access_token);
+						localStorage.setItem(
+							"taskboard_access_token",
+							tokenData.access_token,
+						);
 					}
 				}
 			} catch (_) {}

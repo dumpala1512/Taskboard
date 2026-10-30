@@ -9,7 +9,7 @@ import {
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useSession } from "next-auth/react";
-import React from "react";
+import type React from "react";
 
 interface SidebarProps {
 	isMobileOpen: boolean;
@@ -35,10 +35,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
 		const isActive =
 			item.href === "/"
 				? router.pathname === "/" ||
-				  router.pathname === "/dashboard" ||
-				  router.pathname.startsWith("/admin/dashboard")
+					router.pathname === "/dashboard" ||
+					router.pathname.startsWith("/admin/dashboard")
 				: router.pathname === item.href ||
-				  router.pathname.startsWith(`${item.href}/`);
+					router.pathname.startsWith(`${item.href}/`);
 		const Icon = item.icon;
 
 		return (

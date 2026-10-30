@@ -1,6 +1,6 @@
-import fs from "fs";
-import os from "os";
-import path from "path";
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
 import { seedDatabase } from "../database/seed";
 import type { Database } from "../types";
 
@@ -72,8 +72,16 @@ export function isUserDeleted(id?: string): boolean {
 }
 
 export function isProjectDeleted(id?: string, key?: string): boolean {
-	if (id && (deletedProjectIds.has(id) || deletedProjectIds.has(id.toLowerCase()))) return true;
-	if (key && (deletedProjectIds.has(key) || deletedProjectIds.has(key.toLowerCase()))) return true;
+	if (
+		id &&
+		(deletedProjectIds.has(id) || deletedProjectIds.has(id.toLowerCase()))
+	)
+		return true;
+	if (
+		key &&
+		(deletedProjectIds.has(key) || deletedProjectIds.has(key.toLowerCase()))
+	)
+		return true;
 	return false;
 }
 
@@ -85,9 +93,18 @@ export function isTaskDeleted(id?: string): boolean {
 export function attachDeletedHeaders(res: any) {
 	if (!res || typeof res.setHeader !== "function" || res.headersSent) return;
 	try {
-		res.setHeader("x-deleted-projects", JSON.stringify(Array.from(deletedProjectIds)));
-		res.setHeader("x-deleted-users", JSON.stringify(Array.from(deletedUserIds)));
-		res.setHeader("x-deleted-tasks", JSON.stringify(Array.from(deletedTaskIds)));
+		res.setHeader(
+			"x-deleted-projects",
+			JSON.stringify(Array.from(deletedProjectIds)),
+		);
+		res.setHeader(
+			"x-deleted-users",
+			JSON.stringify(Array.from(deletedUserIds)),
+		);
+		res.setHeader(
+			"x-deleted-tasks",
+			JSON.stringify(Array.from(deletedTaskIds)),
+		);
 	} catch (_) {}
 }
 
@@ -146,7 +163,10 @@ export function loadDb(): Database {
 				fs.writeFileSync(dbPath, initialData);
 			}
 		} catch (e) {
-			console.warn("Could not copy bundled db.json to /tmp, falling back to seed", e);
+			console.warn(
+				"Could not copy bundled db.json to /tmp, falling back to seed",
+				e,
+			);
 		}
 	}
 
@@ -154,7 +174,9 @@ export function loadDb(): Database {
 		try {
 			const stats = fs.statSync(dbPath);
 			if (stats.size > MAX_DB_SIZE_BYTES) {
-				console.warn(`db.json size (${stats.size} bytes) exceeds limit. Auto-clearing except admin user.`);
+				console.warn(
+					`db.json size (${stats.size} bytes) exceeds limit. Auto-clearing except admin user.`,
+				);
 				return clearDbExceptAdmin();
 			}
 
@@ -163,13 +185,19 @@ export function loadDb(): Database {
 
 			// Populate deleted IDs from disk
 			if (Array.isArray(parsed.deletedUserIds)) {
-				parsed.deletedUserIds.forEach((id: string) => markUserDeleted(id));
+				parsed.deletedUserIds.forEach((id: string) => {
+					markUserDeleted(id);
+				});
 			}
 			if (Array.isArray(parsed.deletedProjectIds)) {
-				parsed.deletedProjectIds.forEach((id: string) => markProjectDeleted(id));
+				parsed.deletedProjectIds.forEach((id: string) => {
+					markProjectDeleted(id);
+				});
 			}
 			if (Array.isArray(parsed.deletedTaskIds)) {
-				parsed.deletedTaskIds.forEach((id: string) => markTaskDeleted(id));
+				parsed.deletedTaskIds.forEach((id: string) => {
+					markTaskDeleted(id);
+				});
 			}
 
 			// Filter out permanently deleted entities

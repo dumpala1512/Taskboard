@@ -1,9 +1,9 @@
-import React from "react";
-import Link from "next/link";
 import { Clock, MoreVertical, Pencil, Trash2 } from "lucide-react";
-import type { Project } from "../../server/types";
-import { useUsers } from "../../hooks/useUsers";
+import Link from "next/link";
 import { useSession } from "next-auth/react";
+import React from "react";
+import { useUsers } from "../../hooks/useUsers";
+import type { Project } from "../../server/types";
 
 interface ProjectCardProps {
 	project: Project;
@@ -11,10 +11,7 @@ interface ProjectCardProps {
 	onDelete?: (project: Project) => void;
 }
 
-const STATUS_CONFIG: Record<
-	string,
-	{ label: string; className: string }
-> = {
+const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
 	PLANNING: {
 		label: "Planning",
 		className:
@@ -100,7 +97,8 @@ export function ProjectCard({ project, onEdit, onDelete }: ProjectCardProps) {
 									}}
 									className="w-full text-left px-3 py-1.5 text-sm text-[#33475B] dark:text-slate-200 hover:bg-[#F5F6F8] dark:hover:bg-[#1A233A] hover:text-[#1E88E5] dark:hover:text-sky-400 flex items-center gap-2 transition-colors"
 								>
-									<Pencil className="w-3.5 h-3.5 text-[#9EAAB7] dark:text-slate-400" /> Edit
+									<Pencil className="w-3.5 h-3.5 text-[#9EAAB7] dark:text-slate-400" />{" "}
+									Edit
 								</button>
 								<div className="border-t border-[#EEF0F3] dark:border-[#222F49] my-1" />
 								<button

@@ -310,8 +310,8 @@ export function CommentsTab({ taskId, isAssignee = false }: CommentsTabProps) {
 				</div>
 			) : (
 				<div className="mt-auto border-t border-gray-200 dark:border-[#222F49] pt-4">
-					<div className="bg-amber-50/80 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/80 rounded-lg p-3 text-xs text-amber-800 dark:text-amber-200 flex items-center space-x-2">
-						<Lock className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
+					<div className="bg-slate-50/80 dark:bg-[#1A233A] border border-slate-200 dark:border-[#222F49] rounded-lg p-3 text-xs text-slate-600 dark:text-slate-300 flex items-center space-x-2">
+						<Lock className="w-4 h-4 text-slate-500 dark:text-slate-400 shrink-0" />
 						<span>
 							Only the member assigned to this task (or an Admin) can add
 							comments.

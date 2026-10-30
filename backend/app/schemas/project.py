@@ -20,7 +20,6 @@ class CreateProjectRequest(BaseModel):
     owner_id: Optional[uuid.UUID] = Field(default=None, alias="ownerId", description="Project owner user ID")
     members: Optional[List[uuid.UUID]] = Field(default_factory=list, description="Initial team member IDs")
     tags: Optional[List[str]] = Field(default_factory=list, description="Project tags")
-    progress: Optional[int] = Field(default=0, description="Project progress percentage")
     columns: Optional[List[Dict[str, Any]]] = Field(default=None, description="Kanban columns")
     start_date: Optional[str] = Field(default=None, alias="startDate", description="Start date (YYYY-MM-DD)")
     end_date: Optional[str] = Field(default=None, alias="dueDate", description="End/Due date (YYYY-MM-DD)")

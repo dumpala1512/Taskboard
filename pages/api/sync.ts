@@ -1,11 +1,19 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { getServerSession } from "next-auth/next";
+import {
+	deletedProjectIds,
+	deletedTaskIds,
+	deletedUserIds,
+	loadDb,
+} from "../../server/data";
 import { authOptions } from "./auth/[...nextauth]";
-import { deletedProjectIds, deletedUserIds, deletedTaskIds, loadDb } from "../../server/data";
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+export default async function handler(
+	req: NextApiRequest,
+	res: NextApiResponse,
+) {
 	const session = await getServerSession(req, res, authOptions);
-	if (!session || !session.user) {
+	if (!session?.user) {
 		return res.status(401).json({ message: "Unauthorized" });
 	}
 

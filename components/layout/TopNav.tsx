@@ -1,11 +1,21 @@
-import Link from "next/link";
-import { Bell, ChevronRight, Menu, Moon, Search, Sun, User, LogOut, Shield } from "lucide-react";
-import { useRouter } from "next/router";
-import { useSession, signOut } from "next-auth/react";
 import { useQueryClient } from "@tanstack/react-query";
-import React, { useState, useEffect, useRef } from "react";
-import { useActivities } from "../../hooks/useActivities";
+import {
+	Bell,
+	ChevronRight,
+	LogOut,
+	Menu,
+	Moon,
+	Search,
+	Shield,
+	Sun,
+	User,
+} from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/router";
+import { signOut, useSession } from "next-auth/react";
+import React, { useEffect, useRef, useState } from "react";
 import { useTheme } from "../../context/ThemeContext";
+import { useActivities } from "../../hooks/useActivities";
 import { ProjectWizardModal } from "../projects/ProjectWizardModal";
 import { TaskWizardModal } from "../tasks/TaskWizardModal";
 import { CreateNewModal } from "./CreateNewModal";
@@ -40,7 +50,10 @@ export const TopNav: React.FC<TopNavProps> = ({ setMobileOpen }) => {
 
 	useEffect(() => {
 		const handleClickOutside = (event: MouseEvent) => {
-			if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
+			if (
+				profileRef.current &&
+				!profileRef.current.contains(event.target as Node)
+			) {
 				setProfileOpen(false);
 			}
 		};
@@ -229,13 +242,23 @@ export const TopNav: React.FC<TopNavProps> = ({ setMobileOpen }) => {
 							{/* User Info Header */}
 							<div className="flex items-center gap-3 pb-3 border-b border-slate-100 dark:border-[#222F49]">
 								<div className="h-10 w-10 rounded-full bg-[#E3F2FD] dark:bg-sky-950/70 text-[#1E88E5] dark:text-sky-400 font-bold text-sm flex items-center justify-center border border-[#90CAF9] dark:border-sky-800 shrink-0">
-									{session?.user?.name ? session.user.name.charAt(0).toUpperCase() : <User className="w-5 h-5" />}
+									{session?.user?.name ? (
+										session.user.name.charAt(0).toUpperCase()
+									) : (
+										<User className="w-5 h-5" />
+									)}
 								</div>
 								<div className="min-w-0 flex-1">
-									<p className="text-sm font-semibold text-slate-900 dark:text-slate-100 truncate" title={session?.user?.name || "User"}>
+									<p
+										className="text-sm font-semibold text-slate-900 dark:text-slate-100 truncate"
+										title={session?.user?.name || "User"}
+									>
 										{session?.user?.name || "User"}
 									</p>
-									<p className="text-xs text-slate-500 dark:text-slate-400 truncate" title={session?.user?.email || ""}>
+									<p
+										className="text-xs text-slate-500 dark:text-slate-400 truncate"
+										title={session?.user?.email || ""}
+									>
 										{session?.user?.email}
 									</p>
 								</div>
@@ -243,7 +266,9 @@ export const TopNav: React.FC<TopNavProps> = ({ setMobileOpen }) => {
 
 							{/* Role & Status */}
 							<div className="py-2.5 flex items-center justify-between">
-								<span className="text-xs font-medium text-slate-500 dark:text-slate-400">Logged in as</span>
+								<span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+									Logged in as
+								</span>
 								<span
 									className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full ${
 										userRole === "ADMIN"
@@ -279,8 +304,12 @@ export const TopNav: React.FC<TopNavProps> = ({ setMobileOpen }) => {
 									onClick={handleLogout}
 									className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 hover:text-red-700 dark:hover:text-red-300 transition-colors disabled:opacity-50 cursor-pointer"
 								>
-									<LogOut className={`w-3.5 h-3.5 flex-shrink-0 text-red-600 dark:text-red-400 ${isLoggingOut ? "animate-pulse" : ""}`} />
-									<span className="text-red-600 dark:text-red-400 font-semibold">{isLoggingOut ? "Logging out..." : "Logout"}</span>
+									<LogOut
+										className={`w-3.5 h-3.5 flex-shrink-0 text-red-600 dark:text-red-400 ${isLoggingOut ? "animate-pulse" : ""}`}
+									/>
+									<span className="text-red-600 dark:text-red-400 font-semibold">
+										{isLoggingOut ? "Logging out..." : "Logout"}
+									</span>
 								</button>
 							</div>
 						</div>

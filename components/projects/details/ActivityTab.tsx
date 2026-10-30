@@ -1,21 +1,24 @@
-import React, { useState, useMemo } from "react";
-import type { User, Activity as ActivityItem } from "../../../server/types";
 import {
-	Clock,
-	MessageSquare,
-	Plus,
-	Edit,
-	CheckCircle2,
-	Trash2,
 	Activity as ActivityIcon,
 	ArrowRight,
-	Search,
-	Filter,
 	ArrowRightLeft,
+	CheckCircle2,
+	Clock,
+	Edit,
+	Filter,
+	MessageSquare,
+	Plus,
+	Search,
+	Trash2,
 } from "lucide-react";
+import React, { useMemo, useState } from "react";
+import {
+	type ActivityItem as HookActivityItem,
+	useProjectActivities,
+} from "../../../hooks/useActivities";
+import type { Activity as ActivityItem, User } from "../../../server/types";
 import { EmptyState } from "../../ui/EmptyState";
 import { Input } from "../../ui/Input";
-import { useProjectActivities, type ActivityItem as HookActivityItem } from "../../../hooks/useActivities";
 
 interface ActivityTabProps {
 	projectId?: string;
@@ -62,7 +65,10 @@ const STATUS_CONFIG: Record<
 function formatStatusName(status: string) {
 	if (!status) return "";
 	if (STATUS_CONFIG[status]) return STATUS_CONFIG[status].label;
-	return status.replace(/_/g, " ").toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
+	return status
+		.replace(/_/g, " ")
+		.toLowerCase()
+		.replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
 function StatusBadge({ status }: { status: string }) {
@@ -108,10 +114,13 @@ export default function ActivityTab({
 	activities: initialActivities,
 	users,
 }: ActivityTabProps) {
-	const { data: fetchedActivities, isLoading } = useProjectActivities(projectId);
+	const { data: fetchedActivities, isLoading } =
+		useProjectActivities(projectId);
 	const rawActivities = initialActivities || fetchedActivities || [];
 
-	const [filterType, setFilterType] = useState<"ALL" | "TRANSITIONS" | "UPDATES">("ALL");
+	const [filterType, setFilterType] = useState<
+		"ALL" | "TRANSITIONS" | "UPDATES"
+	>("ALL");
 	const [searchQuery, setSearchQuery] = useState("");
 
 	const sortedActivities = useMemo(() => {
@@ -125,7 +134,10 @@ export default function ActivityTab({
 	const filteredActivities = useMemo(() => {
 		return sortedActivities.filter((activity: any) => {
 			if (filterType === "TRANSITIONS") {
-				if (activity.type !== "TASK_STATUS_CHANGED" && activity.type !== "TASK_COMPLETED") {
+				if (
+					activity.type !== "TASK_STATUS_CHANGED" &&
+					activity.type !== "TASK_COMPLETED"
+				) {
 					return false;
 				}
 			} else if (filterType === "UPDATES") {
@@ -136,11 +148,17 @@ export default function ActivityTab({
 
 			if (searchQuery.trim()) {
 				const query = searchQuery.toLowerCase();
-				const detailsMatch = (activity.details || activity.target || "").toLowerCase().includes(query);
-				const titleMatch = (activity.taskTitle || "").toLowerCase().includes(query);
+				const detailsMatch = (activity.details || activity.target || "")
+					.toLowerCase()
+					.includes(query);
+				const titleMatch = (activity.taskTitle || "")
+					.toLowerCase()
+					.includes(query);
 				const userMatch = (
 					typeof activity.user === "object" ? activity.user.name : ""
-				).toLowerCase().includes(query);
+				)
+					.toLowerCase()
+					.includes(query);
 				return detailsMatch || titleMatch || userMatch;
 			}
 
@@ -158,7 +176,8 @@ export default function ActivityTab({
 						Project Activities
 					</h3>
 					<p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-						Track task transitions, status changes, and team activities in real-time.
+						Track task transitions, status changes, and team activities in
+						real-time.
 					</p>
 				</div>
 
@@ -219,7 +238,7 @@ export default function ActivityTab({
 								day: "numeric",
 								hour: "2-digit",
 								minute: "2-digit",
-						  })
+							})
 						: "";
 
 					return (
@@ -304,8 +323,8 @@ export default function ActivityTab({
 								searchQuery
 									? `No activities match "${searchQuery}". Try a different search.`
 									: filterType === "TRANSITIONS"
-									? "No task transitions recorded yet. Move tasks on the Kanban board to track workflow progression."
-									: "Activities will appear here when team members interact with project tasks."
+										? "No task transitions recorded yet. Move tasks on the Kanban board to track workflow progression."
+										: "Activities will appear here when team members interact with project tasks."
 							}
 						/>
 					</div>

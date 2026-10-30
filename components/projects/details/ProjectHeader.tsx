@@ -9,10 +9,7 @@ interface ProjectHeaderProps {
 	onCreateTask?: () => void;
 }
 
-const STATUS_CONFIG: Record<
-	string,
-	{ label: string; className: string }
-> = {
+const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
 	ACTIVE: {
 		label: "Active",
 		className:
@@ -66,7 +63,11 @@ export default function ProjectHeader({
 					<div className="flex items-center gap-1.5">
 						<Calendar className="w-3.5 h-3.5 text-[#9EAAB7] dark:text-slate-400" />
 						<span>
-							{(project.startDate ? new Date(project.startDate) : new Date(project.createdAt)).toLocaleDateString()} —{" "}
+							{(project.startDate
+								? new Date(project.startDate)
+								: new Date(project.createdAt)
+							).toLocaleDateString()}{" "}
+							—{" "}
 							{project.dueDate
 								? new Date(project.dueDate).toLocaleDateString()
 								: "Ongoing"}

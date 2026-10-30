@@ -1,5 +1,5 @@
-import React from "react";
 import { Clock } from "lucide-react";
+import React from "react";
 import type { ActivityItem } from "../../hooks/useActivities";
 
 interface ActivityFeedProps {
@@ -16,17 +16,27 @@ export function ActivityFeed({
 	markedAllRead,
 }: ActivityFeedProps) {
 	if (isLoading) {
-		return <div className="text-sm text-gray-500 py-4 text-center">Loading activities...</div>;
+		return (
+			<div className="text-sm text-gray-500 py-4 text-center">
+				Loading activities...
+			</div>
+		);
 	}
 
 	if (!activities || activities.length === 0) {
-		return <div className="text-sm text-gray-500 py-4 text-center">No recent activity.</div>;
+		return (
+			<div className="text-sm text-gray-500 py-4 text-center">
+				No recent activity.
+			</div>
+		);
 	}
 
 	return (
 		<div className="space-y-4">
 			{activities.map((activity) => {
-				const title = activity.type ? activity.type.replace(/_/g, " ") : "Activity";
+				const title = activity.type
+					? activity.type.replace(/_/g, " ")
+					: "Activity";
 				const details = activity.target || activity.details || "";
 				const time = activity.timestamp || activity.createdAt;
 				const userName = activity.user?.name;

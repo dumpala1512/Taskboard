@@ -1,8 +1,8 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { getServerSession } from "next-auth/next";
+import { attachDeletedHeaders } from "../../../server/data";
 import { adminService } from "../../../server/services/admin.service";
 import { authOptions } from "../auth/[...nextauth]";
-import { attachDeletedHeaders } from "../../../server/data";
 
 export default async function handler(
 	req: NextApiRequest,
@@ -10,7 +10,7 @@ export default async function handler(
 ) {
 	attachDeletedHeaders(res);
 	const session = await getServerSession(req, res, authOptions);
-	if (!session || !session.user) {
+	if (!session?.user) {
 		return res.status(401).json({ message: "Unauthorized" });
 	}
 
@@ -46,7 +46,8 @@ export default async function handler(
 	if (req.method === "PATCH") {
 		try {
 			const isAdmin = (session.user as any).role === "ADMIN";
-			const isSelf = (session.user as any).id === id || session.user.email === id;
+			const isSelf =
+				(session.user as any).id === id || session.user.email === id;
 
 			if (!isAdmin && !isSelf) {
 				return res.status(403).json({ message: "Forbidden" });
@@ -81,7 +82,9 @@ export default async function handler(
 			if (error.message === "User not found") {
 				return res.status(404).json({ message: error.message });
 			}
-			return res.status(500).json({ message: error.message || "Internal server error" });
+			return res
+				.status(500)
+				.json({ message: error.message || "Internal server error" });
 		}
 	}
 

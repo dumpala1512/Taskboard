@@ -1,8 +1,8 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { getServerSession } from "next-auth/next";
+import { attachDeletedHeaders } from "../../../server/data";
 import { projectService } from "../../../server/services/project.service";
 import { authOptions } from "../auth/[...nextauth]";
-import { attachDeletedHeaders } from "../../../server/data";
 
 export default async function handler(
 	req: NextApiRequest,
@@ -10,7 +10,7 @@ export default async function handler(
 ) {
 	attachDeletedHeaders(res);
 	const session = await getServerSession(req, res, authOptions);
-	if (!session || !session.user) {
+	if (!session?.user) {
 		return res.status(401).json({ message: "Unauthorized" });
 	}
 
@@ -51,7 +51,11 @@ export default async function handler(
 			try {
 				const updates = req.body;
 				const userId = (session.user as any).id;
-				const updatedProject = await projectService.updateProject(id, updates, userId);
+				const updatedProject = await projectService.updateProject(
+					id,
+					updates,
+					userId,
+				);
 				return res.status(200).json(updatedProject);
 			} catch (error: any) {
 				if (error.message === "Project not found") {

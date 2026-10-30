@@ -58,9 +58,7 @@ function normalizeUser(u: any): UserDetailed {
 		tasksAssigned:
 			u.tasks_assigned ??
 			u.tasksAssigned ??
-			(Array.isArray(u.assignedTasksList)
-				? u.assignedTasksList.length
-				: 0),
+			(Array.isArray(u.assignedTasksList) ? u.assignedTasksList.length : 0),
 		assignedProjectsList:
 			u.assigned_projects_list || u.assignedProjectsList || [],
 		assignedTasksList: u.assigned_tasks_list || u.assignedTasksList || [],
@@ -95,10 +93,13 @@ export function useAssignProjects() {
 		mutationFn: async ({
 			userId,
 			projectIds,
-		}: { userId: string; projectIds: string[] }) => {
+		}: {
+			userId: string;
+			projectIds: string[];
+		}) => {
 			const response = await apiClient.post(
 				`/users/${userId}/assign-projects`,
-				{ project_ids: projectIds }
+				{ project_ids: projectIds },
 			);
 			return response.data;
 		},
@@ -125,7 +126,7 @@ export function useUnassignProject() {
 				`/users/${userId}/assign-projects`,
 				{
 					data: { project_id: projectId },
-				}
+				},
 			);
 			return response.data;
 		},
@@ -154,7 +155,7 @@ export function useDeleteUser() {
 						u &&
 						u.id !== userId &&
 						u.id?.toLowerCase() !== target &&
-						(!u.email || u.email.toLowerCase() !== target)
+						(!u.email || u.email.toLowerCase() !== target),
 				);
 			});
 			queryClient.setQueryData(["users"], (old: any) => {
@@ -164,7 +165,7 @@ export function useDeleteUser() {
 						u &&
 						u.id !== userId &&
 						u.id?.toLowerCase() !== target &&
-						(!u.email || u.email.toLowerCase() !== target)
+						(!u.email || u.email.toLowerCase() !== target),
 				);
 			});
 			queryClient.invalidateQueries({ queryKey: ["admin-users"] });

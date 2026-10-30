@@ -1,7 +1,7 @@
-import React, { useMemo, useState } from "react";
 import { Plus, X } from "lucide-react";
-import { useUsers } from "../../../hooks/useUsers";
+import React, { useMemo, useState } from "react";
 import { useProjects } from "../../../hooks/useProjects";
+import { useUsers } from "../../../hooks/useUsers";
 import type { TaskTag } from "../../../server/types";
 import { Button } from "../../ui/Button";
 
@@ -11,7 +11,14 @@ interface Step3Props {
 	errors: Record<string, string>;
 }
 
-const AVAILABLE_TAGS: string[] = ["UI", "BACKEND", "API", "BUG", "FEATURE", "DOCUMENTATION"];
+const AVAILABLE_TAGS: string[] = [
+	"UI",
+	"BACKEND",
+	"API",
+	"BUG",
+	"FEATURE",
+	"DOCUMENTATION",
+];
 
 export function Step3Details({ formData, setFormData, errors }: Step3Props) {
 	const { data: users = [] } = useUsers();
@@ -20,9 +27,9 @@ export function Step3Details({ formData, setFormData, errors }: Step3Props) {
 
 	const projectMembers = useMemo(() => {
 		if (!formData.projectId) return [];
-		const project = projects.find(p => p.id === formData.projectId);
+		const project = projects.find((p) => p.id === formData.projectId);
 		if (!project) return [];
-		return users.filter(u => project.members?.includes(u.id));
+		return users.filter((u) => project.members?.includes(u.id));
 	}, [formData.projectId, projects, users]);
 
 	const toggleTag = (tag: string) => {
@@ -46,51 +53,55 @@ export function Step3Details({ formData, setFormData, errors }: Step3Props) {
 		}
 	};
 
-
-
 	return (
 		<div className="space-y-6">
 			<div className="space-y-2">
-				<label className="text-sm font-medium text-slate-700 dark:text-slate-200">Tags (Max 20)</label>
+				<label className="text-sm font-medium text-slate-700 dark:text-slate-200">
+					Tags (Max 20)
+				</label>
 				<div className="flex flex-wrap gap-2 mb-3">
-					{AVAILABLE_TAGS.map(tag => (
+					{AVAILABLE_TAGS.map((tag) => (
 						<button
 							key={tag}
 							type="button"
 							onClick={() => toggleTag(tag)}
 							className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors
-								${(formData.tags || []).includes(tag) 
-									? 'bg-indigo-100 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800' 
-									: 'bg-white dark:bg-[#1A233A] text-slate-600 dark:text-slate-300 border-slate-200 dark:border-[#222F49] hover:bg-slate-50 dark:hover:bg-[#222F49]'}`}
+								${
+									(formData.tags || []).includes(tag)
+										? "bg-indigo-100 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800"
+										: "bg-white dark:bg-[#1A233A] text-slate-600 dark:text-slate-300 border-slate-200 dark:border-[#222F49] hover:bg-slate-50 dark:hover:bg-[#222F49]"
+								}`}
 						>
 							{tag}
 						</button>
 					))}
-					{(formData.tags || []).filter((t: string) => !AVAILABLE_TAGS.includes(t)).map((tag: string) => (
-						<button
-							key={tag}
-							type="button"
-							onClick={() => toggleTag(tag)}
-							className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors bg-indigo-100 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800"
-						>
-							{tag}
-							<X className="w-3.5 h-3.5 hover:text-indigo-900 dark:hover:text-indigo-100" />
-						</button>
-					))}
+					{(formData.tags || [])
+						.filter((t: string) => !AVAILABLE_TAGS.includes(t))
+						.map((tag: string) => (
+							<button
+								key={tag}
+								type="button"
+								onClick={() => toggleTag(tag)}
+								className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors bg-indigo-100 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800"
+							>
+								{tag}
+								<X className="w-3.5 h-3.5 hover:text-indigo-900 dark:hover:text-indigo-100" />
+							</button>
+						))}
 				</div>
 				<div className="flex gap-2">
-					<input 
-						type="text" 
+					<input
+						type="text"
 						maxLength={30}
 						value={customTag}
 						onChange={(e) => setCustomTag(e.target.value)}
 						onKeyDown={(e) => {
-							if (e.key === 'Enter') {
+							if (e.key === "Enter") {
 								e.preventDefault();
 								handleAddCustomTag();
 							}
 						}}
-						placeholder="Add custom tag..." 
+						placeholder="Add custom tag..."
 						className="flex-1 px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 border-slate-200 dark:border-[#222F49] bg-white dark:bg-[#1A233A] text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500"
 					/>
 					<Button
@@ -104,8 +115,6 @@ export function Step3Details({ formData, setFormData, errors }: Step3Props) {
 					</Button>
 				</div>
 			</div>
-
-
 		</div>
 	);
 }

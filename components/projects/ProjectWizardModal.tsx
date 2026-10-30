@@ -280,7 +280,9 @@ export function ProjectWizardModal({
 				setError("You can add a maximum of 10 tags.");
 				return;
 			}
-			const invalidTags = currentTags.filter((t) => t.length < 2 || t.length > 30);
+			const invalidTags = currentTags.filter(
+				(t) => t.length < 2 || t.length > 30,
+			);
 			if (invalidTags.length > 0) {
 				setError("Each tag must be between 2 and 30 characters long.");
 				return;
@@ -304,7 +306,10 @@ export function ProjectWizardModal({
 	const toggleProjectTag = (tag: string) => {
 		const currentTags = formData.tags || [];
 		if (currentTags.includes(tag)) {
-			setFormData((prev) => ({ ...prev, tags: currentTags.filter((t) => t !== tag) }));
+			setFormData((prev) => ({
+				...prev,
+				tags: currentTags.filter((t) => t !== tag),
+			}));
 		} else {
 			if (currentTags.length >= 20) return;
 			setFormData((prev) => ({ ...prev, tags: [...currentTags, tag] }));
@@ -318,7 +323,10 @@ export function ProjectWizardModal({
 			.map((t) => t.trim().slice(0, 30).toUpperCase())
 			.filter((t) => t.length >= 2);
 		const existingTags = formData.tags || [];
-		const combined = Array.from(new Set([...existingTags, ...newTags])).slice(0, 20);
+		const combined = Array.from(new Set([...existingTags, ...newTags])).slice(
+			0,
+			20,
+		);
 		setFormData((prev) => ({ ...prev, tags: combined }));
 		setTagInput("");
 	};
@@ -379,7 +387,9 @@ export function ProjectWizardModal({
 							<h3 className="text-lg font-semibold text-[#33475B] dark:text-slate-100">
 								{project ? "Edit Project" : "Create New Project"}
 							</h3>
-							<p className="text-sm text-gray-500 dark:text-slate-400">Step {step} of 4</p>
+							<p className="text-sm text-gray-500 dark:text-slate-400">
+								Step {step} of 4
+							</p>
 						</div>
 						<button
 							onClick={handleClose}
@@ -513,13 +523,23 @@ export function ProjectWizardModal({
 												}
 											}}
 										>
-											<option value="PLANNING" className="dark:bg-[#1A233A]">Planning</option>
-											<option value="ACTIVE" className="dark:bg-[#1A233A]">Active</option>
-											<option value="ON_HOLD" className="dark:bg-[#1A233A]">On Hold</option>
-											<option value="COMPLETED" className="dark:bg-[#1A233A]">Completed</option>
+											<option value="PLANNING" className="dark:bg-[#1A233A]">
+												Planning
+											</option>
+											<option value="ACTIVE" className="dark:bg-[#1A233A]">
+												Active
+											</option>
+											<option value="ON_HOLD" className="dark:bg-[#1A233A]">
+												On Hold
+											</option>
+											<option value="COMPLETED" className="dark:bg-[#1A233A]">
+												Completed
+											</option>
 										</select>
 										{touched.status && fieldErrors.status && (
-											<p className="mt-1 text-xs text-red-500">{fieldErrors.status}</p>
+											<p className="mt-1 text-xs text-red-500">
+												{fieldErrors.status}
+											</p>
 										)}
 									</div>
 
@@ -552,7 +572,9 @@ export function ProjectWizardModal({
 											maxLength={1000}
 										/>
 										{touched.description && fieldErrors.description && (
-											<p className="mt-1 text-xs text-red-500">{fieldErrors.description}</p>
+											<p className="mt-1 text-xs text-red-500">
+												{fieldErrors.description}
+											</p>
 										)}
 									</div>
 								</div>
@@ -602,7 +624,9 @@ export function ProjectWizardModal({
 													{users.find((u) => u.id === formData.ownerId)?.name}
 												</span>
 											) : (
-												<span className="text-gray-500 dark:text-slate-400">Select an owner</span>
+												<span className="text-gray-500 dark:text-slate-400">
+													Select an owner
+												</span>
 											)}
 											<ChevronRight
 												className={`w-4 h-4 text-gray-400 transition-transform ${ownerDropdownOpen ? "rotate-90" : ""}`}
@@ -639,7 +663,9 @@ export function ProjectWizardModal({
 											</div>
 										)}
 										{touched.ownerId && fieldErrors.ownerId && (
-											<p className="mt-1 text-xs text-red-500">{fieldErrors.ownerId}</p>
+											<p className="mt-1 text-xs text-red-500">
+												{fieldErrors.ownerId}
+											</p>
 										)}
 									</div>
 
@@ -719,14 +745,22 @@ export function ProjectWizardModal({
 												const val = e.target.value;
 												setFormData({ ...formData, startDate: val });
 												if (touched.startDate) {
-													validateField("startDate", { ...formData, startDate: val });
+													validateField("startDate", {
+														...formData,
+														startDate: val,
+													});
 												}
 												if (touched.dueDate) {
-													validateField("dueDate", { ...formData, startDate: val });
+													validateField("dueDate", {
+														...formData,
+														startDate: val,
+													});
 												}
 											}}
 											onBlur={() => handleBlur("startDate")}
-											error={touched.startDate ? fieldErrors.startDate : undefined}
+											error={
+												touched.startDate ? fieldErrors.startDate : undefined
+											}
 										/>
 									</div>
 
@@ -736,7 +770,8 @@ export function ProjectWizardModal({
 											type="date"
 											min={
 												formData.startDate &&
-												formData.startDate > new Date().toISOString().split("T")[0]
+												formData.startDate >
+													new Date().toISOString().split("T")[0]
 													? formData.startDate
 													: new Date().toISOString().split("T")[0]
 											}
@@ -745,7 +780,10 @@ export function ProjectWizardModal({
 												const val = e.target.value;
 												setFormData({ ...formData, dueDate: val });
 												if (touched.dueDate) {
-													validateField("dueDate", { ...formData, dueDate: val });
+													validateField("dueDate", {
+														...formData,
+														dueDate: val,
+													});
 												}
 											}}
 											onBlur={() => handleBlur("dueDate")}
@@ -965,14 +1003,19 @@ export function ProjectWizardModal({
 									variant="primary"
 									onClick={handleSubmit}
 									disabled={isSubmitting || !isAllRequiredValid}
-									leftIcon={isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+									leftIcon={
+										isSubmitting ? (
+											<Loader2 className="w-4 h-4 animate-spin" />
+										) : (
+											<CheckCircle2 className="w-4 h-4" />
+										)
+									}
 								>
 									{project ? "Save Changes" : "Create Project"}
 								</Button>
 							)}
 						</div>
 					</div>
-					
 				</div>
 			</div>
 		</Portal>

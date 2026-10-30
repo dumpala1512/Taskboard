@@ -96,7 +96,10 @@ export default function MembersTable({ users, searchTerm }: MembersTableProps) {
 															{displayName}
 														</span>
 														{user.role === "ADMIN" && (
-															<span title="Admin" className="shrink-0 inline-flex items-center text-[10px] font-bold px-1.5 py-0.5 rounded bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800">
+															<span
+																title="Admin"
+																className="shrink-0 inline-flex items-center text-[10px] font-bold px-1.5 py-0.5 rounded bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800"
+															>
 																<Shield className="w-2.5 h-2.5 mr-0.5" />
 																Admin
 															</span>

@@ -26,9 +26,12 @@ export default function App({
 			} catch (_) {}
 
 			// Keep-alive heartbeat: ping /api/health every 4 minutes to prevent Render free-tier from sleeping
-			const interval = setInterval(() => {
-				fetch("/api/health").catch(() => {});
-			}, 4 * 60 * 1000);
+			const interval = setInterval(
+				() => {
+					fetch("/api/health").catch(() => {});
+				},
+				4 * 60 * 1000,
+			);
 
 			return () => clearInterval(interval);
 		}

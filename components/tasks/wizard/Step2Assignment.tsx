@@ -1,9 +1,9 @@
-import React, { useMemo } from "react";
-import { Input } from "../../ui/Input";
-import { useUsers } from "../../../hooks/useUsers";
-import { useProjects } from "../../../hooks/useProjects";
-import type { TaskStatus } from "../../../server/types";
 import { Link } from "lucide-react";
+import React, { useMemo } from "react";
+import { useProjects } from "../../../hooks/useProjects";
+import { useUsers } from "../../../hooks/useUsers";
+import type { TaskStatus } from "../../../server/types";
+import { Input } from "../../ui/Input";
 
 interface Step2Props {
 	formData: any;
@@ -26,14 +26,15 @@ export function Step2Assignment({
 	const project = projects.find((p) => p.id === formData.projectId);
 
 	const workflow = useMemo(() => {
-		const cols = (project?.columns && project.columns.length > 0
-			? project.columns
-			: [
-					{ id: "TODO", title: "To Do" },
-					{ id: "IN_PROGRESS", title: "In Progress" },
-					{ id: "REVIEW", title: "Review" },
-					{ id: "DONE", title: "Done" },
-			  ]
+		const cols = (
+			project?.columns && project.columns.length > 0
+				? project.columns
+				: [
+						{ id: "TODO", title: "To Do" },
+						{ id: "IN_PROGRESS", title: "In Progress" },
+						{ id: "REVIEW", title: "Review" },
+						{ id: "DONE", title: "Done" },
+					]
 		).filter((col) => col.id !== "BACKLOG");
 		return ["BACKLOG", ...cols.map((c) => c.id)];
 	}, [project?.columns]);
@@ -53,7 +54,7 @@ export function Step2Assignment({
 				});
 			}
 		}
-	}, [project?.columns]);
+	}, [project?.columns, setFormData, formData.status, formData]);
 
 	return (
 		<div className="space-y-6">
@@ -90,8 +91,7 @@ export function Step2Assignment({
 											project.members.includes(u.id)));
 								return (
 									<option key={u.id} value={u.id} className="dark:bg-[#1A233A]">
-										{u.name} ({u.email})
-										{isMember ? "" : " — (Not in project)"}
+										{u.name} ({u.email}){isMember ? "" : " — (Not in project)"}
 									</option>
 								);
 							})}
@@ -105,23 +105,37 @@ export function Step2Assignment({
 				</div>
 
 				<div className="space-y-1">
-					<label className="text-sm font-medium text-slate-700 dark:text-slate-200">Status <span className="text-red-500">*</span></label>
+					<label className="text-sm font-medium text-slate-700 dark:text-slate-200">
+						Status <span className="text-red-500">*</span>
+					</label>
 					<select
 						value={formData.status}
-						onChange={(e) => setFormData({ ...formData, status: e.target.value as TaskStatus })}
+						onChange={(e) =>
+							setFormData({ ...formData, status: e.target.value as TaskStatus })
+						}
 						onBlur={() => onBlurField?.("status", formData.status)}
 						className={`w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-[#1A233A] text-slate-900 dark:text-slate-100 ${errors.status ? "border-red-500" : "border-slate-200 dark:border-[#222F49]"}`}
 					>
 						{(() => {
-							const curIdx = taskToEdit ? workflow.indexOf(taskToEdit.status) : -1;
-							const isBacklogAdjacent = !taskToEdit || curIdx === -1 || Math.abs(workflow.indexOf("BACKLOG") - curIdx) <= 1;
+							const curIdx = taskToEdit
+								? workflow.indexOf(taskToEdit.status)
+								: -1;
+							const isBacklogAdjacent =
+								!taskToEdit ||
+								curIdx === -1 ||
+								Math.abs(workflow.indexOf("BACKLOG") - curIdx) <= 1;
 							return (
 								<option
 									value="BACKLOG"
 									className="dark:bg-[#1A233A]"
-									disabled={!isBacklogAdjacent && taskToEdit?.status !== "BACKLOG"}
+									disabled={
+										!isBacklogAdjacent && taskToEdit?.status !== "BACKLOG"
+									}
 								>
-									Backlog{!isBacklogAdjacent && taskToEdit?.status !== "BACKLOG" ? " (step-by-step)" : ""}
+									Backlog
+									{!isBacklogAdjacent && taskToEdit?.status !== "BACKLOG"
+										? " (step-by-step)"
+										: ""}
 								</option>
 							);
 						})()}
@@ -132,13 +146,19 @@ export function Step2Assignment({
 									{ id: "IN_PROGRESS", title: "In Progress" },
 									{ id: "REVIEW", title: "Review" },
 									{ id: "DONE", title: "Done" },
-							  ]
+								]
 						)
 							.filter((col) => col.id !== "BACKLOG")
 							.map((col) => {
-								const curIdx = taskToEdit ? workflow.indexOf(taskToEdit.status) : -1;
+								const curIdx = taskToEdit
+									? workflow.indexOf(taskToEdit.status)
+									: -1;
 								const colIdx = workflow.indexOf(col.id);
-								const isColAdjacent = !taskToEdit || curIdx === -1 || colIdx === -1 || Math.abs(colIdx - curIdx) <= 1;
+								const isColAdjacent =
+									!taskToEdit ||
+									curIdx === -1 ||
+									colIdx === -1 ||
+									Math.abs(colIdx - curIdx) <= 1;
 								return (
 									<option
 										key={col.id}
@@ -146,7 +166,10 @@ export function Step2Assignment({
 										className="dark:bg-[#1A233A]"
 										disabled={!isColAdjacent && taskToEdit?.status !== col.id}
 									>
-										{col.title}{!isColAdjacent && taskToEdit?.status !== col.id ? " (step-by-step)" : ""}
+										{col.title}
+										{!isColAdjacent && taskToEdit?.status !== col.id
+											? " (step-by-step)"
+											: ""}
 									</option>
 								);
 							})}
@@ -154,19 +177,27 @@ export function Step2Assignment({
 				</div>
 
 				<div className="space-y-1">
-					<label className="text-sm font-medium text-slate-700 ">Start Date <span className="text-red-500">*</span></label>
+					<label className="text-sm font-medium text-slate-700 ">
+						Start Date <span className="text-red-500">*</span>
+					</label>
 					<Input
 						type="date"
 						value={formData.startDate || ""}
-						onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+						onChange={(e) =>
+							setFormData({ ...formData, startDate: e.target.value })
+						}
 						onBlur={() => onBlurField?.("startDate", formData.startDate)}
 						className={errors.startDate ? "border-red-500" : ""}
 					/>
-					{errors.startDate && <p className="text-xs text-red-500 mt-1">{errors.startDate}</p>}
+					{errors.startDate && (
+						<p className="text-xs text-red-500 mt-1">{errors.startDate}</p>
+					)}
 				</div>
 
 				<div className="space-y-1">
-					<label className="text-sm font-medium text-slate-700 ">Due Date <span className="text-red-500">*</span></label>
+					<label className="text-sm font-medium text-slate-700 ">
+						Due Date <span className="text-red-500">*</span>
+					</label>
 					<Input
 						type="date"
 						min={
@@ -177,7 +208,9 @@ export function Step2Assignment({
 						}
 						max={project?.dueDate ? project.dueDate.split("T")[0] : undefined}
 						value={formData.dueDate || ""}
-						onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
+						onChange={(e) =>
+							setFormData({ ...formData, dueDate: e.target.value })
+						}
 						onBlur={() => onBlurField?.("dueDate", formData.dueDate)}
 						className={errors.dueDate ? "border-red-500" : ""}
 					/>
@@ -186,31 +219,51 @@ export function Step2Assignment({
 							Project Target Date: {project.dueDate.split("T")[0]}
 						</p>
 					)}
-					{errors.dueDate && <p className="text-xs text-red-500 mt-1">{errors.dueDate}</p>}
+					{errors.dueDate && (
+						<p className="text-xs text-red-500 mt-1">{errors.dueDate}</p>
+					)}
 				</div>
 
 				<div className="space-y-1">
-					<label className="text-sm font-medium text-slate-700 ">Estimated Time (Hours)</label>
+					<label className="text-sm font-medium text-slate-700 ">
+						Estimated Time (Hours)
+					</label>
 					<Input
 						type="number"
 						min="0"
 						step="0.5"
 						value={formData.estimatedTime || ""}
-						onChange={(e) => setFormData({ ...formData, estimatedTime: e.target.value ? parseFloat(e.target.value) : null })}
+						onChange={(e) =>
+							setFormData({
+								...formData,
+								estimatedTime: e.target.value
+									? parseFloat(e.target.value)
+									: null,
+							})
+						}
 						placeholder="e.g. 4.5"
 						className={errors.estimatedTime ? "border-red-500" : ""}
 					/>
-					{errors.estimatedTime && <p className="text-xs text-red-500 mt-1">{errors.estimatedTime}</p>}
+					{errors.estimatedTime && (
+						<p className="text-xs text-red-500 mt-1">{errors.estimatedTime}</p>
+					)}
 				</div>
 
 				<div className="space-y-1">
-					<label className="text-sm font-medium text-slate-700 ">Estimated Points</label>
+					<label className="text-sm font-medium text-slate-700 ">
+						Estimated Points
+					</label>
 					<Input
 						type="number"
 						min="0"
 						max="100"
 						value={formData.points || 0}
-						onChange={(e) => setFormData({ ...formData, points: parseInt(e.target.value) || 0 })}
+						onChange={(e) =>
+							setFormData({
+								...formData,
+								points: parseInt(e.target.value, 10) || 0,
+							})
+						}
 						placeholder="e.g. 5"
 					/>
 				</div>

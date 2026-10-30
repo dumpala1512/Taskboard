@@ -1,8 +1,8 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { getServerSession } from "next-auth/next";
+import { attachDeletedHeaders } from "../../../server/data";
 import { projectService } from "../../../server/services/project.service";
 import { authOptions } from "../auth/[...nextauth]";
-import { attachDeletedHeaders } from "../../../server/data";
 
 export default async function handler(
 	req: NextApiRequest,
@@ -10,7 +10,7 @@ export default async function handler(
 ) {
 	attachDeletedHeaders(res);
 	const session = await getServerSession(req, res, authOptions);
-	if (!session || !session.user) {
+	if (!session?.user) {
 		return res.status(401).json({ message: "Unauthorized" });
 	}
 
@@ -21,7 +21,11 @@ export default async function handler(
 	switch (req.method) {
 		case "GET":
 			try {
-				const projects = await projectService.getAllProjects(userId, userRole, userEmail || undefined);
+				const projects = await projectService.getAllProjects(
+					userId,
+					userRole,
+					userEmail || undefined,
+				);
 				return res.status(200).json(projects);
 			} catch (error) {
 				console.error("Error fetching projects:", error);
@@ -43,18 +47,21 @@ export default async function handler(
 					return res.status(400).json({ message: "Missing required fields" });
 				}
 
-				const newProject = await projectService.createProject({
-					name: data.name,
-					description: data.description,
-					status: data.status,
-					progress: data.progress || 0,
-					ownerId: data.ownerId || userId,
-					members: data.members || [],
-					tags: data.tags || [],
-					startDate: data.startDate || undefined,
-					dueDate: data.dueDate || undefined,
-					key: data.key || undefined,
-				}, userId);
+				const newProject = await projectService.createProject(
+					{
+						name: data.name,
+						description: data.description,
+						status: data.status,
+						progress: data.progress || 0,
+						ownerId: data.ownerId || userId,
+						members: data.members || [],
+						tags: data.tags || [],
+						startDate: data.startDate || undefined,
+						dueDate: data.dueDate || undefined,
+						key: data.key || undefined,
+					},
+					userId,
+				);
 
 				return res.status(201).json(newProject);
 			} catch (error: any) {

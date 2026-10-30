@@ -37,7 +37,9 @@ export default function OverviewTab({ project, tasks }: OverviewTabProps) {
 					</div>
 					<div className="space-y-3">
 						{upcomingDeadlines.length === 0 ? (
-							<p className="text-sm text-[#9EAAB7] dark:text-slate-500">No upcoming deadlines.</p>
+							<p className="text-sm text-[#9EAAB7] dark:text-slate-500">
+								No upcoming deadlines.
+							</p>
 						) : (
 							upcomingDeadlines.map((task) => (
 								<div

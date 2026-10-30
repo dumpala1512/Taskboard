@@ -192,16 +192,6 @@ export function CreateUserModal({
 								</div>
 							</div>
 
-							{/* Callout Notice */}
-							<div className="p-3 bg-blue-50/70 border border-blue-100 rounded-lg text-left flex items-start gap-2.5">
-								<CheckCircle2 className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
-								<p className="text-xs text-blue-800 leading-relaxed">
-									No temporary password is required. The member simply clicks
-									the secure link in their email to choose their permanent
-									password and access the workspace.
-								</p>
-							</div>
-
 							{/* Action Buttons */}
 							<div className="flex items-center gap-3 pt-2">
 								<Button

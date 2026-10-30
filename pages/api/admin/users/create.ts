@@ -19,10 +19,24 @@ export default async function handler(
 			return res.status(403).json({ message: "Forbidden" });
 		}
 
-		const { fullName, name, firstName, lastName, email, role, department, jobTitle, phone, joiningDate } =
-			req.body;
+		const {
+			fullName,
+			name,
+			firstName,
+			lastName,
+			email,
+			role,
+			department,
+			jobTitle,
+			phone,
+			joiningDate,
+		} = req.body;
 
-		const displayName = (fullName || name || `${firstName || ""} ${lastName || ""}`).trim();
+		const displayName = (
+			fullName ||
+			name ||
+			`${firstName || ""} ${lastName || ""}`
+		).trim();
 
 		if (!displayName || !email || !role) {
 			return res.status(400).json({ message: "Missing required fields" });

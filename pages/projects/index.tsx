@@ -46,8 +46,8 @@ export default function ProjectsPage() {
 		const matchesSearch =
 			!searchQuery ||
 			p.name.toLowerCase().includes(q) ||
-			(p.key && p.key.toLowerCase().includes(q)) ||
-			(p.tags && p.tags.some((t) => t.toLowerCase().includes(q)));
+			p.key?.toLowerCase().includes(q) ||
+			p.tags?.some((t) => t.toLowerCase().includes(q));
 		const matchesStatus = !statusFilter || p.status === statusFilter;
 		return matchesSearch && matchesStatus;
 	});

@@ -62,7 +62,7 @@ export default function AnalyticsDashboard() {
 
 	const effectiveFilter = isAdmin ? filter : "my";
 
-	const fetchAnalytics = async () => {
+	const fetchAnalytics = React.useCallback(async () => {
 		try {
 			setLoading(true);
 			const params = new URLSearchParams();
@@ -72,8 +72,7 @@ export default function AnalyticsDashboard() {
 			}
 			const res = await apiClient.get(`/analytics?${params.toString()}`);
 			// Accommodate both Next.js direct service response and FastAPI envelope { success: true, data: ... }
-			const analyticsPayload =
-				res.data?.data && res.data?.data?.kpi ? res.data.data : res.data;
+			const analyticsPayload = res.data?.data?.kpi ? res.data.data : res.data;
 			setData(analyticsPayload);
 			if (
 				analyticsPayload?.projectsList &&
@@ -87,13 +86,13 @@ export default function AnalyticsDashboard() {
 		} finally {
 			setLoading(false);
 		}
-	};
+	}, [effectiveFilter, selectedProjectId]);
 
 	useEffect(() => {
 		if (session) {
 			fetchAnalytics();
 		}
-	}, [session, effectiveFilter, selectedProjectId, router.asPath]);
+	}, [session, fetchAnalytics]);
 
 	useEffect(() => {
 		const handleFocus = () => {
@@ -109,7 +108,7 @@ export default function AnalyticsDashboard() {
 			window.removeEventListener("storage", handleFocus);
 			clearInterval(interval);
 		};
-	}, [session, effectiveFilter, selectedProjectId]);
+	}, [session, fetchAnalytics]);
 
 	const COLORS = ["#3b82f6", "#f59e0b", "#ef4444", "#10b981", "#6b7280"];
 	const PRIORITY_COLORS = {
@@ -245,7 +244,7 @@ export default function AnalyticsDashboard() {
 							))}
 						</div>
 					</>
-				) : data && data.kpi ? (
+				) : data?.kpi ? (
 					<>
 						{/* KPI Cards */}
 						<div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
