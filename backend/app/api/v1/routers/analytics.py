@@ -53,11 +53,14 @@ async def require_analytics_user(
     responses={
         status.HTTP_200_OK: {"description": "Analytics data retrieved successfully."},
         status.HTTP_401_UNAUTHORIZED: {"description": "Authentication is required to access this resource."},
+        status.HTTP_403_FORBIDDEN: {"description": "Forbidden - user does not have access to this project."},
+        status.HTTP_404_NOT_FOUND: {"description": "Project not found."},
         status.HTTP_500_INTERNAL_SERVER_ERROR: {"description": "Internal server error while retrieving analytics data."},
     },
 )
 async def get_analytics(
     project_id: Optional[uuid.UUID] = Query(default=None, alias="projectId", description="Optional project filter"),
+    filter_mode: Optional[str] = Query(default="all", alias="filter", description="Filter scope (all or my)"),
     current_user: User = Depends(require_analytics_user),
     db: AsyncSession = Depends(get_db),
 ) -> AnalyticsResponse:
@@ -67,6 +70,7 @@ async def get_analytics(
         analytics_data = await service.get_analytics(
             current_user=current_user,
             project_id=project_id,
+            filter_mode=filter_mode,
         )
         return AnalyticsResponse(
             success=True,

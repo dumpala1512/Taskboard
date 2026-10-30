@@ -12,7 +12,8 @@ import { useProjects } from "../../hooks/useProjects";
 
 export default function Overview() {
 	const { data: session } = useSession();
-	const { data: tasks, isLoading: tasksLoading } = useTasks();
+	const [selectedProjectId, setSelectedProjectId] = useState<string>("all");
+	const { data: tasks, isLoading: tasksLoading } = useTasks(selectedProjectId !== "all" ? selectedProjectId : undefined);
 	const { data: users } = useUsers();
 	const { data: projects = [] } = useProjects();
 	
@@ -36,10 +37,16 @@ export default function Overview() {
 		(t) => t.projectId && (validProjectIds.size === 0 || validProjectIds.has(t.projectId.toLowerCase()))
 	);
 	
-	// Filter tasks based on view
-	const filteredTasks = view === "assigned" 
+	// Filter tasks based on view and project
+	const filteredTasks = (view === "assigned" 
 		? (isAdmin ? safeTasks.filter(t => t.assignees?.length > 0 || t.assigneeId) : safeTasks.filter(t => t.assignees?.includes(userId) || t.assigneeId === userId))
-		: safeTasks;
+		: safeTasks).filter((t) => {
+			if (selectedProjectId === "all") return true;
+			return (
+				(t.projectId && t.projectId.toLowerCase() === selectedProjectId.toLowerCase()) ||
+				(t.projectKey && t.projectKey.toLowerCase() === selectedProjectId.toLowerCase())
+			);
+		});
 
 	const inProgressTasks = filteredTasks.filter((t) => t.status === "IN_PROGRESS" || t.status === "REVIEW");
 	const completedTasks = filteredTasks.filter((t) => t.status === "DONE");
@@ -102,16 +109,38 @@ export default function Overview() {
 								<h2 className="text-base sm:text-lg font-bold text-slate-800 dark:text-white whitespace-nowrap">
 									{view === "assigned" ? (isAdmin ? "Assigned Tasks" : "My Tasks") : "All Tasks"}
 								</h2>
-								<div className="relative self-start sm:self-auto">
-									<select 
-										value={view}
-										onChange={(e) => setView(e.target.value as "assigned" | "all")}
-										className="appearance-none bg-[#F5F5F5] dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-gray-700 dark:text-slate-200 py-1.5 pl-3 pr-8 rounded-md text-xs font-medium focus:outline-none focus:ring-1 focus:ring-gray-400 dark:focus:ring-slate-600"
-									>
-										<option value="assigned" className="dark:bg-slate-800 dark:text-slate-200">{isAdmin ? "Assigned Tasks" : "My Tasks"}</option>
-										<option value="all" className="dark:bg-slate-800 dark:text-slate-200">All Tasks</option>
-									</select>
-									<ChevronDown className="w-3.5 h-3.5 text-gray-400 dark:text-slate-300 absolute right-2.5 top-2 pointer-events-none" />
+								<div className="flex items-center gap-2 flex-wrap self-start sm:self-auto">
+									{/* Project Filter */}
+									<div className="relative">
+										<select
+											value={selectedProjectId}
+											onChange={(e) => setSelectedProjectId(e.target.value)}
+											className="appearance-none bg-[#F5F5F5] dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-gray-700 dark:text-slate-200 py-1.5 pl-3 pr-8 rounded-md text-xs font-medium focus:outline-none focus:ring-1 focus:ring-gray-400 dark:focus:ring-slate-600 max-w-[200px] truncate"
+										>
+											<option value="all" className="dark:bg-slate-800 dark:text-slate-200">
+												All Projects
+											</option>
+											{projects.map((p) => (
+												<option key={p.id} value={p.id} className="dark:bg-slate-800 dark:text-slate-200">
+													{p.name} {p.key ? `(${p.key})` : ""}
+												</option>
+											))}
+										</select>
+										<ChevronDown className="w-3.5 h-3.5 text-gray-400 dark:text-slate-300 absolute right-2.5 top-2 pointer-events-none" />
+									</div>
+
+									{/* View Filter */}
+									<div className="relative">
+										<select 
+											value={view}
+											onChange={(e) => setView(e.target.value as "assigned" | "all")}
+											className="appearance-none bg-[#F5F5F5] dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-gray-700 dark:text-slate-200 py-1.5 pl-3 pr-8 rounded-md text-xs font-medium focus:outline-none focus:ring-1 focus:ring-gray-400 dark:focus:ring-slate-600"
+										>
+											<option value="assigned" className="dark:bg-slate-800 dark:text-slate-200">{isAdmin ? "Assigned Tasks" : "My Tasks"}</option>
+											<option value="all" className="dark:bg-slate-800 dark:text-slate-200">All Tasks</option>
+										</select>
+										<ChevronDown className="w-3.5 h-3.5 text-gray-400 dark:text-slate-300 absolute right-2.5 top-2 pointer-events-none" />
+									</div>
 								</div>
 							</div>
 							

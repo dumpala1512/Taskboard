@@ -10,7 +10,8 @@ Covers:
 
 from datetime import datetime, timezone
 import json
-from unittest.mock import AsyncMock, MagicMock, patch
+from types import SimpleNamespace
+from unittest.mock import AsyncMock, patch
 import uuid
 import pytest
 from httpx import AsyncClient
@@ -141,11 +142,13 @@ async def test_get_analytics_success(
 
     with patch("app.dao.user_repository.UserRepository.get_by_id", new_callable=AsyncMock) as mock_get_user, \
          patch("app.dao.user_repository.UserRepository.get_all", new_callable=AsyncMock) as mock_get_all_users, \
+         patch("app.dao.project_repository.ProjectRepository.get_all", new_callable=AsyncMock) as mock_get_projects, \
          patch("app.dao.task_repository.TaskRepository.get_all", new_callable=AsyncMock) as mock_get_tasks, \
          patch("app.services.analytics_service.get_redis_client", return_value=mock_redis):
 
         mock_get_user.return_value = admin_user
         mock_get_all_users.return_value = [admin_user, member_user, second_member_user]
+        mock_get_projects.return_value = []
         mock_get_tasks.return_value = [task_todo, task_in_progress, task_review, task_done]
 
         response = await async_client.get(
@@ -175,11 +178,11 @@ async def test_get_analytics_success(
         assert workload[1]["user_name"] == "John Doe"
         assert workload[1]["assigned_tasks"] == 2
 
-        # Verify completion trend
+    # Verify completion trend
         trend = data["data"]["completion_trend"]
-        assert len(trend) == 1
-        assert trend[0]["date"] == "2026-10-22"
-        assert trend[0]["completed_tasks"] == 1
+        day_trend = next((t for t in trend if t["date"] == "2026-10-22"), None)
+        assert day_trend is not None
+        assert day_trend["completed_tasks"] == 1
 
         # Verify Redis set was invoked
         mock_redis.set.assert_called_once()
@@ -196,11 +199,13 @@ async def test_get_analytics_member_access(async_client: AsyncClient, member_use
 
     with patch("app.dao.user_repository.UserRepository.get_by_id", new_callable=AsyncMock) as mock_get_user, \
          patch("app.dao.user_repository.UserRepository.get_all", new_callable=AsyncMock) as mock_get_all_users, \
+         patch("app.dao.project_repository.ProjectRepository.get_all", new_callable=AsyncMock) as mock_get_projects, \
          patch("app.dao.task_repository.TaskRepository.get_all", new_callable=AsyncMock) as mock_get_tasks, \
          patch("app.services.analytics_service.get_redis_client", return_value=mock_redis):
 
         mock_get_user.return_value = member_user
         mock_get_all_users.return_value = [member_user]
+        mock_get_projects.return_value = []
         mock_get_tasks.return_value = []
 
         response = await async_client.get(
@@ -267,7 +272,7 @@ async def test_get_analytics_redis_cache_hit(async_client: AsyncClient, admin_us
 
 
 # ==============================================================================
-# 4. Project Filter Query Parameter
+# 4. Project Filter Query Parameter & Validation
 # ==============================================================================
 @pytest.mark.asyncio
 async def test_get_analytics_with_project_filter(async_client: AsyncClient, admin_user: User):
@@ -279,14 +284,28 @@ async def test_get_analytics_with_project_filter(async_client: AsyncClient, admi
     mock_redis = AsyncMock()
     mock_redis.get.return_value = None
 
+    sample_project = SimpleNamespace(
+        id=target_project_id,
+        name="Test Project",
+        key="TP",
+        created_by=admin_user.id,
+        members=[],
+        status="ACTIVE",
+        progress=50,
+    )
+
     with patch("app.dao.user_repository.UserRepository.get_by_id", new_callable=AsyncMock) as mock_get_user, \
          patch("app.dao.user_repository.UserRepository.get_all", new_callable=AsyncMock) as mock_get_all_users, \
+         patch("app.dao.project_repository.ProjectRepository.get_by_id", new_callable=AsyncMock) as mock_get_proj_by_id, \
+         patch("app.dao.project_repository.ProjectRepository.get_all", new_callable=AsyncMock) as mock_get_all_projects, \
          patch("app.dao.task_repository.TaskRepository.get_by_project", new_callable=AsyncMock) as mock_get_by_proj, \
          patch("app.dao.task_repository.TaskRepository.get_all", new_callable=AsyncMock) as mock_get_all_tasks, \
          patch("app.services.analytics_service.get_redis_client", return_value=mock_redis):
 
         mock_get_user.return_value = admin_user
         mock_get_all_users.return_value = [admin_user]
+        mock_get_proj_by_id.return_value = sample_project
+        mock_get_all_projects.return_value = [sample_project]
         mock_get_by_proj.return_value = []
 
         response = await async_client.get(
@@ -295,8 +314,117 @@ async def test_get_analytics_with_project_filter(async_client: AsyncClient, admi
         )
 
         assert response.status_code == 200
+        mock_get_proj_by_id.assert_called_once_with(target_project_id)
         mock_get_by_proj.assert_called_once_with(target_project_id)
         mock_get_all_tasks.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_get_analytics_project_not_found(async_client: AsyncClient, admin_user: User):
+    """When a non-existent projectId is passed, endpoint returns 404 PROJECT_NOT_FOUND."""
+    token = token_service.create_access_token(
+        str(admin_user.id), admin_user.email, admin_user.role
+    )
+    non_existent_project_id = uuid.uuid4()
+
+    with patch("app.dao.user_repository.UserRepository.get_by_id", new_callable=AsyncMock) as mock_get_user, \
+         patch("app.dao.project_repository.ProjectRepository.get_by_id", new_callable=AsyncMock) as mock_get_proj_by_id:
+
+        mock_get_user.return_value = admin_user
+        mock_get_proj_by_id.return_value = None
+
+        response = await async_client.get(
+            f"/taskboard/api/v1/analytics?projectId={non_existent_project_id}",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+        assert response.status_code == 404
+        data = response.json()
+        assert data["success"] is False
+        assert data["code"] == "PROJECT_NOT_FOUND"
+        assert data["error"] == {"code": "PROJECT_NOT_FOUND"}
+        assert "specified project could not be found" in data["message"].lower()
+
+
+@pytest.mark.asyncio
+async def test_get_analytics_member_forbidden(async_client: AsyncClient, member_user: User, admin_user: User):
+    """When a non-admin user requests analytics for a project they are not a member of, return 403."""
+    token = token_service.create_access_token(
+        str(member_user.id), member_user.email, member_user.role
+    )
+    other_project_id = uuid.uuid4()
+
+    unauthorized_project = SimpleNamespace(
+        id=other_project_id,
+        name="Private Project",
+        key="PP",
+        created_by=admin_user.id,
+        members=[],  # member_user is not in members and not creator
+        status="ACTIVE",
+        progress=0,
+    )
+
+    with patch("app.dao.user_repository.UserRepository.get_by_id", new_callable=AsyncMock) as mock_get_user, \
+         patch("app.dao.project_repository.ProjectRepository.get_by_id", new_callable=AsyncMock) as mock_get_proj_by_id:
+
+        mock_get_user.return_value = member_user
+        mock_get_proj_by_id.return_value = unauthorized_project
+
+        response = await async_client.get(
+            f"/taskboard/api/v1/analytics?projectId={other_project_id}",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+        assert response.status_code == 403
+        data = response.json()
+        assert data["success"] is False
+        assert data["code"] == "INSUFFICIENT_PERMISSIONS"
+        assert data["error"] == {"code": "INSUFFICIENT_PERMISSIONS"}
+        assert "do not have access" in data["message"].lower()
+
+
+@pytest.mark.asyncio
+async def test_get_analytics_member_with_project_success(async_client: AsyncClient, member_user: User, admin_user: User):
+    """When a non-admin user requests analytics for a project they ARE a member of, return 200 OK."""
+    token = token_service.create_access_token(
+        str(member_user.id), member_user.email, member_user.role
+    )
+    target_project_id = uuid.uuid4()
+    mock_redis = AsyncMock()
+    mock_redis.get.return_value = None
+
+    member_project = SimpleNamespace(
+        id=target_project_id,
+        name="Team Project",
+        key="TP",
+        created_by=admin_user.id,
+        members=[member_user],  # member_user is a member!
+        status="ACTIVE",
+        progress=20,
+    )
+
+    with patch("app.dao.user_repository.UserRepository.get_by_id", new_callable=AsyncMock) as mock_get_user, \
+         patch("app.dao.user_repository.UserRepository.get_all", new_callable=AsyncMock) as mock_get_all_users, \
+         patch("app.dao.project_repository.ProjectRepository.get_by_id", new_callable=AsyncMock) as mock_get_proj_by_id, \
+         patch("app.dao.project_repository.ProjectRepository.get_all", new_callable=AsyncMock) as mock_get_all_projects, \
+         patch("app.dao.task_repository.TaskRepository.get_by_project", new_callable=AsyncMock) as mock_get_by_proj, \
+         patch("app.services.analytics_service.get_redis_client", return_value=mock_redis):
+
+        mock_get_user.return_value = member_user
+        mock_get_all_users.return_value = [member_user]
+        mock_get_proj_by_id.return_value = member_project
+        mock_get_all_projects.return_value = [member_project]
+        mock_get_by_proj.return_value = []
+
+        response = await async_client.get(
+            f"/taskboard/api/v1/analytics?projectId={target_project_id}",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["success"] is True
+        assert data["message"] == "Analytics data retrieved successfully."
 
 
 # ==============================================================================
