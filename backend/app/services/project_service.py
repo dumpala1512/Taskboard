@@ -154,15 +154,31 @@ class ProjectService:
         created_project = await self.project_repo.create(new_project)
 
         # Build list of members to assign: owner/creator + any members specified in data.members
-        member_ids_to_assign = {creator_id}
+        member_ids_to_assign: List[uuid.UUID] = [creator_id]
         if data.members:
             for m_id in data.members:
-                member_ids_to_assign.add(m_id)
+                if isinstance(m_id, str):
+                    try:
+                        m_id = uuid.UUID(m_id)
+                    except ValueError:
+                        continue
+                if m_id not in member_ids_to_assign:
+                    member_ids_to_assign.append(m_id)
 
         for m_id in member_ids_to_assign:
+            # Verify user exists before assigning to prevent foreign key violations that abort Postgres transactions
+            existing_user = await self.user_repo.get_by_id(m_id)
+            if not existing_user:
+                logger.warning("Skipping member association: user %s does not exist", m_id)
+                continue
+
             try:
                 await self.project_repo.assign_projects_to_user(m_id, [created_project.id])
             except Exception as exc:
+                try:
+                    await self.db.rollback()
+                except Exception:
+                    pass
                 logger.warning("Could not associate member %s during project creation: %s", m_id, exc)
 
         refetched = await self.project_repo.get_by_id(created_project.id)
