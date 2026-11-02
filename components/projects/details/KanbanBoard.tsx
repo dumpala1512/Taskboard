@@ -53,9 +53,15 @@ export default function KanbanBoard({
 	const [deleteConfirmationChecked, setDeleteConfirmationChecked] =
 		useState(false);
 
-	const boardColumns = (
-		project?.columns?.length ? project.columns : COLUMNS
-	).filter((c) => c.id !== "BACKLOG");
+	const boardColumns = (project?.columns?.length ? project.columns : COLUMNS)
+		.filter((c: any) => (c?.id || c)?.toUpperCase() !== "BACKLOG")
+		.map((c: any) => {
+			if (typeof c === "string") return { id: c, title: c };
+			const title =
+				c?.title || c?.name || c?.label || c?.id || "Untitled Column";
+			const id = c?.id || c?.key || c?.name || title;
+			return { id: String(id), title: String(title) };
+		});
 
 	// Sync state if initial tasks update from backend
 	useEffect(() => {
@@ -89,6 +95,46 @@ export default function KanbanBoard({
 		updateProject({ id: project.id, columns: updatedColumns });
 		setNewColumnName("");
 		setIsAddingColumn(false);
+	};
+
+	const handleMoveColumn = (colId: string, direction: "left" | "right") => {
+		if (!project || !isAdmin) return;
+		const currentIndex = boardColumns.findIndex(
+			(c) => c.id.toLowerCase() === colId.toLowerCase(),
+		);
+		if (currentIndex === -1) return;
+
+		const targetIndex =
+			direction === "left" ? currentIndex - 1 : currentIndex + 1;
+		if (targetIndex < 0 || targetIndex >= boardColumns.length) return;
+
+		const newColumns = [...boardColumns];
+		const temp = newColumns[currentIndex];
+		newColumns[currentIndex] = newColumns[targetIndex];
+		newColumns[targetIndex] = temp;
+
+		// Optimistically update query cache
+		queryClient.setQueryData(["projects", project.id], (old: any) => {
+			if (!old) return old;
+			return { ...old, columns: newColumns };
+		});
+
+		updateProject(
+			{ id: project.id, columns: newColumns },
+			{
+				onSuccess: () => {
+					toast.success(
+						`Column "${boardColumns[currentIndex].title}" moved ${direction}`,
+					);
+				},
+				onError: () => {
+					toast.error("Failed to reorder columns");
+					queryClient.invalidateQueries({
+						queryKey: ["projects", project.id],
+					});
+				},
+			},
+		);
 	};
 
 	const confirmDeleteColumn = (colId: string) => {
@@ -637,7 +683,7 @@ export default function KanbanBoard({
 			<div className="flex-1 overflow-x-auto p-4 flex space-x-4 bg-[#F5F6F8] dark:bg-[#0B0F19]">
 				<DragDropContext onDragEnd={onDragEnd}>
 					<div className="flex flex-1 overflow-x-auto overflow-y-hidden gap-5 pb-4 custom-scrollbar items-start">
-						{boardColumns.map((col) => (
+						{boardColumns.map((col, idx) => (
 							<KanbanColumn
 								key={col.id}
 								id={col.id}
@@ -661,6 +707,10 @@ export default function KanbanBoard({
 								}}
 								isAdmin={isAdmin}
 								onDelete={confirmDeleteColumn}
+								onMoveLeft={(colId) => handleMoveColumn(colId, "left")}
+								onMoveRight={(colId) => handleMoveColumn(colId, "right")}
+								canMoveLeft={idx > 0}
+								canMoveRight={idx < boardColumns.length - 1}
 							/>
 						))}
 					</div>

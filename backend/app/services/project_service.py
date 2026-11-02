@@ -122,8 +122,16 @@ class ProjectService:
                 detail="A project with the provided name already exists.",
             )
 
-        # Owner: use data.owner_id if specified, otherwise current_user.id
-        creator_id = data.owner_id or current_user.id
+        # Owner: validate data.owner_id if specified, otherwise default to current_user.id
+        creator_id = current_user.id
+        if data.owner_id:
+            owner_user = await self.user_repo.get_by_id(data.owner_id)
+            if not owner_user:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"The specified project owner (ID: {data.owner_id}) does not exist. Omit ownerId to assign the authenticated user.",
+                )
+            creator_id = owner_user.id
 
         # Status: use data.status if specified, otherwise "ACTIVE"
         project_status = (data.status or "ACTIVE").strip().upper()
@@ -272,7 +280,13 @@ class ProjectService:
         if data.columns is not None:
             updates["columns"] = data.columns
         if data.owner_id is not None:
-            updates["created_by"] = data.owner_id
+            owner_user = await self.user_repo.get_by_id(data.owner_id)
+            if not owner_user:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"The specified project owner (ID: {data.owner_id}) does not exist.",
+                )
+            updates["created_by"] = owner_user.id
         if data.start_date is not None:
             updates["start_date"] = data.start_date
         if data.end_date is not None:

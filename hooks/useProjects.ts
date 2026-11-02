@@ -15,7 +15,22 @@ function normalizeProject(p: any): Project {
 		startDate: p.start_date || p.startDate,
 		dueDate: p.end_date || p.dueDate,
 		members: Array.isArray(p.members) ? p.members.map(String) : [],
-		columns: Array.isArray(p.columns) ? p.columns : [],
+		members_details: Array.isArray(p.members_details)
+			? p.members_details
+			: Array.isArray(p.membersDetails)
+				? p.membersDetails
+				: [],
+		columns: Array.isArray(p.columns)
+			? p.columns.map((c: any) => {
+					if (typeof c === "string") {
+						return { id: c, title: c };
+					}
+					const title =
+						c.title || c.name || c.label || c.id || "Untitled Column";
+					const id = c.id || c.key || c.name || title;
+					return { id: String(id), title: String(title) };
+				})
+			: [],
 		tags: Array.isArray(p.tags) ? p.tags : [],
 		progress: p.progress ?? 0,
 		status: p.status || "ACTIVE",

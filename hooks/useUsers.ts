@@ -69,10 +69,15 @@ export function useUsers() {
 	return useQuery({
 		queryKey: ["users"],
 		queryFn: async (): Promise<UserBasic[]> => {
-			const response = await apiClient.get("/admin/users");
-			const rawList = response.data?.data || response.data || [];
-			return Array.isArray(rawList) ? rawList.map(normalizeUser) : [];
+			try {
+				const response = await apiClient.get("/admin/users");
+				const rawList = response.data?.data || response.data || [];
+				return Array.isArray(rawList) ? rawList.map(normalizeUser) : [];
+			} catch {
+				return [];
+			}
 		},
+		retry: false,
 	});
 }
 

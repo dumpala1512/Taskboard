@@ -1,6 +1,7 @@
-import { CheckCircle2, ListTodo, Mail, Shield } from "lucide-react";
+import { CheckCircle2, ListTodo, Mail, Shield, Users } from "lucide-react";
 import React from "react";
 import type { Task, User } from "../../../server/types";
+import { EmptyState } from "../../ui/EmptyState";
 
 interface MembersTabProps {
 	users: User[];
@@ -8,17 +9,35 @@ interface MembersTabProps {
 }
 
 export default function MembersTab({ users, tasks }: MembersTabProps) {
+	if (!users || users.length === 0) {
+		return (
+			<div className="bg-white dark:bg-[#131B2E] border border-slate-200 dark:border-[#222F49] rounded-xl p-8 shadow-sm flex flex-col items-center justify-center">
+				<EmptyState
+					icon={Users}
+					title="No Members Assigned"
+					description="No team members are currently assigned to this project."
+				/>
+			</div>
+		);
+	}
+
 	return (
 		<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
 			{users.map((user) => {
+				const uid = String(user.id || "").toLowerCase();
 				const userTasks = tasks.filter(
-					(t) => t.assigneeId === user.id || t.assignees?.includes(user.id),
+					(t: any) =>
+						String(t.assigneeId || "").toLowerCase() === uid ||
+						(Array.isArray(t.assignees) &&
+							t.assignees.some((a: any) => String(a).toLowerCase() === uid)),
 				);
 				const completedTasks = userTasks.filter(
-					(t) => t.status === "DONE",
+					(t) => (t.status || "").toUpperCase() === "DONE",
 				).length;
 				const completionPct =
 					userTasks.length > 0 ? (completedTasks / userTasks.length) * 100 : 0;
+				const displayName = user.name || user.email || "Member";
+				const initial = (displayName.charAt(0) || "M").toUpperCase();
 
 				return (
 					<div
@@ -31,17 +50,17 @@ export default function MembersTab({ users, tasks }: MembersTabProps) {
 								{user.avatar ? (
 									<img
 										src={user.avatar}
-										alt={user.name}
+										alt={displayName}
 										className="w-10 h-10 rounded-full border border-[#E0E3E8] dark:border-[#222F49] object-cover"
 									/>
 								) : (
 									<div className="w-10 h-10 rounded-full bg-[#E3F2FD] dark:bg-sky-950/60 border border-sky-200/50 dark:border-sky-800/40 flex items-center justify-center text-[#1E88E5] dark:text-sky-400 font-semibold text-sm">
-										{user.name.charAt(0).toUpperCase()}
+										{initial}
 									</div>
 								)}
 								<div>
 									<h3 className="text-base font-semibold text-[#33475B] dark:text-slate-100">
-										{user.name}
+										{displayName}
 									</h3>
 									<div className="flex items-center text-xs text-[#9EAAB7] dark:text-slate-400 mt-0.5 gap-1">
 										<Mail className="w-3 h-3" />
@@ -52,13 +71,15 @@ export default function MembersTab({ users, tasks }: MembersTabProps) {
 
 							<span
 								className={`text-xs font-semibold px-2 py-0.5 rounded-sm flex items-center gap-1 ${
-									user.role === "ADMIN"
+									(user.role || "").toUpperCase() === "ADMIN"
 										? "bg-[#EDE7F6] dark:bg-purple-950/50 text-[#7B61FF] dark:text-purple-300"
 										: "bg-[#F5F6F8] dark:bg-[#1A233A] text-[#6E7B8B] dark:text-slate-400"
 								}`}
 							>
-								{user.role === "ADMIN" && <Shield className="w-2.5 h-2.5" />}
-								{user.role}
+								{(user.role || "").toUpperCase() === "ADMIN" && (
+									<Shield className="w-2.5 h-2.5" />
+								)}
+								{(user.role || "MEMBER").toUpperCase()}
 							</span>
 						</div>
 

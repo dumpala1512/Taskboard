@@ -46,9 +46,77 @@ export default function ProjectDetailsPage() {
 
 	const projectMembers = React.useMemo(() => {
 		if (!project) return [];
-		return safeUsers.filter(
-			(u: any) => u.id === project.ownerId || project.members?.includes(u.id),
-		);
+
+		// 1. Direct member details from backend API (if available)
+		const directMembers =
+			(project as any).members_details || (project as any).membersDetails;
+		if (Array.isArray(directMembers) && directMembers.length > 0) {
+			const directMap = new Map<string, any>();
+			directMembers.forEach((m: any) => {
+				const idStr = String(m.id || "");
+				if (idStr) {
+					directMap.set(idStr.toLowerCase(), {
+						id: idStr,
+						name: m.name || m.full_name || m.email,
+						email: m.email || "",
+						role: (m.role || "MEMBER").toUpperCase(),
+						avatar: m.avatar,
+					});
+				}
+			});
+
+			const ownerIdStr = String(
+				project.ownerId || project.created_by || "",
+			).toLowerCase();
+			if (ownerIdStr && !directMap.has(ownerIdStr)) {
+				const ownerUser = safeUsers.find(
+					(u: any) => String(u.id || "").toLowerCase() === ownerIdStr,
+				);
+				if (ownerUser) {
+					directMap.set(ownerIdStr, ownerUser);
+				}
+			}
+
+			if (directMap.size > 0) {
+				return Array.from(directMap.values());
+			}
+		}
+
+		// 2. Resolve members from safeUsers directory
+		const memberIdSet = new Set<string>();
+		if (project.ownerId) memberIdSet.add(String(project.ownerId).toLowerCase());
+		if (project.created_by)
+			memberIdSet.add(String(project.created_by).toLowerCase());
+		if (Array.isArray(project.members)) {
+			project.members.forEach((m: any) => {
+				const idStr =
+					typeof m === "object" ? String(m?.id || "") : String(m || "");
+				if (idStr) memberIdSet.add(idStr.toLowerCase());
+			});
+		}
+
+		const matched = safeUsers.filter((u: any) => {
+			const uid = String(u.id || "").toLowerCase();
+			return memberIdSet.has(uid);
+		});
+
+		// 3. Fallback: if safeUsers is still loading or empty, but project.members has object items
+		if (matched.length === 0 && Array.isArray(project.members)) {
+			const objectMembers = project.members.filter(
+				(m: any) => typeof m === "object" && m?.id,
+			);
+			if (objectMembers.length > 0) {
+				return objectMembers.map((m: any) => ({
+					id: String(m.id),
+					name: m.name || m.full_name || m.email || "Member",
+					email: m.email || "",
+					role: (m.role || "MEMBER").toUpperCase(),
+					avatar: m.avatar,
+				}));
+			}
+		}
+
+		return matched;
 	}, [project, safeUsers]);
 
 	const projectColumns = React.useMemo(() => {
@@ -204,14 +272,7 @@ export default function ProjectDetailsPage() {
 								<OverviewTab project={project} tasks={safeTasks} />
 							)}
 							{activeTab === "members" && (
-								<MembersTab
-									users={(safeUsers as any).filter(
-										(u: any) =>
-											u.id === project.ownerId ||
-											project.members?.includes(u.id),
-									)}
-									tasks={safeTasks}
-								/>
+								<MembersTab users={projectMembers as any} tasks={safeTasks} />
 							)}
 							{(activeTab === "activities" || activeTab === "activity") && (
 								<ActivityTab projectId={project.id} users={safeUsers as any} />

@@ -37,7 +37,15 @@ export interface Project {
 	status: ProjectStatus;
 	progress: number;
 	ownerId?: string; // User ID of the owner
+	created_by?: string;
 	members: string[]; // User IDs
+	members_details?: Array<{
+		id: string;
+		name: string;
+		email: string;
+		role?: string;
+		avatar?: string;
+	}>;
 	columns?: { id: string; title: string }[];
 	tags?: string[];
 	startDate?: string;
