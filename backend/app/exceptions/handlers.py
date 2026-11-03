@@ -225,7 +225,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     """Handle FastAPI / Pydantic request validation errors using ValidationErrorResponse format."""
     req_id = getattr(request.state, "request_id", None)
     return JSONResponse(
-        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
         content={
             "success": False,
             "error": "Validation Error",

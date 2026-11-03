@@ -1,4 +1,4 @@
-import { Clock, MoreVertical, Pencil, Trash2 } from "lucide-react";
+import { Calendar, Clock, MoreVertical, Pencil, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import React from "react";
@@ -172,10 +172,61 @@ export function ProjectCard({ project, onEdit, onDelete }: ProjectCardProps) {
 
 			{/* Footer */}
 			<div className="flex items-center justify-between mt-auto">
-				<div className="flex items-center text-[#9EAAB7] dark:text-slate-400 text-xs gap-1.5">
-					<Clock className="w-3.5 h-3.5" />
-					<span>{formatDate(project.dueDate || project.updatedAt)}</span>
-				</div>
+				{(() => {
+					if (project.dueDate) {
+						const isOverdue =
+							new Date(project.dueDate) < new Date() &&
+							project.status !== "COMPLETED";
+						const dateTooltip = project.startDate
+							? `Starts: ${formatDate(project.startDate)} • Due: ${formatDate(project.dueDate)}`
+							: `Due: ${formatDate(project.dueDate)}`;
+
+						return (
+							<div
+								className={`flex items-center text-xs gap-1.5 min-w-0 ${
+									isOverdue
+										? "text-[#E53935] dark:text-red-400 font-medium"
+										: "text-[#9EAAB7] dark:text-slate-400"
+								}`}
+								title={dateTooltip}
+							>
+								<Clock className="w-3.5 h-3.5 flex-shrink-0" />
+								<span className="truncate">
+									Due {formatDate(project.dueDate)}
+									{isOverdue && (
+										<span className="ml-1 text-[11px] font-semibold text-[#E53935] dark:text-red-400">
+											(Overdue)
+										</span>
+									)}
+								</span>
+							</div>
+						);
+					}
+
+					if (project.startDate) {
+						return (
+							<div
+								className="flex items-center text-[#9EAAB7] dark:text-slate-400 text-xs gap-1.5 min-w-0"
+								title={`Project Starts: ${formatDate(project.startDate)}`}
+							>
+								<Calendar className="w-3.5 h-3.5 flex-shrink-0" />
+								<span className="truncate">
+									Starts {formatDate(project.startDate)}
+								</span>
+							</div>
+						);
+					}
+
+					return (
+						<div
+							className="flex items-center text-[#9EAAB7] dark:text-slate-400 text-xs gap-1.5 min-w-0"
+							title="No start or end dates configured"
+						>
+							<Clock className="w-3.5 h-3.5 flex-shrink-0" />
+							<span className="truncate">No deadline</span>
+						</div>
+					);
+				})()}
 				<div className="flex items-center gap-1.5">
 					{/* Owner */}
 					{owner && (

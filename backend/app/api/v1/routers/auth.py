@@ -19,8 +19,9 @@ from app.schemas.auth import (
     UserResponse,
 )
 from app.schemas.common import SuccessResponse
+import jwt
 from app.services.admin_service import AdminUserService
-from app.services.auth_service import AuthenticationService
+from app.services.auth_service import AuthenticationService, token_service
 
 auth_router = APIRouter(tags=["Authentication"])
 
@@ -67,18 +68,45 @@ async def refresh_token(
 async def logout(
     payload: Optional[LogoutRequest] = None,
     auth: Optional[HTTPAuthorizationCredentials] = Depends(bearer_scheme),
-    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> SuccessResponse:
     """Remove user's active refresh session and blacklist access token in Redis."""
     service = AuthenticationService(db)
     refresh_token = payload.refresh_token if payload else None
     access_token = auth.credentials if auth else None
-    await service.logout(
-        user_id=str(current_user.id),
-        refresh_token=refresh_token,
-        access_token=access_token,
-    )
+    user_id = None
+
+    if access_token:
+        try:
+            claims = jwt.decode(
+                access_token,
+                token_service.secret_key,
+                algorithms=[token_service.algorithm],
+                options={"verify_exp": False},
+            )
+            user_id = claims.get("user_id")
+        except Exception:
+            pass
+
+    if not user_id and refresh_token:
+        try:
+            claims = jwt.decode(
+                refresh_token,
+                token_service.secret_key,
+                algorithms=[token_service.algorithm],
+                options={"verify_exp": False},
+            )
+            user_id = claims.get("user_id")
+        except Exception:
+            pass
+
+    if user_id:
+        await service.logout(
+            user_id=str(user_id),
+            refresh_token=refresh_token,
+            access_token=access_token,
+        )
+
     return SuccessResponse(success=True, message="Successfully logged out")
 
 

@@ -259,19 +259,40 @@ export default function KanbanBoard({
 
 		if (newStatus !== task.status) {
 			const workflow = ["BACKLOG", ...boardColumns.map((c) => c.id)];
-			const curIdx = workflow.indexOf(task.status);
-			const newIdx = workflow.indexOf(newStatus);
+			const findIdx = (statusStr?: string) => {
+				if (!statusStr) return -1;
+				const norm = statusStr.trim().toUpperCase();
+				return workflow.findIndex((id) => {
+					const clean = id.trim().toUpperCase();
+					return (
+						clean === norm ||
+						clean.replace(/_/g, " ") === norm.replace(/_/g, " ")
+					);
+				});
+			};
+
+			const curIdx = findIdx(task.status);
+			const newIdx = findIdx(newStatus);
 
 			if (curIdx !== -1 && newIdx !== -1 && Math.abs(newIdx - curIdx) > 1) {
 				const fromTitle =
 					task.status === "BACKLOG"
 						? "Backlog"
-						: boardColumns.find((c) => c.id === task.status)?.title ||
-							task.status;
+						: boardColumns.find(
+								(c) =>
+									c.id.toUpperCase() === task.status.toUpperCase() ||
+									c.id.replace(/_/g, " ").toUpperCase() ===
+										task.status.replace(/_/g, " ").toUpperCase(),
+							)?.title || task.status;
 				const toTitle =
 					newStatus === "BACKLOG"
 						? "Backlog"
-						: boardColumns.find((c) => c.id === newStatus)?.title || newStatus;
+						: boardColumns.find(
+								(c) =>
+									c.id.toUpperCase() === newStatus.toUpperCase() ||
+									c.id.replace(/_/g, " ").toUpperCase() ===
+										newStatus.replace(/_/g, " ").toUpperCase(),
+							)?.title || newStatus;
 				toast.error(
 					`Tasks must move step by step through workflow stages. Cannot move directly from "${fromTitle}" to "${toTitle}".`,
 				);
@@ -609,9 +630,9 @@ export default function KanbanBoard({
 								Are you sure you want to delete this column?
 							</p>
 							<p className="text-sm text-[#6E7B8B] mb-6 leading-relaxed">
-								This will permanently remove the column from the board. Tasks in
-								this column will not be deleted. They will remain in the project
-								but will no longer be associated with this column.
+								This will permanently remove the column from the board. Any
+								tasks currently in this column will automatically be moved to
+								the Backlog so that no work is lost.
 							</p>
 							<label className="flex items-start gap-2 mb-6 cursor-pointer">
 								<input

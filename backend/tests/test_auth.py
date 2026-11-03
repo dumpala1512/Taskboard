@@ -167,7 +167,7 @@ async def test_auth_service_successful_login():
     assert response.access_token is not None
     assert response.refresh_token is not None
     assert response.token_type == "bearer"
-    assert response.access_token_expires_in == 86400
+    assert response.access_token_expires_in == 1800
     assert response.refresh_token_expires_in == 604800
     assert mock_sess_service.save_refresh_token.called
 
@@ -341,7 +341,7 @@ async def test_api_login_success(async_client: AsyncClient):
         assert "access_token" in data
         assert "refresh_token" in data
         assert data["token_type"] == "bearer"
-        assert data["access_token_expires_in"] == 86400
+        assert data["access_token_expires_in"] == 1800
         assert data["refresh_token_expires_in"] == 604800
 
 

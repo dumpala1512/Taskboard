@@ -5,11 +5,13 @@ import logging
 from typing import Any, List, Optional, Union
 import uuid
 from fastapi import HTTPException, status
+from sqlalchemy import func, update as sa_update
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.dao.project_repository import ProjectRepository
 from app.dao.user_repository import UserRepository
 from app.exceptions.handlers import UserAlreadyAssignedException
 from app.models.project import Project
+from app.models.task import Task
 from app.models.user import User
 from app.schemas.project import (
     CreateProjectRequest,
@@ -278,6 +280,77 @@ class ProjectService:
         if data.tags is not None:
             updates["tags"] = data.tags
         if data.columns is not None:
+            # Detect if any columns are being removed from the project
+            old_cols = project.columns or []
+            if isinstance(old_cols, str):
+                try:
+                    import json
+                    old_cols = json.loads(old_cols)
+                except Exception:
+                    old_cols = []
+
+            old_col_identifiers = set()
+            for c in old_cols:
+                if isinstance(c, dict):
+                    if c.get("id"):
+                        old_col_identifiers.add(str(c["id"]).strip().upper())
+                    if c.get("title"):
+                        old_col_identifiers.add(str(c["title"]).strip().upper())
+                elif isinstance(c, str) and c.strip():
+                    old_col_identifiers.add(c.strip().upper())
+
+            new_col_identifiers = set()
+            for c in data.columns:
+                if isinstance(c, dict):
+                    if c.get("id"):
+                        new_col_identifiers.add(str(c["id"]).strip().upper())
+                    if c.get("title"):
+                        new_col_identifiers.add(str(c["title"]).strip().upper())
+                elif isinstance(c, str) and c.strip():
+                    new_col_identifiers.add(c.strip().upper())
+
+            # Never migrate default core workflow columns
+            core_workflows = {"BACKLOG", "TODO", "IN_PROGRESS", "REVIEW", "DONE"}
+            removed_identifiers = {
+                ident for ident in (old_col_identifiers - new_col_identifiers)
+                if ident not in core_workflows
+            }
+
+            if removed_identifiers:
+                all_targets = set()
+                for ident in removed_identifiers:
+                    all_targets.add(ident)
+                    all_targets.add(ident.replace(" ", "_"))
+                    all_targets.add(ident.replace("_", " "))
+
+                # Atomically reassign any tasks in removed column(s) to BACKLOG
+                stmt = (
+                    sa_update(Task)
+                    .where(
+                        Task.project_id == project.id,
+                        func.upper(Task.status).in_(list(all_targets)),
+                    )
+                    .values(status="BACKLOG")
+                )
+                result = await self.db.execute(stmt)
+                reassigned_count = result.rowcount or 0
+                if reassigned_count > 0:
+                    logger.info(
+                        "Reassigned %d task(s) from deleted columns %s to BACKLOG in project %s",
+                        reassigned_count,
+                        removed_identifiers,
+                        project.id,
+                    )
+                    try:
+                        from app.utils.redis import get_redis_client
+                        redis = get_redis_client()
+                        if redis:
+                            keys = await redis.keys(f"*project*{project.id}*")
+                            if keys:
+                                await redis.delete(*keys)
+                    except Exception as exc:
+                        logger.warning("Cache invalidation error on column delete: %s", exc)
+
             updates["columns"] = data.columns
         if data.owner_id is not None:
             owner_user = await self.user_repo.get_by_id(data.owner_id)

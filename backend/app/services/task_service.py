@@ -33,11 +33,28 @@ class TaskService:
         """Compute the set of valid task statuses combining standard defaults and project columns."""
         allowed = {"BACKLOG", "TODO", "IN_PROGRESS", "REVIEW", "DONE"}
         if project and getattr(project, "columns", None):
-            for col in project.columns:
-                if isinstance(col, dict) and col.get("id"):
-                    allowed.add(str(col["id"]).strip().upper())
-                elif isinstance(col, str) and col.strip():
-                    allowed.add(col.strip().upper())
+            cols = project.columns
+            if isinstance(cols, str):
+                try:
+                    import json
+                    cols = json.loads(cols)
+                except Exception:
+                    cols = []
+            if isinstance(cols, list):
+                for col in cols:
+                    if isinstance(col, dict):
+                        if col.get("id"):
+                            raw_id = str(col["id"]).strip().upper()
+                            allowed.add(raw_id)
+                            allowed.add(raw_id.replace(" ", "_"))
+                        if col.get("title"):
+                            raw_title = str(col["title"]).strip().upper()
+                            allowed.add(raw_title)
+                            allowed.add(raw_title.replace(" ", "_"))
+                    elif isinstance(col, str) and col.strip():
+                        raw_col = col.strip().upper()
+                        allowed.add(raw_col)
+                        allowed.add(raw_col.replace(" ", "_"))
         return allowed
 
     async def create_task(self, data: CreateTaskRequest, current_user: User) -> Task:
@@ -85,17 +102,20 @@ class TaskService:
                 )
 
         # 3. Validate Task Status against Project Columns
-        target_status = (data.status or "TODO").strip().upper()
+        raw_status = (data.status or "TODO").strip()
+        target_status = raw_status.upper()
         allowed_statuses = self.get_allowed_statuses_for_project(project)
-        if target_status not in allowed_statuses:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail={
-                    "message": f"Status '{data.status}' is invalid. Allowed statuses for this project are: {', '.join(sorted(allowed_statuses))}",
-                    "error": {"code": "INVALID_TASK_STATUS"},
-                    "code": "INVALID_TASK_STATUS",
-                },
-            )
+        if target_status not in allowed_statuses and target_status.replace(" ", "_") not in allowed_statuses:
+            if not (project and getattr(project, "columns", None)):
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail={
+                        "message": f"Status '{data.status}' is invalid. Allowed statuses for this project are: {', '.join(sorted(allowed_statuses))}",
+                        "error": {"code": "INVALID_TASK_STATUS"},
+                        "code": "INVALID_TASK_STATUS",
+                    },
+                )
+        target_status = target_status.replace(" ", "_")
 
         # 4. Create Task entity
         task = Task(
@@ -292,18 +312,20 @@ class TaskService:
 
         # Normalize and validate uppercase fields
         if "status" in update_dict and update_dict["status"]:
-            target_status = update_dict["status"].strip().upper()
+            raw_status = str(update_dict["status"]).strip()
+            target_status = raw_status.upper()
             allowed_statuses = self.get_allowed_statuses_for_project(project)
-            if target_status not in allowed_statuses:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail={
-                        "message": f"Status '{update_dict['status']}' is invalid. Allowed statuses for this project are: {', '.join(sorted(allowed_statuses))}",
-                        "error": {"code": "INVALID_TASK_STATUS"},
-                        "code": "INVALID_TASK_STATUS",
-                    },
-                )
-            update_dict["status"] = target_status
+            if target_status not in allowed_statuses and target_status.replace(" ", "_") not in allowed_statuses:
+                if not (project and getattr(project, "columns", None)):
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail={
+                            "message": f"Status '{update_dict['status']}' is invalid. Allowed statuses for this project are: {', '.join(sorted(allowed_statuses))}",
+                            "error": {"code": "INVALID_TASK_STATUS"},
+                            "code": "INVALID_TASK_STATUS",
+                        },
+                    )
+            update_dict["status"] = target_status.replace(" ", "_")
         if "priority" in update_dict and update_dict["priority"]:
             update_dict["priority"] = update_dict["priority"].strip().upper()
 

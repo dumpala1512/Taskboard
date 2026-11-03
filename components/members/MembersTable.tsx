@@ -111,7 +111,10 @@ export default function MembersTable({ users, searchTerm }: MembersTableProps) {
 												</p>
 												<div className="flex items-center justify-between text-[11px] text-slate-400 dark:text-slate-500 pt-0.5">
 													<span className="truncate text-slate-600 dark:text-slate-300 font-medium">
-														{user.jobTitle || user.department || "Team Member"}
+														{user.jobTitle ||
+															((user.role || "").toUpperCase() === "ADMIN"
+																? "Administrator"
+																: "Team Member")}
 													</span>
 													<span className="shrink-0 ml-2">
 														{user.joiningDate || user.createdAt
@@ -139,7 +142,7 @@ export default function MembersTable({ users, searchTerm }: MembersTableProps) {
 									<tr className="bg-slate-50 dark:bg-[#1A233A] border-b border-slate-200 dark:border-[#222F49] text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
 										<th className="px-6 py-4">Name Of The Member</th>
 										<th className="px-6 py-4">Email</th>
-										<th className="px-6 py-4">Designation</th>
+										<th className="px-6 py-4">Role</th>
 										<th className="px-6 py-4">Joining Date</th>
 									</tr>
 								</thead>
@@ -182,9 +185,26 @@ export default function MembersTable({ users, searchTerm }: MembersTableProps) {
 													</div>
 												</td>
 												<td className="px-6 py-4 whitespace-nowrap">
-													<div className="text-sm text-slate-900 dark:text-slate-100">
-														{user.jobTitle || user.department || "—"}
-													</div>
+													{user.jobTitle ? (
+														<div className="text-sm text-slate-900 dark:text-slate-100 font-medium">
+															{user.jobTitle}
+														</div>
+													) : (
+														<span
+															className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold ${
+																(user.role || "").toUpperCase() === "ADMIN"
+																	? "bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800"
+																	: "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-200 dark:border-slate-700"
+															}`}
+														>
+															{(user.role || "").toUpperCase() === "ADMIN" && (
+																<Shield className="w-3 h-3 text-indigo-500" />
+															)}
+															{(user.role || "").toUpperCase() === "ADMIN"
+																? "Administrator"
+																: "Team Member"}
+														</span>
+													)}
 												</td>
 												<td className="px-6 py-4 whitespace-nowrap text-sm text-slate-700 dark:text-slate-300">
 													{user.joiningDate || user.createdAt

@@ -15,6 +15,23 @@ export default function Document() {
 					href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap"
 					rel="stylesheet"
 				/>
+				<script
+					dangerouslySetInnerHTML={{
+						__html: `
+							(function() {
+								try {
+									var saved = localStorage.getItem('taskboard_theme');
+									var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+									if (saved === 'dark' || (!saved && prefersDark)) {
+										document.documentElement.classList.add('dark');
+									} else {
+										document.documentElement.classList.remove('dark');
+									}
+								} catch (e) {}
+							})();
+						`,
+					}}
+				/>
 			</Head>
 			<body className="antialiased">
 				<Main />

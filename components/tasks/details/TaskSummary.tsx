@@ -12,9 +12,10 @@ import type { Task } from "../../../server/types";
 
 interface TaskSummaryProps {
 	task: Task;
+	columns?: any[];
 }
 
-export function TaskSummary({ task }: TaskSummaryProps) {
+export function TaskSummary({ task, columns }: TaskSummaryProps) {
 	const formatDate = (dateStr?: string | null) => {
 		if (!dateStr) return "Not set";
 		return new Date(dateStr).toLocaleDateString("en-US", {
@@ -31,6 +32,23 @@ export function TaskSummary({ task }: TaskSummaryProps) {
 		) {
 			return Math.min(100, Math.max(0, (task as any).progress));
 		}
+
+		// Calculate proportional progress along the project's active Kanban columns
+		if (columns && columns.length > 1) {
+			const activeCols = columns.filter(
+				(c: any) => (c.id || c).toUpperCase() !== "BACKLOG",
+			);
+			if (activeCols.length > 1) {
+				const idx = activeCols.findIndex(
+					(c: any) =>
+						(c.id || c).toUpperCase() === (task.status || "").toUpperCase(),
+				);
+				if (idx !== -1) {
+					return Math.round((idx / (activeCols.length - 1)) * 100);
+				}
+			}
+		}
+
 		switch (task.status) {
 			case "DONE":
 				return 100;
@@ -44,6 +62,11 @@ export function TaskSummary({ task }: TaskSummaryProps) {
 	};
 
 	const progress = getProgress();
+	const statusDisplay =
+		columns?.find(
+			(c: any) =>
+				(c.id || c).toUpperCase() === (task.status || "").toUpperCase(),
+		)?.title || task.status;
 
 	return (
 		<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -58,7 +81,7 @@ export function TaskSummary({ task }: TaskSummaryProps) {
 						{`${progress}%`}
 					</span>
 					<span className="text-sm text-gray-500 dark:text-slate-400 truncate">
-						Status: {task.status}
+						Status: {statusDisplay}
 					</span>
 				</div>
 				<div className="w-full bg-gray-200 dark:bg-slate-700 rounded-full h-2 mt-3">

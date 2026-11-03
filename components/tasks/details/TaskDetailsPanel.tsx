@@ -63,14 +63,38 @@ export function TaskDetailsPanel({
 			{ id: "REVIEW", title: "Review" },
 			{ id: "DONE", title: "Done" },
 		];
-		const cols = (
+		const rawCols =
 			project?.columns && project.columns.length > 0
 				? project.columns
-				: defaultCols
-		).filter((c: any) => c.id !== "BACKLOG");
+				: defaultCols;
 
-		return [{ id: "BACKLOG", title: "Backlog" }, ...cols];
+		const normalized = rawCols
+			.filter((c: any) => (c?.id || c)?.toUpperCase() !== "BACKLOG")
+			.map((c: any) => {
+				if (typeof c === "string") return { id: c, title: c };
+				const title =
+					c?.title || c?.name || c?.label || c?.id || "Untitled Column";
+				const id = c?.id || c?.key || c?.name || title;
+				return { id: String(id), title: String(title) };
+			});
+
+		return [{ id: "BACKLOG", title: "Backlog" }, ...normalized];
 	}, [project?.columns]);
+
+	const findColIndex = (statusStr?: string) => {
+		if (!statusStr) return -1;
+		const norm = statusStr.trim().toUpperCase();
+		return availableColumns.findIndex((c) => {
+			const colId = (c.id || "").trim().toUpperCase();
+			const colTitle = (c.title || "").trim().toUpperCase();
+			return (
+				colId === norm ||
+				colId.replace(/_/g, " ") === norm.replace(/_/g, " ") ||
+				colTitle === norm ||
+				colTitle.replace(/_/g, " ") === norm.replace(/_/g, " ")
+			);
+		});
+	};
 
 	const { mutate: updateTask, isPending } = useUpdateTask();
 	const deleteTask = useDeleteTask();
@@ -97,16 +121,12 @@ export function TaskDetailsPanel({
 	const handleStatusChange = (newStatus: TaskStatus) => {
 		if (newStatus === task.status) return;
 
-		const workflow = availableColumns.map((c) => c.id);
-		const curIdx = workflow.indexOf(task.status);
-		const newIdx = workflow.indexOf(newStatus);
+		const curIdx = findColIndex(task.status);
+		const newIdx = findColIndex(newStatus);
 
 		if (curIdx !== -1 && newIdx !== -1 && Math.abs(newIdx - curIdx) > 1) {
-			const fromTitle =
-				availableColumns.find((c) => c.id === task.status)?.title ||
-				task.status;
-			const toTitle =
-				availableColumns.find((c) => c.id === newStatus)?.title || newStatus;
+			const fromTitle = availableColumns[curIdx]?.title || task.status;
+			const toTitle = availableColumns[newIdx]?.title || newStatus;
 			toast.error(
 				`Tasks must move step by step through workflow stages. Cannot move directly from "${fromTitle}" to "${toTitle}".`,
 			);
@@ -119,9 +139,13 @@ export function TaskDetailsPanel({
 			{ id: task.id, status: newStatus },
 			{
 				onSuccess: () => toast.success("Status updated"),
-				onError: () => {
+				onError: (err: any) => {
 					setEditedStatus(task.status);
-					toast.error("Failed to update status");
+					const msg =
+						err?.response?.data?.message ||
+						err?.message ||
+						"Failed to update status";
+					toast.error(msg);
 				},
 			},
 		);
@@ -206,12 +230,8 @@ export function TaskDetailsPanel({
 								className="px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border-none cursor-pointer focus:ring-2 focus:ring-blue-500 hover:bg-blue-200 transition-colors disabled:opacity-50 shrink-0"
 							>
 								{availableColumns.map((col) => {
-									const curIdx = availableColumns.findIndex(
-										(c) => c.id === task.status,
-									);
-									const colIdx = availableColumns.findIndex(
-										(c) => c.id === col.id,
-									);
+									const curIdx = findColIndex(task.status);
+									const colIdx = findColIndex(col.id);
 									const isAdjacent =
 										curIdx === -1 ||
 										colIdx === -1 ||
@@ -278,7 +298,7 @@ export function TaskDetailsPanel({
 					) : (
 						<div className="p-6 space-y-6 break-words">
 							{/* Task Summary Cards */}
-							<TaskSummary task={task} />
+							<TaskSummary task={task} columns={availableColumns} />
 
 							{/* Tabs Navigation */}
 							<div className="border-b border-gray-200 dark:border-[#222F49]">

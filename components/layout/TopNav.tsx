@@ -16,6 +16,7 @@ import { signOut, useSession } from "next-auth/react";
 import React, { useEffect, useRef, useState } from "react";
 import { useTheme } from "../../context/ThemeContext";
 import { useActivities } from "../../hooks/useActivities";
+import { apiClient } from "../../lib/axios";
 import { ProjectWizardModal } from "../projects/ProjectWizardModal";
 import { TaskWizardModal } from "../tasks/TaskWizardModal";
 import { CreateNewModal } from "./CreateNewModal";
@@ -43,6 +44,31 @@ export const TopNav: React.FC<TopNavProps> = ({ setMobileOpen }) => {
 	const handleLogout = async () => {
 		setIsLoggingOut(true);
 		try {
+			const accessToken =
+				(session as any)?.accessToken ||
+				(typeof window !== "undefined"
+					? localStorage.getItem("taskboard_access_token")
+					: null);
+			const refreshToken = (session as any)?.refreshToken;
+
+			// Invalidate active session and refresh token in Redis backend
+			await apiClient
+				.post(
+					"/auth/logout",
+					refreshToken ? { refresh_token: refreshToken } : {},
+					accessToken
+						? { headers: { Authorization: `Bearer ${accessToken}` } }
+						: {},
+				)
+				.catch(() => {});
+
+			// Purge client-side cached access token & react-query state
+			try {
+				localStorage.removeItem("taskboard_access_token");
+			} catch (_) {}
+			queryClient.clear();
+
+			// Terminate NextAuth session cookie
 			await signOut({ redirect: false });
 		} catch (_) {}
 		window.location.href = "/auth/signin";
